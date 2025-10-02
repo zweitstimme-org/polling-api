@@ -11,5 +11,7 @@ wheels/
 
 #keys
 .env
+notebooks/
+
 
 Notes.txt
