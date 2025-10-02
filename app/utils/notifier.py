@@ -4,6 +4,9 @@ import httpx
 
 NTFY_TOPIC = "zweitstimme_org"  # change this to your ntfy topic
 
+# TODO: change NTFY to env variable
+# TODO: rework this so it follows NTFY best practice
+
 
 async def send_notification(title: str, message: str):
     url = f"https://ntfy.sh/{NTFY_TOPIC}"
