@@ -4,15 +4,22 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import download, polls
+from .routers import (
+    download,
+    election,
+    hook_bundestag_scraper,
+    hook_election_date,
+    polls,
+)
 
 load_dotenv()
 
 app = FastAPI(
-    title=os.getenv("API_TITLE", "German Election Polls API"),
-    version=os.getenv("API_VERSION", "1.0.0"),
+    title=os.getenv("API_TITLE", "Zweitstimme Polling Api"),
+    version=os.getenv("API_VERSION", "0.0.1"),
     description=os.getenv(
-        "API_DESCRIPTION", "API for accessing German election polling data"
+        "API_DESCRIPTION",
+        "The one stop Api for all things german elections \n proudly presented by zweitstimme.org",
     ),
 )
 
@@ -28,6 +35,10 @@ app.add_middleware(
 # Include routers
 app.include_router(polls.router, prefix="", tags=["polls"])
 app.include_router(download.router, prefix="", tags=["export"])
+# app.include_router(dates.router, prefix="", tags=["election-dates"])
+app.include_router(election.router, prefix="", tags=["election"])
+app.include_router(hook_bundestag_scraper.router, prefix="", tags=["webooks"])
+app.include_router(hook_election_date.router, prefix="", tags=["webooks"])
 
 
 @app.get("/")
