@@ -40,52 +40,13 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/pollingapi:latest
             ghcr.io/${{ github.repository_owner }}/pollingapi:${{ github.sha }}
-  notify:
-    name: Send ntfy notification
-    runs-on: ubuntu-latest
-    needs:
-      - build-and-deploy
-    if: always()
-    steps:
-      - name: Push ntfy message
-        env:
-          NTFY_URL: '${{ secrets.NTFY_SECRET }}'
-          RUN_URL: >-
-            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{
-            github.run_id }}
-          RESULT: '${{ needs.build-and-deploy.result }}'
-        run: >
-          set -eu
+  
+      - name: ntfy (simple)
+        if: always()
+        run: |
+          curl -fsS \
+            -H "Title: CI: ${{ job.status }}" \
+            -H "Click: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --data-raw "Repo: ${{ github.repository }} | Ref: ${{ github.ref }} | SHA: ${{ github.sha }}" \
+            "${{ secrets.NTFY_SECRET }}"
 
-          SHORT_SHA="${GITHUB_SHA::7}"
-
-
-          # Pick emoji tag + priority based on result (1=min, 3=default, 5=max).
-
-          case "$RESULT" in
-            success)   TAGS="white_check_mark"; PRIORITY=3; TITLE="✅ CI succeeded";;
-            cancelled) TAGS="no_entry_sign";    PRIORITY=3; TITLE="⛔ CI cancelled";;
-            skipped)   TAGS="warning";          PRIORITY=2; TITLE="⚠️ CI skipped";;
-            failure|*) TAGS="x";                PRIORITY=4; TITLE="❌ CI failed";;
-          esac
-
-
-          BODY=$'Repo: '"${GITHUB_REPOSITORY}"$'\n'\
-            $'Ref:  '"${GITHUB_REF}"$'\n'\
-            $'SHA:  '"${SHORT_SHA}"$'\n'\
-            $'Job:  build-and-deploy'$'\n'\
-            $'Result: '"${RESULT}"
-
-          # Send using headers per ntfy docs: Title, Priority (1..5), Tags,
-          Click.
-
-          # Use --data-binary to preserve newlines; silence output to avoid log
-          noise.
-
-          curl --fail --silent --show-error \
-            -H "Title: ${TITLE}" \
-            -H "Priority: ${PRIORITY}" \
-            -H "Tags: ${TAGS}" \
-            -H "Click: ${RUN_URL}" \
-            --data-binary "${BODY}" \
-            "${NTFY_URL}" || echo "ntfy notify failed (non-blocking)"
