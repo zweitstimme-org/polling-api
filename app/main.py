@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.auth import verify_token
+from app.db_init import init_db
 
 from .routers import (
     download,
@@ -34,6 +35,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+def _initialize_database() -> None:
+    """Ensure the database schema is present when the service boots."""
+    init_db()
 
 # Include routers
 app.include_router(polls.router, prefix="", tags=["polls"])
