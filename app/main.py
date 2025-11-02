@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.auth import verify_token
 
 from .routers import (
     download,
@@ -11,6 +12,7 @@ from .routers import (
     hook_db,
     hook_election_date,
     polls,
+    database_insert,
 )
 
 load_dotenv()
@@ -41,6 +43,7 @@ app.include_router(election.router, prefix="", tags=["election"])
 app.include_router(hook_bundestag_scraper.router, prefix="", tags=["webhooks"])
 app.include_router(hook_election_date.router, prefix="", tags=["webhooks"])
 app.include_router(hook_db.router, prefix="", tags=["webhooks"])
+app.include_router(database_insert.router)
 
 
 @app.get("/")

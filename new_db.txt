@@ -1,19 +1,22 @@
-from datetime import datetime
-
+#!/usr/bin/env python3
 from sqlalchemy import (
     Column,
-    Date,
-    DateTime,
-    Float,
-    ForeignKey,
     Integer,
     String,
     Text,
+    Date,
+    Float,
+    DateTime,
+    ForeignKey,
     UniqueConstraint,
+    create_engine,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, declarative_base
+from datetime import datetime
 
-from .database import Base
+Base = declarative_base()
+
+# RAW SCRAPED DATA TABLE (ingestion layer)
 
 
 class RawPolls(Base):
@@ -25,7 +28,7 @@ class RawPolls(Base):
     Zeitraum = Column(String(255))
     survey_date_start = Column(String(255))
     survey_date_end = Column(String(255))
-    parties = Column(Text)
+    parties = Column(Text)  # raw JSON/text
     institute_id = Column(String(255))
     forecast_provider = Column(String(255))
     source = Column(String(255))
@@ -35,14 +38,18 @@ class RawPolls(Base):
     date_downloaded = Column(String(50))
     inserted_at = Column(DateTime, default=datetime.utcnow)
 
+    # Optional: Relationship to cleaned poll if processed
     cleaned_poll = relationship("Poll", back_populates="raw_poll", uselist=False)
+
+
+# CLEAN & NORMALIZED POLLS TABLE
 
 
 class Poll(Base):
     __tablename__ = "polls"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    raw_id = Column(Integer, ForeignKey("polls_raw.id"), unique=True)
+    raw_id = Column(Integer, ForeignKey("polls_raw.id"), unique=True)  # one-to-one link
     publish_date = Column(Date)
     survey_date_start = Column(Date)
     survey_date_end = Column(Date)
@@ -60,11 +67,10 @@ class Poll(Base):
     forecast_provider = relationship("ForecastProvider", back_populates="polls")
     election = relationship("Election", back_populates="polls")
     method = relationship("Method", back_populates="polls")
-    results = relationship(
-        "PollResult",
-        back_populates="poll",
-        cascade="all, delete-orphan",
-    )
+    results = relationship("PollResult", back_populates="poll", cascade="all, delete-orphan")
+
+
+# BRIDGE: STORE PARTY RESULTS FOR EACH POLL
 
 
 class PollResult(Base):
@@ -78,7 +84,11 @@ class PollResult(Base):
     poll = relationship("Poll", back_populates="results")
     party = relationship("Party", back_populates="results")
 
+    # Prevent duplicate entries for same poll x party pair
     __table_args__ = (UniqueConstraint("poll_id", "party_id", name="_poll_party_uc"),)
+
+
+# REFERENCE TABLES (normalized entities)
 
 
 class Institute(Base):
@@ -97,7 +107,7 @@ class Party(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True)
     abbreviation = Column(String(10), unique=True)
-    color = Column(String(7), nullable=True)
+    color = Column(String(7))  # Optional HEX value for visualizations
 
     results = relationship("PollResult", back_populates="party")
 
@@ -107,7 +117,7 @@ class ForecastProvider(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True)
-    url = Column(String(255), nullable=True)
+    url = Column(String(255))
 
     polls = relationship("Poll", back_populates="forecast_provider")
 
@@ -116,7 +126,7 @@ class Election(Base):
     __tablename__ = "elections"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    type = Column(String(50))
+    type = Column(String(50))  # e.g. 'bundestag' or 'landtag'
     year = Column(Integer)
     state = Column(String(50), nullable=True)
 
@@ -128,6 +138,6 @@ class Method(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255))
-    description = Column(Text, nullable=True)
+    description = Column(Text)
 
     polls = relationship("Poll", back_populates="method")

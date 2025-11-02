@@ -7,7 +7,9 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..models import RawPolls
 from ..schemas import Forecast as ForecastSchema
+from ..schemas import RawPoll as RawPollSchema
 
 router = APIRouter(prefix="/polls", tags=["polls"])
 
@@ -31,3 +33,11 @@ def get_recent_polls(db: Session = Depends(get_db)):
     """Get recent polls from the current week (to be implemented later)"""
     # Placeholder for future implementation
     raise HTTPException(status_code=501, detail="Not implemented yet")
+
+
+@router.get("/raw", response_model=List[RawPollSchema])
+def get_raw_polls(db: Session = Depends(get_db)):
+    """Return all rows from the raw polls table"""
+    # Sort by primary key to provide stable output ordering for clients.
+    polls = db.query(RawPolls).order_by(RawPolls.id).all()
+    return polls
