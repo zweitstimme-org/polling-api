@@ -169,9 +169,48 @@ def get_polls_by_election(
 
 @router.get("/recent")
 def get_recent_polls(db: Session = Depends(get_db)):
-    """Get recent polls from the current week (to be implemented later)"""
-    # Placeholder for future implementation
-    raise HTTPException(status_code=501, detail="Not implemented yet")
+    """Get polls published in the last 30 days, including their results."""
+    cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
+
+    polls = (
+        db.query(Poll)
+        .options(joinedload(Poll.results))
+        .filter(Poll.publish_date >= cutoff_date)
+        .order_by(Poll.publish_date.desc())
+        .all()
+    )
+
+    def serialize_date(d):
+        return d.isoformat() if d else None
+
+    result = []
+    for poll in polls:
+        poll_data = {
+            "id": poll.id,
+            "raw_id": poll.raw_id,
+            "publish_date": serialize_date(poll.publish_date),
+            "survey_date_start": serialize_date(poll.survey_date_start),
+            "survey_date_end": serialize_date(poll.survey_date_end),
+            "respondents": poll.respondents,
+            "scope": poll.scope,
+            "institute_id": poll.institute_id,
+            "provider_id": poll.provider_id,
+            "election_id": poll.election_id,
+            "method_id": poll.method_id,
+            "results": [
+                {
+                    "id": r.id,
+                    "poll_id": r.poll_id,
+                    "raw_id": r.raw_id,
+                    "party_id": r.party_id,
+                    "percentage": r.percentage,
+                }
+                for r in poll.results
+            ],
+        }
+        result.append(poll_data)
+
+    return JSONResponse(content=result)
 
 
 @raw_router.get("/", response_class=JSONResponse)
