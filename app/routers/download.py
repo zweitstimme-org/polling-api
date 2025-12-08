@@ -105,3 +105,21 @@ def download_parquet():
             "Content-Disposition": "attachment; filename=german_election_polls.parquet"
         },
     )
+
+
+@router.get("/export/raw")
+def export_raw_json():
+    """Export raw polls in JSON format (unprocessed data)"""
+    json_path = "./data/export/polls_raw.json"
+
+    if not os.path.exists(json_path):
+        raise HTTPException(status_code=404, detail="Raw JSON file not found")
+
+    return FileResponse(
+        path=json_path,
+        filename="german_election_polls_raw.json",
+        media_type="application/json",
+        headers={
+            "Content-Disposition": "attachment; filename=german_election_polls_raw.json"
+        },
+    )

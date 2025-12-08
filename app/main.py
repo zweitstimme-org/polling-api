@@ -7,6 +7,7 @@ from app.auth import verify_token
 from app.db_init import init_db
 
 from .routers import (
+    dictionaries,
     download,
     election,
     hook_bundestag_scraper,
@@ -48,6 +49,7 @@ app.include_router(polls.raw_router, prefix="", tags=["raw polls"])
 app.include_router(download.router, prefix="", tags=["export"])
 # app.include_router(dates.router, prefix="", tags=["election-dates"])
 app.include_router(election.router, prefix="", tags=["election"])
+app.include_router(dictionaries.router, prefix="", tags=["dict"])
 app.include_router(hook_bundestag_scraper.router, prefix="", tags=["webhooks"])
 app.include_router(hook_election_date.router, prefix="", tags=["webhooks"])
 app.include_router(hook_db.router, prefix="", tags=["webhooks"])
