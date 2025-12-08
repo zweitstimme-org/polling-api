@@ -11,7 +11,6 @@ from .routers import (
     download,
     election,
     hook_bundestag_scraper,
-    hook_db,
     hook_election_date,
     polls,
 )
@@ -52,7 +51,6 @@ app.include_router(election.router, prefix="", tags=["election"])
 app.include_router(dictionaries.router, prefix="", tags=["dict"])
 app.include_router(hook_bundestag_scraper.router, prefix="", tags=["webhooks"])
 app.include_router(hook_election_date.router, prefix="", tags=["webhooks"])
-app.include_router(hook_db.router, prefix="", tags=["webhooks"])
 
 
 @app.get("/")
