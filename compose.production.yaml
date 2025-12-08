@@ -1,3 +1,12 @@
+x-data-cleaner-base: &data-cleaner-base
+  image: ghcr.io/zweitstimme-org/data-cleaner:latest
+  working_dir: /app
+  environment:
+    DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/pollingapi
+  volumes:
+    - export-data:/app/data/export
+  restart: "no"
+
 services:
   traefik:
     image: traefik:v3.1
@@ -18,7 +27,7 @@ services:
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./letsencrypt:/letsencrypt
+      - letsencrypt:/letsencrypt
     restart: always
 
   postgres:
@@ -41,12 +50,14 @@ services:
     image: ghcr.io/zweitstimme-org/pollingapi:latest
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/pollingapi
+    volumes:
+      - export-data:/app/data/export
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.polling-api.rule=Host(`api.fasttrack29.com`)"
       - "traefik.http.routers.polling-api.entrypoints=websecure"
       - "traefik.http.routers.polling-api.tls.certresolver=myresolver"
-      - "traefik.http.services.polling-api.loadbalancer.server.port=80"
+      - "traefik.http.services.polling-api.loadbalancer.server.port=8000"
       - "com.centurylinklabs.watchtower.enable=true"
     depends_on:
       postgres:
@@ -70,23 +81,37 @@ services:
         condition: service_healthy
     restart: "no"
 
-# Data scraper, runs on a scheduled interval
   poll-vault:
-    image: ghcr.io
+    image: ghcr.io/zweitstimme-org/poll-vault:latest
+    command:
+      - run-all
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/polling-api
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/pollingapi
     depends_on:
       postgres:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    restart: "no"
 
-# Data clean and insert utility, on insert of new data into database will run  
   data-cleaner:
-    image: ghcr.io
-    environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/polling-api
-    depends_on: 
+    <<: *data-cleaner-base
+    command:
+      - db
+      - export
+      - --output-dir
+      - /app/data/export
+      - --format
+      - json
+    depends_on:
       postgres:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   watchtower:
     image: containrrr/watchtower
@@ -104,3 +129,5 @@ services:
 
 volumes:
   pgdata:
+  letsencrypt:
+  export-data:
