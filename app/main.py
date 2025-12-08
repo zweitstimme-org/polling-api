@@ -13,7 +13,6 @@ from .routers import (
     hook_db,
     hook_election_date,
     polls,
-    database_insert,
 )
 
 load_dotenv()
@@ -36,20 +35,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.on_event("startup")
 def _initialize_database() -> None:
     """Ensure the database schema is present when the service boots."""
     init_db()
 
+
 # Include routers
 app.include_router(polls.router, prefix="", tags=["polls"])
+app.include_router(polls.raw_router, prefix="", tags=["raw polls"])
 app.include_router(download.router, prefix="", tags=["export"])
 # app.include_router(dates.router, prefix="", tags=["election-dates"])
 app.include_router(election.router, prefix="", tags=["election"])
 app.include_router(hook_bundestag_scraper.router, prefix="", tags=["webhooks"])
 app.include_router(hook_election_date.router, prefix="", tags=["webhooks"])
 app.include_router(hook_db.router, prefix="", tags=["webhooks"])
-app.include_router(database_insert.router)
 
 
 @app.get("/")

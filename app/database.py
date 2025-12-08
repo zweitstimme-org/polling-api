@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 load_dotenv()
 
-DEFAULT_DATABASE_URL = "postgresql+psycopg://postgres:postgres@localhost:5432/pollingapi_dev"
+DEFAULT_DATABASE_URL = (
+    "postgresql+psycopg://postgres:postgres@localhost:5432/pollingapi_dev"
+)
 
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL)
 ASYNC_DATABASE_URL = os.getenv("ASYNC_DATABASE_URL", DATABASE_URL)

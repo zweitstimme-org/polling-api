@@ -33,6 +33,20 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+
+  db-init:
+    build: .
+    command:
+      - "/app/.venv/bin/python"
+      - "scripts/init_db.py"
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/pollingapi_dev
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
 
 volumes:
   pgdata:

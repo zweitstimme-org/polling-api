@@ -1,112 +1,91 @@
 # Polling API Worker Handoff Guide
 
-This document is the short course a new worker (or LLM) needs to operate against the refactored FastAPI service in this repository. It explains how the application is put together, how the database schema is shaped, and the integration points you are expected to use.
+This handoff tells new workers exactly how to move raw polling data into the service. The worker’s only job is to package validated polls and send them to the FastAPI ingestion endpoint. Never connect to Postgres directly and never write to any table yourself—the API performs every database write on your behalf.
 
-## 1. Runtime & Project Layout
-- **FastAPI application**: `app/main.py` instantiates the API and wires routers for ingestion, data export, webhooks, and election metadata. CORS is fully open for now.
-- **Synchronous & async DB access**: `app/database.py` configures SQLAlchemy engines/sessions from `DATABASE_URL` and `ASYNC_DATABASE_URL`. Defaults point at a local Postgres instance (`postgresql+psycopg://postgres:postgres@localhost:5432/pollingapi_dev`).
-- **Schema definitions**: ORM models live in `app/models.py`, while the request/response Pydantic models are in `app/schemas.py`.
-- **Scripts**: `scripts/init_db.py` creates the schema using SQLAlchemy metadata. Run it after bringing up Postgres.
-- **Data files**: Artifacts exposed by download endpoints/webhooks are stored under `./data`. The repo includes helper utilities that fetch, scrape, or refresh these files.
-- **Environment variables**: See `.env` (not committed) plus defaults in code. The worker must at least provide `DATABASE_URL` if it is not running inside the docker-compose network.
+## Worker Contract
+- **Do** normalize raw polls into the request format described below and POST them to `POST /ingest/polls`.
+- **Do** handle HTTP errors, retry when appropriate, and log any payloads the API rejects.
+- **Do** keep payload fields aligned with the `polls_raw` schema so the downstream cleaner can promote them.
+- **Don’t** open manual SQL connections, touch normalized tables, or assume the database schema outside of this contract.
+- **Don’t** hard-code hosts; read the API base URL from configuration so you can target local or deployed environments.
 
-### Key directories
-| Path | Purpose |
-| --- | --- |
-| `app/routers/` | FastAPI routers grouped by purpose (`polls`, `download`, `database_insert`, `hook_*`). |
-| `app/utils/` | Helper modules for scraping Bundestag results, election dates, notifying via ntfy, pulling DB snapshots, and fetching release assets. |
-| `data/` | Output/ingested JSON, CSV, Parquet, and SQLite snapshots consumed by several endpoints. |
-| `scripts/` | CLI utilities such as database initialization. |
-| `static/` | Front-end assets if needed by future clients (currently unused by the API). |
+## Runtime & Project Layout (Context Only)
+- **FastAPI service**: `app/main.py` wires routers for ingestion, exports, webhooks, and metadata. CORS stays permissive for now.
+- **Database bootstrap**: `app/db_init.py` creates the Postgres schema (`Base.metadata.create_all()`). FastAPI runs `init_db()` at startup; `scripts/init_db.py` mirrors that logic for manual bootstraps.
+- **Database config**: `app/database.py` exposes sync/async SQLAlchemy engines from `DATABASE_URL` / `ASYNC_DATABASE_URL`. Defaults point at `postgresql+psycopg://postgres:postgres@localhost:5432/pollingapi_dev`.
+- **Schemas**: ORM models live in `app/models.py`; Pydantic request/response models in `app/schemas.py`.
+- **Router of interest**: `app/routers/database_insert.py` hosts the ingestion endpoint that the worker calls. Treat it as the single integration point.
 
-## 2. Request Lifecycle
-1. A client (your worker) calls `POST /ingest/polls` with a batch payload matching `app/schemas.RawPollBatchIn`.
-2. The handler in `app/routers/database_insert.py` uses the async SQLAlchemy session to insert each poll into `polls_raw` and returns the new primary keys. Party dictionaries are automatically JSON-serialized before insertion.
-3. Downstream cleaners/ETL jobs (not part of this repo yet) are expected to populate the normalized tables (`polls`, `poll_results`, etc.) based on `polls_raw`.
-4. Clients can read back raw data via `GET /polls/raw` or download pregenerated files from `/polls/export/*`.
+## Raw Poll Payload Specification
+Everything you send maps 1:1 into the `polls_raw` table once the API validates it.
 
-## 3. Database Schema Summary
-All tables are created via `Base.metadata.create_all()` in `scripts/init_db.py`. The important pieces for ingestion/worker coordination are:
+| Field | Required | Type | Notes |
+| --- | --- | --- | --- |
+| `source` | ✅ | `string` | Unique provider identifier used for dedupe; keep consistent across runs. |
+| `publish_date` | ✅ | `string` | ISO-like date (e.g., `2024-04-25`). Stored verbatim. |
+| `survey_date_start` | ✅ | `string` | Beginning of the fieldwork period. |
+| `survey_date_end` | ✅ | `string` | End of the fieldwork period. |
+| `parties` | ✅ | `object` or `string` | Party → percentage map. If object, API JSON-serializes it before insertion. |
+| `date_downloaded` | ✅ | `string` | Timestamp when you scraped the poll (ISO recommended). |
+| `Befragte` | ❌ | `string` | Sample size; send raw value if known. |
+| `Zeitraum` | ❌ | `string` | Original survey range label. |
+| `institute_id` | ❌ | `string` | Lookup key for polling institute. |
+| `forecast_provider` | ❌ | `string` | Lookup key for forecasting vendor. |
+| `scope` | ❌ | `string` | Example: `national`, `state`, etc. |
+| `election_id` | ❌ | `string` | Maps to elections table downstream. |
+| `method_id` | ❌ | `string` | Sampling method reference. |
 
-### `polls_raw`
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `Integer` PK | Auto-increment primary key. |
-| `publish_date`, `survey_date_start`, `survey_date_end` | `String` | Stored as received; downstream jobs convert to real dates. |
-| `parties` | `Text` | JSON string with party → percentage mappings. Worker may send either dict or string. |
-| `institute_id`, `forecast_provider`, `scope`, `election_id`, `method_id`, `Befragte`, `Zeitraum`, `forecast_provider`, `source` | `String` | Optional metadata captured as-is. `source` is the only required field. |
-| `date_downloaded` | `String` | Free-form timestamp supplied by worker. |
-| `inserted_at` | `DateTime` | Auto-populated with `datetime.utcnow()`.
+> The API stores every field as received. Downstream ETL jobs promote rows into normalized tables (`polls`, `poll_results`, lookups) but the worker never writes to them directly.
 
-### Normalized tables (populated later)
-- **`polls`**: Cleansed poll records with FK links into lookup tables. Uniquely references one `polls_raw` row via `raw_id`.
-- **`poll_results`**: Party-level results with a uniqueness constraint on `(poll_id, party_id)`.
-- **`institutes`, `parties`, `forecast_providers`, `elections`, `methods`**: Lookup tables referenced by `polls`.
+## FastAPI Ingestion Flow
+- **Endpoint**: `POST {API_BASE_URL}/ingest/polls`
+- **Headers**: `Content-Type: application/json`. Authentication is currently not required.
+- **Request body**: JSON object with a `polls` array containing one or more entries matching the table above. All polls in a batch must use the same schema revision.
+- **Validation**: Missing required fields, invalid JSON, or unsupported types produce `422` responses. Duplicate `source` + date combinations currently insert as-is; dedupe is handled later.
+- **Response**: On success, the API returns `{ "inserted": <int>, "record_ids": [<int>, ...] }`.
+- **Error handling**:
+  - `4xx`: Treat as permanent unless the response JSON clearly indicates a transient validation error you can fix quickly.
+  - `5xx` or timeouts: retry with backoff; keep retries idempotent by resending the same payload.
 
-> **Note for worker authors**: The only table you need to touch is `polls_raw`. Keep payloads consistent so the normalization job can map them correctly.
+### Canonical Example
+```json
+{
+  "polls": [
+    {
+      "source": "bundestag",
+      "publish_date": "2024-04-25",
+      "survey_date_start": "2024-04-20",
+      "survey_date_end": "2024-04-23",
+      "parties": {"CDU": 29.0, "SPD": 17.5},
+      "Befragte": "1000",
+      "scope": "national",
+      "date_downloaded": "2024-04-25T12:00:00Z"
+    }
+  ]
+}
+```
 
-## 4. Ingestion Contract (`POST /ingest/polls`)
-- **Endpoint**: Mounted by `app/routers/database_insert.py` at `/ingest/polls`.
-- **Auth**: Currently open; no token/secret required.
-- **Body schema**:
-  ```json
-  {
-    "polls": [
-      {
-        "source": "bundestag",
-        "publish_date": "2024-04-25",
-        "survey_date_start": "2024-04-20",
-        "survey_date_end": "2024-04-23",
-        "parties": {"CDU": 29.0, "SPD": 17.5},
-        "Befragte": "1000",
-        "scope": "national",
-        "date_downloaded": "2024-04-25T12:00:00Z"
-      }
-    ]
-  }
+Variants you can rely on:
+- `parties` may be sent as a JSON string (`"{\"CDU\": 29.0}"`).
+- Optional fields can be omitted entirely; the API stores `NULL` in those columns.
+
+## Local FastAPI Target
+Development assumes the API runs locally via `dev.compose.yaml`, exposing `http://localhost:8000`.
+
+- Export `API_BASE_URL=http://localhost:8000` (or inject it through your worker’s config file/environment).
+- Smoke test connectivity before running a full scrape:
+  ```bash
+  curl -X POST "${API_BASE_URL}/ingest/polls" \
+       -H 'Content-Type: application/json' \
+       -d '{"polls": []}'
   ```
-- **Response**: `{ "inserted": <count>, "record_ids": [<int>, ...] }`.
-- **Edge cases**:
-  - Empty batches return `{"inserted": 0, "record_ids": []}` without hitting the database.
-  - If you pre-serialize `parties` as a JSON string it is stored verbatim; otherwise the API encodes it for you.
-  - SQL errors are surfaced as `400` responses with the original DB error message.
+  A `200` with `{"inserted":0,"record_ids":[]}` confirms the route is live.
+- When running the worker inside Docker, attach it to the same compose network and set `API_BASE_URL=http://api:8000` if `api` is the service name. No database credentials are needed by the worker container.
 
-### Worker checklist
-1. Validate or coerce dates to ISO strings (`YYYY-MM-DD`) before sending.
-2. Supply a stable `source` value so deduplication/ETL can partition feeds later.
-3. Include the original source metadata (`institute_id`, `method_id`, etc.) whenever available; missing fields may limit downstream joins.
-4. If you run multiple batches, you can parallelize requests—the endpoint opens a transaction per request and commits after the loop.
-5. Handle retryable failures (network/HTTP 5xx) with exponential backoff; `400` means your payload is malformed.
+## Operational Checklist
+- **Before sending**: Validate schemas, ensure timestamps are ISO-8601, and keep `source` identifiers consistent. Log outgoing payloads for auditing.
+- **During execution**: Batch inserts when possible (e.g., 50–100 polls per request) to reduce chatter. Respect API rate limits your deployment might impose.
+- **On failure**: Record the response payload, implement exponential backoff for retries, and escalate consistent validation errors with a sample payload.
+- **Monitoring**: Track polls processed, successful inserts, and failure counts. Capture the most recent `record_ids` so you can reconcile against the API if needed.
 
-## 5. Other API Surfaces Your Worker Should Know About
-- `GET /polls/raw`: Returns the current contents of `polls_raw` ordered by `id`. Useful for smoke checks after ingestion.
-- `GET /polls/`: Serves the `data/polls.json` snapshot (if present). This is not directly connected to the live database.
-- `GET /polls/export/{json|csv|sqlite|parquet}`: File downloads for various prebuilt snapshots. The `data` directory must contain the respective files; generating them is outside the scope of the ingestion worker.
-- `POST /webhook/scrape`, `POST /webhook/dates`, `POST /webhook/hook_db`: Protected by the `X-Secret: supersecret` header. They trigger background tasks in `app/utils/*` to refresh auxiliary datasets and send ntfy notifications.
-
-## 6. Utilities & Background Tasks
-- **Bundestag scraper (`app/utils/bundestag_scraper.py`)**: Fetches Bundestag historical election results and saves them as `data/bundestagswahl.json`.
-- **Election date scraper (`app/utils/election_date.py`)**: Pulls the German election calendar into `data/election_dates.json`, marking estimated dates.
-- **GitHub release fetcher (`app/utils/data_fetcher.py`)**: Downloads release assets from a private GitHub repo. Requires `GITHUB_TOKEN` and `GITHUB_REPO` environment variables.
-- **Notifier (`app/utils/notifier.py`)**: Sends async notifications to `ntfy.sh/zweitstimme_org`. Webhooks rely on this to log success/failure.
-- **DB pull stub (`app/utils/pull_db.py`)**: Placeholder for downloading the latest SQLite/Postgres dump. Worker authors should not rely on it yet; implementers still need to finish it.
-
-## 7. Local Development & Testing
-1. `uv sync` (Python 3.13) to install dependencies.
-2. `docker compose up db` to start Postgres using `compose.yaml` definitions.
-3. `uv run python scripts/init_db.py` to create tables.
-4. `uv run fastapi dev app/main.py` to launch the API with hot reload.
-5. Use `.env` to override `DATABASE_URL`, `GITHUB_TOKEN`, `GITHUB_REPO`, etc.
-
-### Database inspection helpers
-- Run `psql` against `pollingapi_dev` to inspect tables after ingestion.
-- Use `uv run python -m app.scripts.dump_raw` (if you add such scripts) to debug payloads. Currently there is no built-in dump script beyond the API endpoints listed above.
-
-## 8. Handoff Notes for the Next Worker Implementation
-- Mirror the input schema defined in `app/schemas.RawPollIn` to stay forward-compatible with future validation upgrades.
-- Plan for an eventual auth/token check on ingestion. `app/auth.py` contains a token verifier used elsewhere; expect `/ingest/polls` to adopt it later.
-- The normalization layer (`polls`, `poll_results`, etc.) is not yet automated. If your worker expects those tables to reflect raw inserts immediately, you must run the cleaning job yourself or wait for future updates.
-- The `/webhook/*` routes are intended for platform automation (scrapers, DB refresh). If your worker is replacing an older implementation, preserve the `X-Secret` header logic so existing infrastructure keeps functioning.
-- `app/utils/pull_db.py` is a no-op. If your worker depended on a DB download hook, coordinate with this repo to implement it before calling `/webhook/hook_db`.
-
-With this context, you should be able to adapt the worker to emit batches that the FastAPI ingestion endpoint accepts, monitor inserts via `/polls/raw`, and leave the rest of the system unchanged.
+Stay within this contract and the FastAPI service will manage all persistence, schema evolution, and downstream normalization for you.

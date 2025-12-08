@@ -51,10 +51,42 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     deploy:
       mode: replicated
       replicas: 3
     restart: always
+
+  db-init:
+    image: ghcr.io/zweitstimme-org/pollingapi:latest
+    command:
+      - "/app/.venv/bin/python"
+      - "scripts/init_db.py"
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/pollingapi
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+# Data scraper, runs on a scheduled interval
+  poll-vault:
+    image: ghcr.io
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/polling-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+# Data clean and insert utility, on insert of new data into database will run  
+  data-cleaner:
+    image: ghcr.io
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/polling-api
+    depends_on: 
+      postgres:
+        condition: service_healthy
 
   watchtower:
     image: containrrr/watchtower

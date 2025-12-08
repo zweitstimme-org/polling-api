@@ -1,0 +1,117 @@
+x-data-cleaner-base: &data-cleaner-base
+  image: ghcr.io/zweitstimme-org/data-cleaner:latest
+  working_dir: /app
+  env_file:
+    - .env
+  environment:
+    DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/pollingapi_dev
+  volumes:
+    - ./data/export:/app/data/export
+  restart: "no"
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pollingapi_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  api:
+    build:
+      context: .
+    command:
+      - uv
+      - run
+      - --frozen
+      - fastapi
+      - dev
+      - app/main.py
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/pollingapi_dev
+      UV_PROJECT_ENVIRONMENT: /app/.venv
+    volumes:
+      - .:/app
+      - uv-venv:/app/.venv
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  db-init:
+    build:
+      context: .
+    command:
+      - uv
+      - run
+      - --frozen
+      - python
+      - scripts/init_db.py
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/pollingapi_dev
+      UV_PROJECT_ENVIRONMENT: /app/.venv
+    volumes:
+      - .:/app
+      - uv-venv:/app/.venv
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  pollv:
+    image: ghcr.io/zweitstimme-org/poll-vault:latest
+    command:
+      - run-all
+    # optional: if you have shared env vars in .env
+    # env_file:
+    #   - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/pollingapi_dev
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"     # do NOT auto-restart the scraper
+
+  data-cleaner:
+    <<: *data-cleaner-base
+    command:
+      - db
+      - export
+      - --output-dir
+      - /app/data/export
+      - --format
+      - json
+    depends_on:
+      db:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-data:
+  uv-venv:
