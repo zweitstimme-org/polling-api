@@ -19,7 +19,7 @@ services:
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=you@example.com"
+      - "--certificatesresolvers.myresolver.acme.email=contact@paul-elvis.com"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
@@ -57,16 +57,18 @@ services:
       - "traefik.http.routers.polling-api.rule=Host(`api.fasttrack29.com`)"
       - "traefik.http.routers.polling-api.entrypoints=websecure"
       - "traefik.http.routers.polling-api.tls.certresolver=myresolver"
-      - "traefik.http.services.polling-api.loadbalancer.server.port=8000"
+      - "traefik.http.services.polling-api.loadbalancer.server.port=80"
       - "com.centurylinklabs.watchtower.enable=true"
     depends_on:
       postgres:
         condition: service_healthy
       db-init:
         condition: service_completed_successfully
-    deploy:
-      mode: replicated
-      replicas: 3
+          #    deploy:;
+
+  #    deploy:
+          #mode: replicated
+          #replicas: 3
     restart: always
 
   db-init:
@@ -125,9 +127,3 @@ services:
       - /home/paul/.docker/config.json:/config.json:ro
     environment:
       - DOCKER_CONFIG=/
-    restart: always
-
-volumes:
-  pgdata:
-  letsencrypt:
-  export-data:
