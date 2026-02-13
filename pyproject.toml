@@ -11,6 +11,7 @@ dependencies = [
     # Web Framework
     "fastapi[standard]>=0.115.0",
     "uvicorn[standard]>=0.32.0",
+    "gunicorn>=21.0.0",  # Production WSGI server
     # Database
     "sqlalchemy>=2.0.44",
     "aiosqlite>=0.20.0",

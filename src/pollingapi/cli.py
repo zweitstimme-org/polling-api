@@ -1,5 +1,7 @@
 """CLI entry points for zweitstimme."""
 
+from pathlib import Path
+
 import typer
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -383,7 +385,7 @@ def server_start(
     port: int = typer.Option(8000, "--port", "-p", help="Port to bind to"),
     reload: bool = typer.Option(False, "--reload", "-r", help="Enable auto-reload"),
 ):
-    """Start the API server."""
+    """Start the API server (development mode)."""
     import uvicorn
 
     logger.info(f"Starting API server on {host}:{port}")
@@ -394,6 +396,160 @@ def server_start(
         port=port,
         reload=reload,
     )
+
+
+@app.command(name="server:prod")
+def server_prod(
+    host: str = typer.Option(
+        "127.0.0.1", "--host", "-h", help="Host to bind to (use 127.0.0.1 for nginx reverse proxy)"
+    ),
+    port: int = typer.Option(8000, "--port", "-p", help="Port to bind to"),
+    workers: int | None = typer.Option(
+        None, "--workers", "-w", help="Number of Gunicorn workers (default: 2 * CPU cores + 1)"
+    ),
+    timeout: int = typer.Option(120, "--timeout", "-t", help="Worker timeout in seconds"),
+    keepalive: int = typer.Option(5, "--keepalive", help="Keep-alive timeout in seconds"),
+    max_requests: int = typer.Option(
+        10000,
+        "--max-requests",
+        help="Max requests per worker before restart (prevents memory leaks)",
+    ),
+    access_log: str | None = typer.Option(
+        None, "--access-log", help="Access log file path (default: stdout)"
+    ),
+    error_log: str | None = typer.Option(
+        None, "--error-log", help="Error log file path (default: stderr)"
+    ),
+    daemon: bool = typer.Option(False, "--daemon", "-d", help="Run as daemon (background process)"),
+    pid_file: str | None = typer.Option(None, "--pid", help="PID file path for daemon mode"),
+):
+    """Start the production API server with Gunicorn.
+
+    This is the recommended way to run in production with nginx as reverse proxy.
+    Bind to 127.0.0.1 and let nginx handle external traffic.
+
+    Examples:
+        # Basic production server (binds to localhost:8000, 5 workers)
+        pollingapi server:prod
+
+        # Custom workers and port
+        pollingapi server:prod -h 127.0.0.1 -p 8080 -w 4
+
+        # With log files
+        pollingapi server:prod --access-log /var/log/pollingapi/access.log \\
+                              --error-log /var/log/pollingapi/error.log
+
+        # As daemon with PID file
+        pollingapi server:prod --daemon --pid /var/run/pollingapi.pid
+    """
+    import multiprocessing
+    import subprocess
+    import sys
+
+    # Calculate default workers if not specified
+    if workers is None:
+        workers = (multiprocessing.cpu_count() * 2) + 1
+
+    # Ensure logs directory exists if log files specified
+    for log_path in [access_log, error_log]:
+        if log_path:
+            log_dir = Path(log_path).parent
+            log_dir.mkdir(parents=True, exist_ok=True)
+
+    # Build Gunicorn command
+    cmd = [
+        sys.executable,
+        "-m",
+        "gunicorn",
+        "-k",
+        "uvicorn.workers.UvicornWorker",
+        "pollingapi.main:app",
+        "--bind",
+        f"{host}:{port}",
+        "--workers",
+        str(workers),
+        "--timeout",
+        str(timeout),
+        "--keep-alive",
+        str(keepalive),
+        "--max-requests",
+        str(max_requests),
+        "--max-requests-jitter",
+        str(max_requests // 20),  # 5% jitter
+        "--worker-class",
+        "uvicorn.workers.UvicornWorker",
+        "--worker-tmp-dir",
+        "/dev/shm",  # Use RAM for temp files (faster)
+        "--preload",  # Preload app for memory efficiency
+    ]
+
+    # Add logging options
+    if access_log:
+        cmd.extend(["--access-logfile", access_log])
+    else:
+        cmd.append("--access-logfile")  # Send to stdout
+        cmd.append("-")
+
+    if error_log:
+        cmd.extend(["--error-logfile", error_log])
+    else:
+        cmd.append("--error-logfile")  # Send to stderr
+        cmd.append("-")
+
+    # Add daemon options
+    if daemon:
+        cmd.append("--daemon")
+        if pid_file:
+            cmd.extend(["--pid", pid_file])
+
+    # Log configuration
+    logger.info(
+        f"Starting production server: host={host}, port={port}, workers={workers}, "
+        f"timeout={timeout}s, max_requests={max_requests}"
+    )
+
+    typer.echo("Starting production server with Gunicorn...")
+    typer.echo(f"  Bind: {host}:{port}")
+    typer.echo(f"  Workers: {workers}")
+    typer.echo(f"  Timeout: {timeout}s")
+    typer.echo(f"  Max requests/worker: {max_requests}")
+
+    if host == "0.0.0.0":
+        typer.echo("")
+        typer.echo("⚠️  Warning: Binding to 0.0.0.0 exposes the server directly to the internet.")
+        typer.echo("   Consider using 127.0.0.1 with nginx as reverse proxy for production.")
+    elif host == "127.0.0.1":
+        typer.echo("")
+        typer.echo("✓ Binding to localhost (127.0.0.1)")
+        typer.echo("  Ensure nginx is configured as reverse proxy:")
+        typer.echo("")
+        typer.echo(r"  location / {")
+        typer.echo(r"      proxy_pass http://127.0.0.1:8000;")
+        typer.echo(r"      proxy_set_header Host $host;")
+        typer.echo(r"      proxy_set_header X-Real-IP $remote_addr;")
+        typer.echo(r"  }")
+
+    if daemon:
+        typer.echo("")
+        typer.echo("Running as daemon")
+        if pid_file:
+            typer.echo(f"PID file: {pid_file}")
+
+    typer.echo("")
+
+    try:
+        result = subprocess.run(cmd, check=False)
+        if result.returncode != 0:
+            logger.error(f"Gunicorn exited with code {result.returncode}")
+            raise typer.Exit(result.returncode)
+    except KeyboardInterrupt:
+        typer.echo("\nShutting down server...")
+        logger.info("Server shutdown requested via keyboard interrupt")
+        raise typer.Exit(0)
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")
+        typer.echo(f"✗ Error starting server: {e}", err=True)
+        raise typer.Exit(1)
 
 
 # ============================================================================
