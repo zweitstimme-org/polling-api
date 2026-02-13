@@ -1,0 +1,335 @@
+{
+  "63": {
+    "Name": "RTL / n-tv"
+  },
+  "4": {
+    "Name": "BILD"
+  },
+  "3": {
+    "Name": "BILD am Sonntag"
+  },
+  "5": {
+    "Name": "ZDF-Politbarometer"
+  },
+  "80": {
+    "Name": "FUNKE Medien Thüringen"
+  },
+  "10": {
+    "Name": "ARD-Tagesthemen"
+  },
+  "35": {
+    "Name": "Hessischer Rundfunk"
+  },
+  "28": {
+    "Name": "WDR-Westpol"
+  },
+  "6": {
+    "Name": "Frankfurter Allgemeine Zeitung"
+  },
+  "123": {
+    "Name": "NIUS"
+  },
+  "39": {
+    "Name": "NDR"
+  },
+  "17": {
+    "Name": "Der Tagesspiegel"
+  },
+  "22": {
+    "Name": "SWR"
+  },
+  "25": {
+    "Name": "SWR / Stuttgarter Zeitung"
+  },
+  "60": {
+    "Name": "Augsburger Allgemeine"
+  },
+  "117": {
+    "Name": "RBB Abendschau / RBB 88.8"
+  },
+  "64": {
+    "Name": "FOCUS"
+  },
+  "57": {
+    "Name": "Nordkurier"
+  },
+  "13": {
+    "Name": "Ipsos"
+  },
+  "53": {
+    "Name": "Bayerischer Rundfunk"
+  },
+  "43": {
+    "Name": "YouGov"
+  },
+  "67": {
+    "Name": "pollytix"
+  },
+  "125": {
+    "Name": "Sächsische Zeitung / Leipziger Volkszeitung"
+  },
+  "12": {
+    "Name": "SAT.1 Bayern"
+  },
+  "7": {
+    "Name": "GMS"
+  },
+  "103": {
+    "Name": "CSU"
+  },
+  "70": {
+    "Name": "RBB Brandenburg aktuell / Antenne Brandenburg"
+  },
+  "40": {
+    "Name": "Saarländischer Rundfunk"
+  },
+  "56": {
+    "Name": "Schwäbische Zeitung"
+  },
+  "46": {
+    "Name": "SWR Zur Sache Rheinland-Pfalz"
+  },
+  "112": {
+    "Name": "Märkische Allgemeine Zeitung (MAZ) / Märkische Oderzeitung (MOZ) / Lausitzer Rundschau (LR)"
+  },
+  "108": {
+    "Name": "Süddeutsche Zeitung"
+  },
+  "124": {
+    "Name": "MDR / Mitteldeutsche Zeitung / Volksstimme"
+  },
+  "62": {
+    "Name": "Sächsische Zeitung"
+  },
+  "100": {
+    "Name": "NRW-Tageszeitungen"
+  },
+  "97": {
+    "Name": "Institut Wahlkreisprognose"
+  },
+  "113": {
+    "Name": "Campact"
+  },
+  "37": {
+    "Name": "Radio Bremen"
+  },
+  "122": {
+    "Name": "Seven.One"
+  },
+  "11": {
+    "Name": "ARD"
+  },
+  "38": {
+    "Name": "Ostsee-Zeitung"
+  },
+  "120": {
+    "Name": "Radio Hamburg / Die ZEIT"
+  },
+  "121": {
+    "Name": "Osthessen|News"
+  },
+  "98": {
+    "Name": "Drei Quellen-Mediengruppe"
+  },
+  "82": {
+    "Name": "Hamburger Abendblatt"
+  },
+  "119": {
+    "Name": "ARD-Politikmagazin Kontraste"
+  },
+  "2": {
+    "Name": "Stern / RTL"
+  },
+  "111": {
+    "Name": "Sächsische Zeitung / Freie Presse / Leipziger Volkszeitung"
+  },
+  "118": {
+    "Name": "General-Anzeiger Bonn"
+  },
+  "69": {
+    "Name": "B.Z."
+  },
+  "30": {
+    "Name": "MDR"
+  },
+  "114": {
+    "Name": "t-online"
+  },
+  "116": {
+    "Name": "CDU Brandenburg"
+  },
+  "115": {
+    "Name": "Euronews"
+  },
+  "1": {
+    "Name": "ARD-Morgenmagazin"
+  },
+  "16": {
+    "Name": "RBB / Berliner Morgenpost"
+  },
+  "73": {
+    "Name": "Spiegel Online / Augsburger Allgemeine"
+  },
+  "14": {
+    "Name": "Spiegel Online"
+  },
+  "91": {
+    "Name": "BILD / B.Z."
+  },
+  "66": {
+    "Name": "FAZ / Hitradio FFH"
+  },
+  "110": {
+    "Name": "SAT.1 Bayern / Antenne Bayern"
+  },
+  "109": {
+    "Name": "Die Linke Brandenburg"
+  },
+  "107": {
+    "Name": "Bürger in Wut"
+  },
+  "106": {
+    "Name": "Radio Bremen / Nordsee-Zeitung"
+  },
+  "105": {
+    "Name": "FUNKE NRW Redaktionsgesellschaft"
+  },
+  "48": {
+    "Name": "Weser-Kurier"
+  },
+  "104": {
+    "Name": "Forsa"
+  },
+  "101": {
+    "Name": "Niedersächsische Tageszeitungen"
+  },
+  "86": {
+    "Name": "Spiegel Online / Der Tagesspiegel"
+  },
+  "15": {
+    "Name": "Berliner Zeitung"
+  },
+  "26": {
+    "Name": "SAT.1 NRW"
+  },
+  "83": {
+    "Name": "SPD Brandenburg"
+  },
+  "65": {
+    "Name": "DIE ZEIT"
+  },
+  "102": {
+    "Name": "Verlag Nürnberger Presse"
+  },
+  "27": {
+    "Name": "Märkische Allgemeine"
+  },
+  "18": {
+    "Name": "Cicero"
+  },
+  "41": {
+    "Name": "Radio Hamburg"
+  },
+  "95": {
+    "Name": "NDR / Ostsee-Zeitung / Schweriner Volkszeitung"
+  },
+  "54": {
+    "Name": "Leipziger Volkszeitung"
+  },
+  "99": {
+    "Name": "Der Hauptstadtbrief"
+  },
+  "96": {
+    "Name": "FDP Bayern"
+  },
+  "34": {
+    "Name": "BR-Politikmagazin Kontrovers"
+  },
+  "94": {
+    "Name": "Märkische Oderzeitung (MOZ)"
+  },
+  "93": {
+    "Name": "WDR"
+  },
+  "90": {
+    "Name": "Körber-Stiftung"
+  },
+  "36": {
+    "Name": "SPD Niedersachsen"
+  },
+  "42": {
+    "Name": "Kölner Stadt-Anzeiger / Express"
+  },
+  "45": {
+    "Name": "RBB Brandenburg aktuell"
+  },
+  "31": {
+    "Name": "Universität Hamburg"
+  },
+  "47": {
+    "Name": "RedaktionsNetzwerk Deutschland (RND)"
+  },
+  "89": {
+    "Name": "Rheinische Post"
+  },
+  "88": {
+    "Name": "NDR / Ostsee-Zeitung"
+  },
+  "87": {
+    "Name": "Hamburg Zwei"
+  },
+  "85": {
+    "Name": "DIE ZEIT / Körber-Stiftung"
+  },
+  "84": {
+    "Name": "CDU Sachsen"
+  },
+  "81": {
+    "Name": "Rheinische Post / Bonner General-Anzeiger / Zeitungsverlag Aachen"
+  },
+  "76": {
+    "Name": "Spiegel Online / Hessische Niedersächsische Allgemeine"
+  },
+  "79": {
+    "Name": "renewEU"
+  },
+  "78": {
+    "Name": "Hessische Niedersächsische Allgemeine"
+  },
+  "77": {
+    "Name": "CDU Bremen"
+  },
+  "75": {
+    "Name": "Thüringer Allgemeine"
+  },
+  "74": {
+    "Name": "SPD Bremen"
+  },
+  "72": {
+    "Name": "Schweriner Volkszeitung"
+  },
+  "71": {
+    "Name": "Landeszentrale für politische Bildung Sachsen-Anhalt"
+  },
+  "68": {
+    "Name": "BILD / WELT"
+  },
+  "59": {
+    "Name": "Spiegel Online / Hannoversche Allgemeine Zeitung"
+  },
+  "58": {
+    "Name": "CDU Niedersachsen"
+  },
+  "19": {
+    "Name": "Rheinpfalz"
+  },
+  "44": {
+    "Name": "Spiegel Online / RP Online"
+  },
+  "21": {
+    "Name": "Stern / RTL / Kölner Stadt-Anzeiger"
+  },
+  "29": {
+    "Name": "Wochenmagazin Forum"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "0": {
+    "Shortcut": "Bundestag",
+    "Name": "Bundestag",
+    "Election": "Bundestagswahl"
+  },
+  "16": {
+    "Shortcut": "Thüringen",
+    "Name": "Thüringischer Landtag",
+    "Election": "Landtagswahl in Thüringen"
+  },
+  "7": {
+    "Shortcut": "Hessen",
+    "Name": "Hessischer Landtag",
+    "Election": "Landtagswahl in Hessen"
+  },
+  "10": {
+    "Shortcut": "Nordrhein-Westfalen (NRW)",
+    "Name": "Landtag von Nordrhein-Westfalen",
+    "Election": "Landtagswahl in Nordrhein-Westfalen (NRW)"
+  },
+  "1": {
+    "Shortcut": "Baden-Württemberg",
+    "Name": "Landtag von Baden-Württemberg",
+    "Election": "Landtagswahl in Baden-Württemberg"
+  },
+  "8": {
+    "Shortcut": "Mecklenburg-Vorpommern",
+    "Name": "Landtag von Mecklenburg-Vorpommern",
+    "Election": "Landtagswahl in Mecklenburg-Vorpommern"
+  },
+  "14": {
+    "Shortcut": "Sachsen-Anhalt",
+    "Name": "Landtag von Sachsen-Anhalt",
+    "Election": "Landtagswahl in Sachsen-Anhalt"
+  },
+  "3": {
+    "Shortcut": "Berlin",
+    "Name": "Berliner Abgeordnetenhaus",
+    "Election": "Abgeordnetenhauswahl in Berlin"
+  },
+  "11": {
+    "Shortcut": "Rheinland-Pfalz",
+    "Name": "Landtag von Rheinland-Pfalz",
+    "Election": "Landtagswahl in Rheinland-Pfalz"
+  },
+  "2": {
+    "Shortcut": "Bayern",
+    "Name": "Bayerischer Landtag",
+    "Election": "Landtagswahl in Bayern"
+  },
+  "4": {
+    "Shortcut": "Brandenburg",
+    "Name": "Brandenburgischer Landtag",
+    "Election": "Landtagswahl in Brandenburg"
+  },
+  "13": {
+    "Shortcut": "Sachsen",
+    "Name": "Sächsischer Landtag",
+    "Election": "Landtagswahl in Sachsen"
+  },
+  "12": {
+    "Shortcut": "Saarland",
+    "Name": "Saarländischer Landtag",
+    "Election": "Landtagswahl im Saarland"
+  },
+  "9": {
+    "Shortcut": "Niedersachsen",
+    "Name": "Niedersächsischer Landtag",
+    "Election": "Landtagswahl in Niedersachsen"
+  },
+  "5": {
+    "Shortcut": "Bremen",
+    "Name": "Bremische Bürgerschaft",
+    "Election": "Bürgerschaftswahl in Bremen"
+  },
+  "6": {
+    "Shortcut": "Hamburg",
+    "Name": "Hamburgische Bürgerschaft",
+    "Election": "Bürgerschaftswahl in Hamburg"
+  },
+  "15": {
+    "Shortcut": "Schleswig-Holstein",
+    "Name": "Landtag von Schleswig-Holstein",
+    "Election": "Landtagswahl in Schleswig-Holstein"
+  },
+  "17": {
+    "Shortcut": "Europäisches Parlament",
+    "Name": "Europäisches Parlament",
+    "Election": "Europawahl"
+  }
+}

@@ -1,0 +1,1481 @@
+2026-02-07 12:43:04,564 - forsa - INFO - Processing 1 URLs for forsa
+2026-02-07 12:43:04,564 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 12:43:07,284 - forsa - ERROR - Error processing https://www.wahlrecht.de/umfragen/forsa/1999.htm: [Errno 2] No such file or directory: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="de-DE">
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="description" content="Forsa &ndash; Ergebnisse von Umfragen zur Bundestagswahl (Sonntagsfrage) &ndash; 1999">
+<title>Sonntagsfrage Archiv &ndash; Forsa 1999</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link rel="alternate" type="application/rss+xml" title="Wahlrecht.de &ndash; Umfragen (RSS)" href="../umfragen.xml" />
+<link rel="stylesheet" type="text/css" href="../../normal.css">
+<link rel="stylesheet" type="text/css" href="../../images/umfrage.css">
+<style type="text/css">
+<!--
+ h2:target, h3:target, h4:target, ul:target, li:target, p:target, span:target, table:target, col:target, colgroup:target, tr:target, th:target, td:target { background: #e0e0ff; }
+-->
+</style>
+</head>
+
+<body>
+
+<div class="head">
+<table class="title" width="100%"><tr>
+ <td class="title" valign="top"><h1>Forsa</h1></td>
+ <td class="index" align="right">[<a href="../index.htm" title="Übergeordnete Seite">Umfragen</a>]</td></tr>
+</table><hr></div>
+
+<p class="wenn">Wenn am nächsten Sonntag Bundestagswahl wäre &hellip;</p>
+
+<p class="navi">
+<a href="1998.htm">1998</a>&nbsp; |&nbsp;
+<span class="arc">1999</span>&nbsp; |&nbsp;
+<a href="2000.htm">2000</a>&nbsp; |&nbsp;
+<a href="2001.htm">2001</a>&nbsp; |&nbsp;
+<a href="2002.htm">2002</a>&nbsp; |&nbsp;
+<a href="2003.htm">2003</a>&nbsp; |&nbsp;
+<a href="2004.htm">2004</a>&nbsp; |&nbsp;
+<a href="2005.htm">2005</a>&nbsp; |&nbsp;
+<a href="2006.htm">2006</a>&nbsp; |&nbsp;
+<a href="2007.htm">2007</a>&nbsp; |&nbsp;
+<a href="2008.htm">2008</a>&nbsp; |&nbsp;
+<a href="2013.htm">2009–2013</a>&nbsp; |&nbsp;
+<a href="../forsa.htm">Aktuell</a></p>
+
+<table class="wilko" align="center" cellpadding="2" cellspacing="3" border="0">
+<thead>
+<tr>
+ <th class="dat">&nbsp;</th>
+ <th>&nbsp;</th>
+ <th class="part">CDU/CSU</th>
+ <th class="part">SPD</th>
+ <th class="part">GRÜNE</th>
+ <th class="part">FDP</th>
+ <th class="part">PDS</th>
+ <th class="part">Sonstige</th>
+</tr>
+</thead>
+<tfoot>
+<tr>
+ <th class="dat">&nbsp;</th>
+ <th>&nbsp;</th>
+ <th class="part">CDU/CSU</th>
+ <th class="part">SPD</th>
+ <th class="part">GRÜNE</th>
+ <th class="part">FDP</th>
+ <th class="part">PDS</th>
+ <th class="part">Sonstige</th>
+</tr>
+</tfoot>
+<tbody>
+<tr>
+ <td class="s">16.12.1999</td>
+ <td>&nbsp;</td>
+ <td>42 %</td>
+ <td>37 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">09.12.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>34 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">02.12.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>34 %</td>
+ <td>5 %</td>
+ <td>4 %</td>
+ <td>7 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">25.11.1999</td>
+ <td>&nbsp;</td>
+ <td>47 %</td>
+ <td>33 %</td>
+ <td>5 %</td>
+ <td>4 %</td>
+ <td>7 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">18.11.1999</td>
+ <td>&nbsp;</td>
+ <td>46 %</td>
+ <td>33 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">11.11.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>32 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>7 %</td>
+ <td>6 %</td>
+</tr>
+<tr>
+ <td class="s">04.11.1999</td>
+ <td>&nbsp;</td>
+ <td>47 %</td>
+ <td>31 %</td>
+ <td>5 %</td>
+ <td>4 %</td>
+ <td>7 %</td>
+ <td>6 %</td>
+</tr>
+<tr>
+ <td class="s">28.10.1999</td>
+ <td>&nbsp;</td>
+ <td>44 %</td>
+ <td>34 %</td>
+ <td>5 %</td>
+ <td>4 %</td>
+ <td>8 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">21.10.1999</td>
+ <td>&nbsp;</td>
+ <td>44 %</td>
+ <td>33 %</td>
+ <td>5 %</td>
+ <td>4 %</td>
+ <td>8 %</td>
+ <td>6 %</td>
+</tr>
+<tr>
+ <td class="s">14.10.1999</td>
+ <td>&nbsp;</td>
+ <td>43 %</td>
+ <td>33 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+ <td>8 %</td>
+ <td>6 %</td>
+</tr>
+<tr>
+ <td class="s">07.10.1999</td>
+ <td>&nbsp;</td>
+ <td>43 %</td>
+ <td>34 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+ <td>7 %</td>
+ <td>6 %</td>
+</tr>
+<tr>
+ <td class="s">30.09.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>33 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">23.09.1999</td>
+ <td>&nbsp;</td>
+ <td>46 %</td>
+ <td>32 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">16.09.1999</td>
+ <td>&nbsp;</td>
+ <td>47 %</td>
+ <td>31 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>7 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">09.09.1999</td>
+ <td>&nbsp;</td>
+ <td>48 %</td>
+ <td>31 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>7 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">02.09.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>33 %</td>
+ <td>7 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">26.08.1999</td>
+ <td>&nbsp;</td>
+ <td>47 %</td>
+ <td>32 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">19.08.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>34 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>7 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">12.08.1999</td>
+ <td>&nbsp;</td>
+ <td>46 %</td>
+ <td>33 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">05.08.1999</td>
+ <td>&nbsp;</td>
+ <td>44 %</td>
+ <td>34 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">29.07.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>33 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">22.07.1999</td>
+ <td>&nbsp;</td>
+ <td>46 %</td>
+ <td>32 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">15.07.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>32 %</td>
+ <td>5 %</td>
+ <td>7 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">08.07.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>33 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">01.07.1999</td>
+ <td>&nbsp;</td>
+ <td>46 %</td>
+ <td>33 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">24.06.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>32 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+</tr>
+<tr>
+ <td class="s">17.06.1999</td>
+ <td>&nbsp;</td>
+ <td>45 %</td>
+ <td>34 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">10.06.1999</td>
+ <td>&nbsp;</td>
+ <td>44 %</td>
+ <td>34 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+</tr>
+<tr>
+ <td class="s">03.06.1999</td>
+ <td>&nbsp;</td>
+ <td>44 %</td>
+ <td>34 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">27.05.1999</td>
+ <td>&nbsp;</td>
+ <td>43 %</td>
+ <td>35 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">20.05.1999</td>
+ <td>&nbsp;</td>
+ <td>43 %</td>
+ <td>33 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+</tr>
+<tr>
+ <td class="s">12.05.1999</td>
+ <td>&nbsp;</td>
+ <td>43 %</td>
+ <td>34 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">06.05.1999</td>
+ <td>&nbsp;</td>
+ <td>42 %</td>
+ <td>35 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">29.04.1999</td>
+ <td>&nbsp;</td>
+ <td>42 %</td>
+ <td>37 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">22.04.1999</td>
+ <td>&nbsp;</td>
+ <td>41 %</td>
+ <td>38 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">15.04.1999</td>
+ <td>&nbsp;</td>
+ <td>42 %</td>
+ <td>37 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">08.04.1999</td>
+ <td>&nbsp;</td>
+ <td>43 %</td>
+ <td>37 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">01.04.1999</td>
+ <td>&nbsp;</td>
+ <td>44 %</td>
+ <td>34 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">25.03.1999</td>
+ <td>&nbsp;</td>
+ <td>44 %</td>
+ <td>34 %</td>
+ <td>7 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">18.03.1999</td>
+ <td>&nbsp;</td>
+ <td>43 %</td>
+ <td>35 %</td>
+ <td>7 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">11.03.1999</td>
+ <td>&nbsp;</td>
+ <td>42 %</td>
+ <td>37 %</td>
+ <td>7 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>4 %</td>
+</tr>
+<tr>
+ <td class="s">04.03.1999</td>
+ <td>&nbsp;</td>
+ <td>41 %</td>
+ <td>38 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">25.02.1999</td>
+ <td>&nbsp;</td>
+ <td>42 %</td>
+ <td>37 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>4 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">18.02.1999</td>
+ <td>&nbsp;</td>
+ <td>41 %</td>
+ <td>38 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">11.02.1999</td>
+ <td>&nbsp;</td>
+ <td>40 %</td>
+ <td>38 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">04.02.1999</td>
+ <td>&nbsp;</td>
+ <td>39 %</td>
+ <td>39 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">28.01.1999</td>
+ <td>&nbsp;</td>
+ <td>39 %</td>
+ <td>39 %</td>
+ <td>7 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+</tr>
+<tr>
+ <td class="s">21.01.1999</td>
+ <td>&nbsp;</td>
+ <td>38 %</td>
+ <td>39 %</td>
+ <td>7 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+</tr>
+<tr>
+ <td class="s">14.01.1999</td>
+ <td>&nbsp;</td>
+ <td>37 %</td>
+ <td>39 %</td>
+ <td>7 %</td>
+ <td>5 %</td>
+ <td>6 %</td>
+ <td>6 %</td>
+</tr>
+<tr>
+ <td class="s">07.01.1999</td>
+ <td>&nbsp;</td>
+ <td>37 %</td>
+ <td>39 %</td>
+ <td>7 %</td>
+ <td>5 %</td>
+ <td>5 %</td>
+ <td>7 %</td>
+</tr>
+</tbody>
+</table>
+
+<div class="indent2">
+
+<p class="i" id="link">(Quelle und Auftraggeber: <a class="intern" href="2002.htm#woche">Die Woche</a>; angegeben ist das Datum der Veröffentlichung)</p>
+
+
+<h3 id="links">Links</h3>
+
+<ul>
+ <li><a href="../../bundestag/2009/index.html">Bundestagswahl 2009</a></li>
+ <li><a href="../../bundestag/2005/index.html">Bundestagswahl 2005</a></li>
+ <li><a href="../../bundestag/index.htm">Wahlrecht und Besonderheiten der Bundestagswahl</a></li>
+ <li><a href="../../ergebnisse/bundestag.htm">Wahlergebnisse der bisherigen Bundestagswahlen</a></li>
+</ul>
+
+</div>
+
+<div class="foot">
+<hr><address>zusammengestellt von <a href="../../kontakt.htm#kontakt">Wilko Zicht</a></address></div></body></html>
+2026-02-07 12:43:07,284 - forsa - INFO - Total inserted: 0
+2026-02-07 12:43:54,739 - forsa - INFO - Processing 1 URLs for forsa
+2026-02-07 12:43:54,739 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 12:43:57,601 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 12:43:57,601 - forsa - INFO - Total inserted: 0
+2026-02-07 12:46:13,662 - gms - INFO - Processing 5 URLs for gms
+2026-02-07 12:46:13,662 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/2005.htm
+2026-02-07 12:46:15,292 - gms - ERROR - Error processing https://www.wahlrecht.de/umfragen/gms/2005.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/gms/2005.htm
+2026-02-07 12:46:15,292 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/2009.htm
+2026-02-07 12:46:16,442 - gms - ERROR - Error processing https://www.wahlrecht.de/umfragen/gms/2009.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/gms/2009.htm
+2026-02-07 12:46:16,442 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/2013.htm
+2026-02-07 12:46:17,558 - gms - ERROR - Error processing https://www.wahlrecht.de/umfragen/gms/2013.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/gms/2013.htm
+2026-02-07 12:46:17,558 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/2017.htm
+2026-02-07 12:48:43,882 - gms - INFO - Processing 5 URLs for gms
+2026-02-07 12:48:43,882 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2005.htm
+2026-02-07 12:48:46,654 - gms - INFO - Inserted 38 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2005.htm
+2026-02-07 12:48:46,654 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2009.htm
+2026-02-07 12:48:49,061 - gms - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2009.htm
+2026-02-07 12:48:49,061 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2013.htm
+2026-02-07 12:48:51,356 - gms - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2013.htm
+2026-02-07 12:48:51,356 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2017.htm
+2026-02-07 12:48:53,674 - gms - INFO - Inserted 45 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2017.htm
+2026-02-07 12:48:53,675 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms.htm
+2026-02-07 12:48:55,971 - gms - INFO - Inserted 73 polls from https://www.wahlrecht.de/umfragen/gms.htm
+2026-02-07 12:48:55,971 - gms - INFO - Total inserted: 255
+2026-02-07 13:05:16,104 - gms - INFO - Processing 1 URLs for gms
+2026-02-07 13:05:16,105 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2005.htm
+2026-02-07 13:05:18,940 - gms - INFO - Inserted 0 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2005.htm
+2026-02-07 13:05:18,940 - gms - INFO - Total inserted: 0
+2026-02-07 13:08:58,496 - dawum - INFO - Starting DAWUM scraper
+2026-02-07 13:08:59,684 - dawum - ERROR - Error in DAWUM scraper: "['Parliament_ID'] not in index"
+2026-02-07 13:35:27,335 - forsa - INFO - Processing 13 URLs for forsa
+2026-02-07 13:35:27,335 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/projektion-1999.htm
+2026-02-07 13:35:28,956 - forsa - ERROR - Error processing https://www.wahlrecht.de/umfragen/forsa/projektion-1999.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/forsa/projektion-1999.htm
+2026-02-07 13:35:28,957 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/projektion-2000.htm
+2026-02-07 13:35:30,106 - forsa - ERROR - Error processing https://www.wahlrecht.de/umfragen/forsa/projektion-2000.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/forsa/projektion-2000.htm
+2026-02-07 13:35:30,107 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/projektion-2001.htm
+2026-02-07 13:35:31,222 - forsa - ERROR - Error processing https://www.wahlrecht.de/umfragen/forsa/projektion-2001.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/forsa/projektion-2001.htm
+2026-02-07 13:35:31,222 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/projektion-2002.htm
+2026-02-07 13:35:32,341 - forsa - ERROR - Error processing https://www.wahlrecht.de/umfragen/forsa/projektion-2002.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/forsa/projektion-2002.htm
+2026-02-07 13:35:32,342 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/projektion-2003.htm
+2026-02-07 13:36:36,974 - forsa - INFO - Processing 12 URLs for forsa
+2026-02-07 13:36:36,974 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 13:36:40,695 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 13:36:40,695 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-07 13:36:42,996 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-07 13:36:42,996 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-07 13:36:45,257 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-07 13:36:45,258 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-07 14:00:09,590 - forsa - INFO - Processing 12 URLs for forsa
+2026-02-07 14:00:09,590 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 14:00:12,437 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 14:00:12,437 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-07 14:00:15,628 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-07 14:00:15,628 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-07 14:06:11,858 - forsa - INFO - Processing 12 URLs for forsa
+2026-02-07 14:06:11,858 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 14:06:14,602 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 14:06:14,602 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-07 14:06:16,850 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-07 14:06:16,850 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-07 14:06:19,092 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-07 14:06:19,092 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-07 14:06:21,419 - forsa - INFO - [DRY RUN] Would insert 41 polls
+2026-02-07 14:06:21,420 - forsa - INFO -   {'publish_date': '17.12.2002', 'respondents': '2.511', 'zeitraum': '09.12.–13.12.', 'parties': {'CDU/CSU': 48.0, 'SPD': 30.0, 'GRÜNE': 10.0, 'FDP': 4.0, 'PDS': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:21.412204'}
+2026-02-07 14:06:21,420 - forsa - INFO -   {'publish_date': '11.12.2002', 'respondents': '2.502', 'zeitraum': '02.12.–06.12.', 'parties': {'CDU/CSU': 48.0, 'SPD': 29.0, 'GRÜNE': 11.0, 'FDP': 4.0, 'PDS': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:21.412204'}
+2026-02-07 14:06:21,420 - forsa - INFO -   {'publish_date': '04.12.2002', 'respondents': '2.501', 'zeitraum': '25.11.–29.11.', 'parties': {'CDU/CSU': 50.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 4.0, 'PDS': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:21.412204'}
+2026-02-07 14:06:21,420 - forsa - INFO -   ... and 38 more
+2026-02-07 14:06:21,420 - forsa - INFO - Inserted 41 polls from https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-07 14:06:21,420 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-07 14:06:23,682 - forsa - INFO - [DRY RUN] Would insert 49 polls
+2026-02-07 14:06:23,682 - forsa - INFO -   {'publish_date': '31.12.2003', 'respondents': '1.009', 'zeitraum': '22.12.–23.12.', 'parties': {'CDU/CSU': 49.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 6.0, 'PDS': 4.0, 'Sonstige': 3.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:23.678418'}
+2026-02-07 14:06:23,682 - forsa - INFO -   {'publish_date': '22.12.2003', 'respondents': '2.502', 'zeitraum': '15.12.–19.12.', 'parties': {'CDU/CSU': 49.0, 'SPD': 28.0, 'GRÜNE': 10.0, 'FDP': 6.0, 'PDS': 4.0, 'Sonstige': 3.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:23.678418'}
+2026-02-07 14:06:23,682 - forsa - INFO -   {'publish_date': '16.12.2003', 'respondents': '2.501', 'zeitraum': '08.12.–12.12.', 'parties': {'CDU/CSU': 47.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 7.0, 'PDS': 5.0, 'Sonstige': 3.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:23.678418'}
+2026-02-07 14:06:23,682 - forsa - INFO -   ... and 46 more
+2026-02-07 14:06:23,682 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-07 14:06:23,682 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-07 14:06:26,027 - forsa - INFO - [DRY RUN] Would insert 49 polls
+2026-02-07 14:06:26,028 - forsa - INFO -   {'publish_date': '28.12.2004', 'respondents': '2.007', 'zeitraum': '20.12.–23.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 34.0, 'GRÜNE': 10.0, 'FDP': 8.0, 'PDS': 5.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:26.023350'}
+2026-02-07 14:06:26,028 - forsa - INFO -   {'publish_date': '21.12.2004', 'respondents': '2.506', 'zeitraum': '11.12.–17.12.', 'parties': {'CDU/CSU': 40.0, 'SPD': 33.0, 'GRÜNE': 10.0, 'FDP': 7.0, 'PDS': 5.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:26.023350'}
+2026-02-07 14:06:26,028 - forsa - INFO -   {'publish_date': '14.12.2004', 'respondents': '2.507', 'zeitraum': '06.12.–10.12.', 'parties': {'CDU/CSU': 39.0, 'SPD': 32.0, 'GRÜNE': 11.0, 'FDP': 8.0, 'PDS': 5.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:26.023350'}
+2026-02-07 14:06:26,028 - forsa - INFO -   ... and 46 more
+2026-02-07 14:06:26,028 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-07 14:06:26,028 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-07 14:06:28,296 - forsa - INFO - [DRY RUN] Would insert 52 polls
+2026-02-07 14:06:28,296 - forsa - INFO -   {'publish_date': '28.12.2005', 'respondents': '2.500', 'zeitraum': '19.12.–23.12.', 'parties': {'CDU/CSU': 37.0, 'SPD': 32.0, 'GRÜNE': 8.0, 'FDP': 11.0, 'Linke.PDS': 8.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:28.292859'}
+2026-02-07 14:06:28,296 - forsa - INFO -   {'publish_date': '21.12.2005', 'respondents': '2.498', 'zeitraum': '15.12.–16.12.', 'parties': {'CDU/CSU': 36.0, 'SPD': 32.0, 'GRÜNE': 8.0, 'FDP': 11.0, 'Linke.PDS': 9.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:28.292859'}
+2026-02-07 14:06:28,296 - forsa - INFO -   {'publish_date': '14.12.2005', 'respondents': '2.502', 'zeitraum': '05.12.–09.12.', 'parties': {'CDU/CSU': 36.0, 'SPD': 31.0, 'GRÜNE': 8.0, 'FDP': 12.0, 'Linke.PDS': 9.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:28.292859'}
+2026-02-07 14:06:28,296 - forsa - INFO -   ... and 49 more
+2026-02-07 14:06:28,296 - forsa - INFO - Inserted 52 polls from https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-07 14:06:28,297 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-07 14:06:30,553 - forsa - INFO - [DRY RUN] Would insert 49 polls
+2026-02-07 14:06:30,553 - forsa - INFO -   {'publish_date': '27.12.2006', 'respondents': '2.501', 'zeitraum': '18.12.–22.12.', 'parties': {'CDU/CSU': 33.0, 'SPD': 28.0, 'GRÜNE': 11.0, 'FDP': 13.0, 'Linke.PDS': 9.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:30.549242'}
+2026-02-07 14:06:30,553 - forsa - INFO -   {'publish_date': '20.12.2006', 'respondents': '2.498', 'zeitraum': '11.12.–15.12.', 'parties': {'CDU/CSU': 31.0, 'SPD': 29.0, 'GRÜNE': 10.0, 'FDP': 14.0, 'Linke.PDS': 10.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:30.549242'}
+2026-02-07 14:06:30,553 - forsa - INFO -   {'publish_date': '13.12.2006', 'respondents': '2.505', 'zeitraum': '04.12.–08.12.', 'parties': {'CDU/CSU': 32.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 14.0, 'Linke.PDS': 10.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:30.549242'}
+2026-02-07 14:06:30,553 - forsa - INFO -   ... and 46 more
+2026-02-07 14:06:30,553 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-07 14:06:30,554 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-07 14:06:32,844 - forsa - INFO - [DRY RUN] Would insert 50 polls
+2026-02-07 14:06:32,845 - forsa - INFO -   {'publish_date': '26.12.2007', 'respondents': '2.501', 'zeitraum': '17.12.–21.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 26.0, 'GRÜNE': 10.0, 'FDP': 10.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:32.841147'}
+2026-02-07 14:06:32,845 - forsa - INFO -   {'publish_date': '19.12.2007', 'respondents': '2.503', 'zeitraum': '10.12.–14.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 26.0, 'GRÜNE': 10.0, 'FDP': 10.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:32.841147'}
+2026-02-07 14:06:32,845 - forsa - INFO -   {'publish_date': '12.12.2007', 'respondents': '2.501', 'zeitraum': '03.12.–07.12.', 'parties': {'CDU/CSU': 39.0, 'SPD': 26.0, 'GRÜNE': 9.0, 'FDP': 10.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:32.841147'}
+2026-02-07 14:06:32,845 - forsa - INFO -   ... and 47 more
+2026-02-07 14:06:32,845 - forsa - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-07 14:06:32,845 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-07 14:06:35,115 - forsa - INFO - [DRY RUN] Would insert 50 polls
+2026-02-07 14:06:35,115 - forsa - INFO -   {'publish_date': '22.12.2008', 'respondents': '2.503', 'zeitraum': '15.12.–19.12.', 'parties': {'CDU/CSU': 37.0, 'SPD': 24.0, 'GRÜNE': 10.0, 'FDP': 12.0, 'LINKE': 12.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:35.111662'}
+2026-02-07 14:06:35,115 - forsa - INFO -   {'publish_date': '16.12.2008', 'respondents': '2.502', 'zeitraum': '08.12.–12.12.', 'parties': {'CDU/CSU': 37.0, 'SPD': 24.0, 'GRÜNE': 10.0, 'FDP': 13.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:35.111662'}
+2026-02-07 14:06:35,115 - forsa - INFO -   {'publish_date': '10.12.2008', 'respondents': '2.501', 'zeitraum': '01.12.–05.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 23.0, 'GRÜNE': 11.0, 'FDP': 12.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:35.111662'}
+2026-02-07 14:06:35,115 - forsa - INFO -   ... and 47 more
+2026-02-07 14:06:35,115 - forsa - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-07 14:06:35,116 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-07 14:06:37,413 - forsa - INFO - [DRY RUN] Would insert 249 polls
+2026-02-07 14:06:37,414 - forsa - INFO -   {'publish_date': '22.09.2013', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 41.5, 'SPD': 25.7, 'GRÜNE': 8.4, 'FDP': 4.8, 'LINKE': 8.6, 'PIRATEN': 2.2, 'AfD': 4.7, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:37.409338'}
+2026-02-07 14:06:37,414 - forsa - INFO -   {'publish_date': '20.09.2013', 'respondents': '1.995', 'zeitraum': '16.09.–19.09.', 'parties': {'CDU/CSU': 40.0, 'SPD': 26.0, 'GRÜNE': 10.0, 'FDP': 5.0, 'LINKE': 9.0, 'PIRATEN': 2.0, 'AfD': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:37.409338'}
+2026-02-07 14:06:37,414 - forsa - INFO -   {'publish_date': '17.09.2013', 'respondents': '2.502', 'zeitraum': '10.09.–16.09.', 'parties': {'CDU/CSU': 39.0, 'SPD': 25.0, 'GRÜNE': 9.0, 'FDP': 5.0, 'LINKE': 10.0, 'PIRATEN': 3.0, 'AfD': 3.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:37.409338'}
+2026-02-07 14:06:37,414 - forsa - INFO -   ... and 246 more
+2026-02-07 14:06:37,414 - forsa - INFO - Inserted 249 polls from https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-07 14:06:37,414 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:06:40,018 - forsa - INFO - [DRY RUN] Would insert 648 polls
+2026-02-07 14:06:40,018 - forsa - INFO -   {'publish_date': '03.02.2026', 'respondents': '2.503', 'zeitraum': '27.01.–02.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:40.011591'}
+2026-02-07 14:06:40,018 - forsa - INFO -   {'publish_date': '27.01.2026', 'respondents': '2.501', 'zeitraum': '20.01.–26.01.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0, 'Nichtwähler/ Unentschl.': 28.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:40.011591'}
+2026-02-07 14:06:40,018 - forsa - INFO -   {'publish_date': '20.01.2026', 'respondents': '2.501', 'zeitraum': '13.01.–19.01.', 'parties': {'CDU/CSU': 25.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 10.0, 'AfD': 26.0, 'BSW': 3.0, 'Sonstige': 7.0, 'Nichtwähler/ Unentschl.': 26.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:06:40.011591'}
+2026-02-07 14:06:40,018 - forsa - INFO -   ... and 645 more
+2026-02-07 14:06:40,018 - forsa - INFO - Inserted 648 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:06:40,018 - forsa - INFO - Total inserted: 1237
+2026-02-07 14:06:44,063 - forsa - INFO - Processing 1 URLs for forsa
+2026-02-07 14:06:44,063 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 14:06:46,794 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 14:06:46,795 - forsa - INFO - Total inserted: 0
+2026-02-07 14:08:12,376 - forsa - INFO - Processing 1 URLs for forsa
+2026-02-07 14:08:12,376 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:08:15,441 - forsa - INFO - [DRY RUN] Would insert 648 polls
+2026-02-07 14:08:15,441 - forsa - INFO -   {'publish_date': '03.02.2026', 'respondents': '2.503', 'zeitraum': '27.01.–02.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:08:15.434920'}
+2026-02-07 14:08:15,441 - forsa - INFO -   {'publish_date': '27.01.2026', 'respondents': '2.501', 'zeitraum': '20.01.–26.01.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0, 'Nichtwähler/ Unentschl.': 28.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:08:15.434920'}
+2026-02-07 14:08:15,441 - forsa - INFO -   {'publish_date': '20.01.2026', 'respondents': '2.501', 'zeitraum': '13.01.–19.01.', 'parties': {'CDU/CSU': 25.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 10.0, 'AfD': 26.0, 'BSW': 3.0, 'Sonstige': 7.0, 'Nichtwähler/ Unentschl.': 26.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:08:15.434920'}
+2026-02-07 14:08:15,441 - forsa - INFO -   ... and 645 more
+2026-02-07 14:08:15,441 - forsa - INFO - Inserted 648 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:08:15,441 - forsa - INFO - Total inserted: 648
+2026-02-07 14:08:18,926 - forsa - INFO - Processing 1 URLs for forsa
+2026-02-07 14:08:18,926 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:08:21,876 - forsa - INFO - [DRY RUN] Would insert 648 polls
+2026-02-07 14:08:21,876 - forsa - INFO -   {'publish_date': '03.02.2026', 'respondents': '2.503', 'zeitraum': '27.01.–02.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:08:21.870297'}
+2026-02-07 14:08:21,876 - forsa - INFO -   {'publish_date': '27.01.2026', 'respondents': '2.501', 'zeitraum': '20.01.–26.01.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0, 'Nichtwähler/ Unentschl.': 28.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:08:21.870297'}
+2026-02-07 14:08:21,876 - forsa - INFO -   {'publish_date': '20.01.2026', 'respondents': '2.501', 'zeitraum': '13.01.–19.01.', 'parties': {'CDU/CSU': 25.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 10.0, 'AfD': 26.0, 'BSW': 3.0, 'Sonstige': 7.0, 'Nichtwähler/ Unentschl.': 26.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-07T14:08:21.870297'}
+2026-02-07 14:08:21,876 - forsa - INFO -   ... and 645 more
+2026-02-07 14:08:21,876 - forsa - INFO - Inserted 648 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:08:21,876 - forsa - INFO - Total inserted: 648
+2026-02-07 14:09:03,204 - forsa - INFO - Processing 1 URLs for forsa
+2026-02-07 14:09:03,204 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:09:06,350 - forsa - INFO - Inserted 648 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:09:06,350 - forsa - INFO - Total inserted: 648
+2026-02-07 14:10:41,910 - forsa - INFO - Processing 12 URLs for forsa
+2026-02-07 14:10:41,910 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 14:10:44,618 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-07 14:10:44,618 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-07 14:10:46,867 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-07 14:10:46,868 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-07 14:10:49,104 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-07 14:10:49,105 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-07 14:10:51,454 - forsa - INFO - Inserted 41 polls from https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-07 14:10:51,454 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-07 14:10:53,740 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-07 14:10:53,740 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-07 14:10:56,061 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-07 14:10:56,061 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-07 14:10:58,331 - forsa - INFO - Inserted 52 polls from https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-07 14:10:58,331 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-07 14:11:00,615 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-07 14:11:00,615 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-07 14:11:02,979 - forsa - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-07 14:11:02,979 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-07 14:11:05,262 - forsa - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-07 14:11:05,262 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-07 14:11:07,662 - forsa - INFO - Inserted 249 polls from https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-07 14:11:07,662 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:11:10,379 - forsa - INFO - Inserted 648 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:11:10,379 - forsa - INFO - Total inserted: 1237
+2026-02-07 14:11:15,057 - forsa - INFO - Processing 1 URLs for forsa
+2026-02-07 14:11:15,057 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:11:18,138 - forsa - INFO - Inserted 0 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-07 14:11:18,138 - forsa - INFO - Total inserted: 0
+2026-02-07 14:11:27,457 - gms - INFO - Processing 5 URLs for gms
+2026-02-07 14:11:27,457 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2005.htm
+2026-02-07 14:11:30,262 - gms - INFO - Inserted 38 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2005.htm
+2026-02-07 14:11:30,262 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2009.htm
+2026-02-07 14:11:32,551 - gms - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2009.htm
+2026-02-07 14:11:32,551 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2013.htm
+2026-02-07 14:11:34,871 - gms - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2013.htm
+2026-02-07 14:11:34,871 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2017.htm
+2026-02-07 14:11:37,167 - gms - INFO - Inserted 45 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2017.htm
+2026-02-07 14:11:37,167 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms.htm
+2026-02-07 14:11:39,472 - gms - INFO - Inserted 73 polls from https://www.wahlrecht.de/umfragen/gms.htm
+2026-02-07 14:11:39,472 - gms - INFO - Total inserted: 255
+2026-02-10 19:05:33,716 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-10 19:05:33,718 - forsa - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:05:33,718 - forsa - INFO - Processing 12 URLs for forsa
+2026-02-10 19:05:33,718 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:05:36,601 - forsa - ERROR - [forsa] Could not identify party columns using config: {'url': 'https://www.wahlrecht.de/umfragen/forsa/1999.htm', 'drop_footer': 4, 'party_start_after': 'Unnamed: 1', 'party_end_before': 'Befragte'}
+2026-02-10 19:05:36,601 - forsa - WARNING - [forsa] Normalization produced no rows for https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:05:36,602 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:05:36,602 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:05:38,847 - forsa - ERROR - [forsa] Could not identify party columns using config: {'url': 'https://www.wahlrecht.de/umfragen/forsa/2000.htm', 'drop_footer': 4, 'party_start_after': 'Unnamed: 1', 'party_end_before': 'Befragte'}
+2026-02-10 19:05:38,847 - forsa - WARNING - [forsa] Normalization produced no rows for https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:05:38,847 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:05:38,847 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:05:41,094 - forsa - ERROR - [forsa] Could not identify party columns using config: {'url': 'https://www.wahlrecht.de/umfragen/forsa/2001.htm', 'drop_footer': 4, 'party_start_after': 'Unnamed: 1', 'party_end_before': 'Befragte'}
+2026-02-10 19:05:41,094 - forsa - WARNING - [forsa] Normalization produced no rows for https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:05:41,095 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:05:41,095 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-10 19:05:43,401 - forsa - INFO - [DRY RUN] Would insert 41 polls
+2026-02-10 19:05:43,402 - forsa - INFO -   {'publish_date': '17.12.2002', 'respondents': '2.511', 'zeitraum': '09.12.–13.12.', 'parties': {'CDU/CSU': 48.0, 'SPD': 30.0, 'GRÜNE': 10.0, 'FDP': 4.0, 'PDS': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:43.396394'}
+2026-02-10 19:05:43,402 - forsa - INFO -   {'publish_date': '11.12.2002', 'respondents': '2.502', 'zeitraum': '02.12.–06.12.', 'parties': {'CDU/CSU': 48.0, 'SPD': 29.0, 'GRÜNE': 11.0, 'FDP': 4.0, 'PDS': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:43.396394'}
+2026-02-10 19:05:43,402 - forsa - INFO -   {'publish_date': '04.12.2002', 'respondents': '2.501', 'zeitraum': '25.11.–29.11.', 'parties': {'CDU/CSU': 50.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 4.0, 'PDS': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:43.396394'}
+2026-02-10 19:05:43,402 - forsa - INFO -   ... and 38 more
+2026-02-10 19:05:43,402 - forsa - INFO - Inserted 41 polls from https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-10 19:05:43,402 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-10 19:05:45,659 - forsa - INFO - [DRY RUN] Would insert 49 polls
+2026-02-10 19:05:45,659 - forsa - INFO -   {'publish_date': '31.12.2003', 'respondents': '1.009', 'zeitraum': '22.12.–23.12.', 'parties': {'CDU/CSU': 49.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 6.0, 'PDS': 4.0, 'Sonstige': 3.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:45.655840'}
+2026-02-10 19:05:45,659 - forsa - INFO -   {'publish_date': '22.12.2003', 'respondents': '2.502', 'zeitraum': '15.12.–19.12.', 'parties': {'CDU/CSU': 49.0, 'SPD': 28.0, 'GRÜNE': 10.0, 'FDP': 6.0, 'PDS': 4.0, 'Sonstige': 3.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:45.655840'}
+2026-02-10 19:05:45,659 - forsa - INFO -   {'publish_date': '16.12.2003', 'respondents': '2.501', 'zeitraum': '08.12.–12.12.', 'parties': {'CDU/CSU': 47.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 7.0, 'PDS': 5.0, 'Sonstige': 3.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:45.655840'}
+2026-02-10 19:05:45,659 - forsa - INFO -   ... and 46 more
+2026-02-10 19:05:45,659 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-10 19:05:45,659 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-10 19:05:47,912 - forsa - INFO - [DRY RUN] Would insert 49 polls
+2026-02-10 19:05:47,912 - forsa - INFO -   {'publish_date': '28.12.2004', 'respondents': '2.007', 'zeitraum': '20.12.–23.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 34.0, 'GRÜNE': 10.0, 'FDP': 8.0, 'PDS': 5.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:47.907946'}
+2026-02-10 19:05:47,912 - forsa - INFO -   {'publish_date': '21.12.2004', 'respondents': '2.506', 'zeitraum': '11.12.–17.12.', 'parties': {'CDU/CSU': 40.0, 'SPD': 33.0, 'GRÜNE': 10.0, 'FDP': 7.0, 'PDS': 5.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:47.907946'}
+2026-02-10 19:05:47,912 - forsa - INFO -   {'publish_date': '14.12.2004', 'respondents': '2.507', 'zeitraum': '06.12.–10.12.', 'parties': {'CDU/CSU': 39.0, 'SPD': 32.0, 'GRÜNE': 11.0, 'FDP': 8.0, 'PDS': 5.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:47.907946'}
+2026-02-10 19:05:47,912 - forsa - INFO -   ... and 46 more
+2026-02-10 19:05:47,912 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-10 19:05:47,912 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-10 19:05:50,192 - forsa - INFO - [DRY RUN] Would insert 52 polls
+2026-02-10 19:05:50,192 - forsa - INFO -   {'publish_date': '28.12.2005', 'respondents': '2.500', 'zeitraum': '19.12.–23.12.', 'parties': {'CDU/CSU': 37.0, 'SPD': 32.0, 'GRÜNE': 8.0, 'FDP': 11.0, 'Linke.PDS': 8.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:50.191409'}
+2026-02-10 19:05:50,192 - forsa - INFO -   {'publish_date': '21.12.2005', 'respondents': '2.498', 'zeitraum': '15.12.–16.12.', 'parties': {'CDU/CSU': 36.0, 'SPD': 32.0, 'GRÜNE': 8.0, 'FDP': 11.0, 'Linke.PDS': 9.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:50.191409'}
+2026-02-10 19:05:50,192 - forsa - INFO -   {'publish_date': '14.12.2005', 'respondents': '2.502', 'zeitraum': '05.12.–09.12.', 'parties': {'CDU/CSU': 36.0, 'SPD': 31.0, 'GRÜNE': 8.0, 'FDP': 12.0, 'Linke.PDS': 9.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:50.191409'}
+2026-02-10 19:05:50,192 - forsa - INFO -   ... and 49 more
+2026-02-10 19:05:50,192 - forsa - INFO - Inserted 52 polls from https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-10 19:05:50,193 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-10 19:05:52,465 - forsa - INFO - [DRY RUN] Would insert 49 polls
+2026-02-10 19:05:52,466 - forsa - INFO -   {'publish_date': '27.12.2006', 'respondents': '2.501', 'zeitraum': '18.12.–22.12.', 'parties': {'CDU/CSU': 33.0, 'SPD': 28.0, 'GRÜNE': 11.0, 'FDP': 13.0, 'Linke.PDS': 9.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:52.463767'}
+2026-02-10 19:05:52,466 - forsa - INFO -   {'publish_date': '20.12.2006', 'respondents': '2.498', 'zeitraum': '11.12.–15.12.', 'parties': {'CDU/CSU': 31.0, 'SPD': 29.0, 'GRÜNE': 10.0, 'FDP': 14.0, 'Linke.PDS': 10.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:52.463767'}
+2026-02-10 19:05:52,466 - forsa - INFO -   {'publish_date': '13.12.2006', 'respondents': '2.505', 'zeitraum': '04.12.–08.12.', 'parties': {'CDU/CSU': 32.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 14.0, 'Linke.PDS': 10.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:52.463767'}
+2026-02-10 19:05:52,466 - forsa - INFO -   ... and 46 more
+2026-02-10 19:05:52,466 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-10 19:05:52,466 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-10 19:05:54,711 - forsa - INFO - [DRY RUN] Would insert 50 polls
+2026-02-10 19:05:54,711 - forsa - INFO -   {'publish_date': '26.12.2007', 'respondents': '2.501', 'zeitraum': '17.12.–21.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 26.0, 'GRÜNE': 10.0, 'FDP': 10.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:54.709474'}
+2026-02-10 19:05:54,711 - forsa - INFO -   {'publish_date': '19.12.2007', 'respondents': '2.503', 'zeitraum': '10.12.–14.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 26.0, 'GRÜNE': 10.0, 'FDP': 10.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:54.709474'}
+2026-02-10 19:05:54,711 - forsa - INFO -   {'publish_date': '12.12.2007', 'respondents': '2.501', 'zeitraum': '03.12.–07.12.', 'parties': {'CDU/CSU': 39.0, 'SPD': 26.0, 'GRÜNE': 9.0, 'FDP': 10.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:54.709474'}
+2026-02-10 19:05:54,711 - forsa - INFO -   ... and 47 more
+2026-02-10 19:05:54,711 - forsa - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-10 19:05:54,711 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-10 19:05:57,013 - forsa - INFO - [DRY RUN] Would insert 50 polls
+2026-02-10 19:05:57,013 - forsa - INFO -   {'publish_date': '22.12.2008', 'respondents': '2.503', 'zeitraum': '15.12.–19.12.', 'parties': {'CDU/CSU': 37.0, 'SPD': 24.0, 'GRÜNE': 10.0, 'FDP': 12.0, 'LINKE': 12.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:57.011190'}
+2026-02-10 19:05:57,013 - forsa - INFO -   {'publish_date': '16.12.2008', 'respondents': '2.502', 'zeitraum': '08.12.–12.12.', 'parties': {'CDU/CSU': 37.0, 'SPD': 24.0, 'GRÜNE': 10.0, 'FDP': 13.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:57.011190'}
+2026-02-10 19:05:57,013 - forsa - INFO -   {'publish_date': '10.12.2008', 'respondents': '2.501', 'zeitraum': '01.12.–05.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 23.0, 'GRÜNE': 11.0, 'FDP': 12.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:57.011190'}
+2026-02-10 19:05:57,013 - forsa - INFO -   ... and 47 more
+2026-02-10 19:05:57,013 - forsa - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-10 19:05:57,013 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-10 19:05:59,324 - forsa - INFO - [DRY RUN] Would insert 249 polls
+2026-02-10 19:05:59,324 - forsa - INFO -   {'publish_date': '22.09.2013', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 41.5, 'SPD': 25.7, 'GRÜNE': 8.4, 'FDP': 4.8, 'LINKE': 8.6, 'PIRATEN': 2.2, 'AfD': 4.7, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:59.319745'}
+2026-02-10 19:05:59,324 - forsa - INFO -   {'publish_date': '20.09.2013', 'respondents': '1.995', 'zeitraum': '16.09.–19.09.', 'parties': {'CDU/CSU': 40.0, 'SPD': 26.0, 'GRÜNE': 10.0, 'FDP': 5.0, 'LINKE': 9.0, 'PIRATEN': 2.0, 'AfD': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:59.319745'}
+2026-02-10 19:05:59,324 - forsa - INFO -   {'publish_date': '17.09.2013', 'respondents': '2.502', 'zeitraum': '10.09.–16.09.', 'parties': {'CDU/CSU': 39.0, 'SPD': 25.0, 'GRÜNE': 9.0, 'FDP': 5.0, 'LINKE': 10.0, 'PIRATEN': 3.0, 'AfD': 3.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:05:59.319745'}
+2026-02-10 19:05:59,324 - forsa - INFO -   ... and 246 more
+2026-02-10 19:05:59,324 - forsa - INFO - Inserted 249 polls from https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-10 19:05:59,324 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:06:01,906 - forsa - INFO - [DRY RUN] Would insert 649 polls
+2026-02-10 19:06:01,906 - forsa - INFO -   {'publish_date': '10.02.2026', 'respondents': '2.503', 'zeitraum': '03.02.–09.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 13.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 6.0, 'Nichtwähler/ Unentschl.': 27.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:01.899521'}
+2026-02-10 19:06:01,906 - forsa - INFO -   {'publish_date': '03.02.2026', 'respondents': '2.503', 'zeitraum': '27.01.–02.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:01.899521'}
+2026-02-10 19:06:01,906 - forsa - INFO -   {'publish_date': '27.01.2026', 'respondents': '2.501', 'zeitraum': '20.01.–26.01.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0, 'Nichtwähler/ Unentschl.': 28.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:01.899521'}
+2026-02-10 19:06:01,906 - forsa - INFO -   ... and 646 more
+2026-02-10 19:06:01,906 - forsa - INFO - Inserted 649 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:06:01,906 - forsa - INFO - Historic URLs marked as processed
+2026-02-10 19:06:01,906 - forsa - INFO - Total inserted: 1238
+2026-02-10 19:06:20,764 - allensbach - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/allensbach/2002.htm
+2026-02-10 19:06:20,764 - allensbach - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/allensbach/2005.htm
+2026-02-10 19:06:20,764 - allensbach - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/allensbach/2009.htm
+2026-02-10 19:06:20,764 - allensbach - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/allensbach/2013.htm
+2026-02-10 19:06:20,764 - allensbach - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/allensbach/2017.htm
+2026-02-10 19:06:20,764 - allensbach - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/allensbach.htm
+2026-02-10 19:06:20,764 - allensbach - INFO - Processing 6 URLs for allensbach
+2026-02-10 19:06:20,764 - allensbach - INFO - Processing: https://www.wahlrecht.de/umfragen/allensbach/2002.htm
+2026-02-10 19:06:23,882 - allensbach - INFO - [DRY RUN] Would insert 5 polls
+2026-02-10 19:06:23,882 - allensbach - INFO -   {'publish_date': '22.09.2002', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 38.5, 'SPD': 38.5, 'GRÜNE': 8.6, 'FDP': 7.4, 'PDS': 4.0, 'Sonstige': 3.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:23.879837'}
+2026-02-10 19:06:23,882 - allensbach - INFO -   {'publish_date': '17.09.2002', 'respondents': '≈2.000', 'zeitraum': '06.09.–15.09.', 'parties': {'CDU/CSU': 37.3, 'SPD': 37.0, 'GRÜNE': 7.2, 'FDP': 10.1, 'PDS': 4.4, 'Sonstige': 4.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:23.879837'}
+2026-02-10 19:06:23,882 - allensbach - INFO -   {'publish_date': '11.09.2002', 'respondents': '≈2.000', 'zeitraum': '30.08.–08.09.', 'parties': {'CDU/CSU': 37.0, 'SPD': 37.0, 'GRÜNE': 7.3, 'FDP': 10.1, 'PDS': 4.9, 'Sonstige': 3.7}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:23.879837'}
+2026-02-10 19:06:23,882 - allensbach - INFO -   ... and 2 more
+2026-02-10 19:06:23,882 - allensbach - INFO - Inserted 5 polls from https://www.wahlrecht.de/umfragen/allensbach/2002.htm
+2026-02-10 19:06:23,882 - allensbach - INFO - Processing: https://www.wahlrecht.de/umfragen/allensbach/2005.htm
+2026-02-10 19:06:26,138 - allensbach - INFO - [DRY RUN] Would insert 20 polls
+2026-02-10 19:06:26,138 - allensbach - INFO -   {'publish_date': '18.09.2005', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 35.2, 'SPD': 34.2, 'GRÜNE': 8.1, 'FDP': 9.8, 'Linke.PDS': 8.7, 'Sonstige': 3.9}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:26.135489'}
+2026-02-10 19:06:26,138 - allensbach - INFO -   {'publish_date': '16.09.2005', 'respondents': '1.682', 'zeitraum': '10.09.–15.09.', 'parties': {'CDU/CSU': 41.5, 'SPD': 32.5, 'GRÜNE': 7.0, 'FDP': 8.0, 'Linke.PDS': 8.5, 'Sonstige': 2.5}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:26.135489'}
+2026-02-10 19:06:26,138 - allensbach - INFO -   {'publish_date': '13.09.2005', 'respondents': '≈2.000', 'zeitraum': '04.09.–12.09.', 'parties': {'CDU/CSU': 41.7, 'SPD': 32.9, 'GRÜNE': 7.2, 'FDP': 7.0, 'Linke.PDS': 8.5, 'Sonstige': 2.7}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:26.135489'}
+2026-02-10 19:06:26,138 - allensbach - INFO -   ... and 17 more
+2026-02-10 19:06:26,138 - allensbach - INFO - Inserted 20 polls from https://www.wahlrecht.de/umfragen/allensbach/2005.htm
+2026-02-10 19:06:26,138 - allensbach - INFO - Processing: https://www.wahlrecht.de/umfragen/allensbach/2009.htm
+2026-02-10 19:06:28,391 - allensbach - INFO - [DRY RUN] Would insert 27 polls
+2026-02-10 19:06:28,391 - allensbach - INFO -   {'publish_date': '27.09.2009', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 33.8, 'SPD': 23.0, 'GRÜNE': 10.7, 'FDP': 14.6, 'LINKE': 11.9, 'Sonstige': 6.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:28.388078'}
+2026-02-10 19:06:28,391 - allensbach - INFO -   {'publish_date': '22.09.2009', 'respondents': '1.200', 'zeitraum': '14.09.–21.09.', 'parties': {'CDU/CSU': 35.0, 'SPD': 24.0, 'GRÜNE': 11.0, 'FDP': 13.5, 'LINKE': 11.5, 'Sonstige': 5.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:28.388078'}
+2026-02-10 19:06:28,391 - allensbach - INFO -   {'publish_date': '21.07.2009', 'respondents': '≈1.800', 'zeitraum': '06.07.–17.07.', 'parties': {'CDU/CSU': 36.5, 'SPD': 24.0, 'GRÜNE': 12.0, 'FDP': 13.5, 'LINKE': 10.0, 'Sonstige': 4.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:28.388078'}
+2026-02-10 19:06:28,391 - allensbach - INFO -   ... and 24 more
+2026-02-10 19:06:28,391 - allensbach - INFO - Inserted 27 polls from https://www.wahlrecht.de/umfragen/allensbach/2009.htm
+2026-02-10 19:06:28,391 - allensbach - INFO - Processing: https://www.wahlrecht.de/umfragen/allensbach/2013.htm
+2026-02-10 19:06:30,689 - allensbach - INFO - [DRY RUN] Would insert 50 polls
+2026-02-10 19:06:30,689 - allensbach - INFO -   {'publish_date': '22.09.2013', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 41.5, 'SPD': 25.7, 'GRÜNE': 8.4, 'FDP': 4.8, 'LINKE': 8.6, 'PIRATEN': 2.2, 'AfD': 4.7, 'Sonstige': 4.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:30.684955'}
+2026-02-10 19:06:30,689 - allensbach - INFO -   {'publish_date': '20.09.2013', 'respondents': '1.070', 'zeitraum': '16.09.–19.09.', 'parties': {'CDU/CSU': 39.5, 'SPD': 27.0, 'GRÜNE': 9.0, 'FDP': 5.5, 'LINKE': 9.0, 'PIRATEN': 2.0, 'AfD': 4.5, 'Sonstige': 3.5}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:30.684955'}
+2026-02-10 19:06:30,689 - allensbach - INFO -   {'publish_date': '18.09.2013', 'respondents': '1.269', 'zeitraum': '03.09.–13.09.', 'parties': {'CDU/CSU': 39.0, 'SPD': 26.0, 'GRÜNE': 11.0, 'FDP': 6.0, 'LINKE': 9.0, 'PIRATEN': 2.0, 'AfD': 3.5, 'Sonstige': 3.5}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:30.684955'}
+2026-02-10 19:06:30,689 - allensbach - INFO -   ... and 47 more
+2026-02-10 19:06:30,689 - allensbach - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/allensbach/2013.htm
+2026-02-10 19:06:30,689 - allensbach - INFO - Processing: https://www.wahlrecht.de/umfragen/allensbach/2017.htm
+2026-02-10 19:06:32,951 - allensbach - INFO - [DRY RUN] Would insert 51 polls
+2026-02-10 19:06:32,951 - allensbach - INFO -   {'publish_date': '24.09.2017', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 32.9, 'SPD': 20.5, 'GRÜNE': 8.9, 'FDP': 10.7, 'LINKE': 9.2, 'AfD': 12.6, 'Sonstige': 5.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:32.947452'}
+2026-02-10 19:06:32,951 - allensbach - INFO -   {'publish_date': '22.09.2017', 'respondents': '1.074', 'zeitraum': '13.09.–20.09.', 'parties': {'CDU/CSU': 36.0, 'SPD': 22.0, 'GRÜNE': 8.0, 'FDP': 10.5, 'LINKE': 9.5, 'AfD': 10.0, 'Sonstige': 4.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:32.947452'}
+2026-02-10 19:06:32,951 - allensbach - INFO -   {'publish_date': '19.09.2017', 'respondents': '1.083', 'zeitraum': '06.09.–14.09.', 'parties': {'CDU/CSU': 36.5, 'SPD': 22.0, 'GRÜNE': 8.0, 'FDP': 11.0, 'LINKE': 9.0, 'AfD': 10.0, 'Sonstige': 3.5}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:32.947452'}
+2026-02-10 19:06:32,951 - allensbach - INFO -   ... and 48 more
+2026-02-10 19:06:32,951 - allensbach - INFO - Inserted 51 polls from https://www.wahlrecht.de/umfragen/allensbach/2017.htm
+2026-02-10 19:06:32,951 - allensbach - INFO - Processing: https://www.wahlrecht.de/umfragen/allensbach.htm
+2026-02-10 19:06:35,208 - allensbach - INFO - [DRY RUN] Would insert 107 polls
+2026-02-10 19:06:35,208 - allensbach - INFO -   {'publish_date': '31.01.2026', 'respondents': '1.077', 'zeitraum': '06.01.–19.01.', 'parties': {'CDU/CSU': 27.0, 'SPD': 15.0, 'GRÜNE': 11.5, 'FDP': 3.5, 'LINKE': 10.0, 'AfD': 25.0, 'Sonstige': 8.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:35.206513'}
+2026-02-10 19:06:35,208 - allensbach - INFO -   {'publish_date': '11.12.2025', 'respondents': '1.029', 'zeitraum': '22.11.–04.12.', 'parties': {'CDU/CSU': 27.0, 'SPD': 14.0, 'GRÜNE': 12.5, 'FDP': 4.5, 'LINKE': 9.0, 'AfD': 25.0, 'BSW': 3.0, 'Sonstige': 5.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:35.206513'}
+2026-02-10 19:06:35,208 - allensbach - INFO -   {'publish_date': '14.11.2025', 'respondents': '1.011', 'zeitraum': '23.10.–06.11.', 'parties': {'CDU/CSU': 27.0, 'SPD': 15.5, 'GRÜNE': 11.0, 'FDP': 3.5, 'LINKE': 10.0, 'AfD': 24.0, 'BSW': 4.0, 'Sonstige': 5.0}, 'institute_id': 'allensbach', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:06:35.206513'}
+2026-02-10 19:06:35,208 - allensbach - INFO -   ... and 104 more
+2026-02-10 19:06:35,208 - allensbach - INFO - Inserted 107 polls from https://www.wahlrecht.de/umfragen/allensbach.htm
+2026-02-10 19:06:35,209 - allensbach - INFO - Historic URLs marked as processed
+2026-02-10 19:06:35,209 - allensbach - INFO - Total inserted: 260
+2026-02-10 19:06:40,356 - bayern - INFO - Processing 1 URLs for bayern
+2026-02-10 19:06:40,356 - bayern - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:06:42,157 - bayern - INFO - [DRY RUN] Would insert 0 polls
+2026-02-10 19:06:42,157 - bayern - INFO - Inserted 0 polls from https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:06:42,157 - bayern - INFO - Total inserted: 0
+2026-02-10 19:06:46,329 - dawum - INFO - Starting DAWUM scraper
+2026-02-10 19:06:46,329 - dawum - INFO - Fetching data from DAWUM API: https://api.dawum.de/
+2026-02-10 19:06:47,610 - dawum - INFO - Processed 3713 surveys from DAWUM
+2026-02-10 19:06:47,631 - dawum - INFO - Prepared 3713 payloads for insertion
+2026-02-10 19:06:47,631 - dawum - INFO - [DRY RUN] Would insert 3713 polls
+2026-02-10 19:06:47,631 - dawum - INFO -   {'publish_date': '2026-02-10', 'respondents': '2503', 'survey_date_start': '2026-02-03', 'survey_date_end': '2026-02-09', 'parties': {'CDU/CSU': 26.0, 'AfD': 24.0, 'SPD': 14.0, 'Grüne': 13.0, 'Linke': 11.0, 'Sonstige': 6.0, 'FDP': 3.0, 'BSW': 3.0}, 'institute_id': 'Forsa', 'tasker': 'RTL / n-tv', 'source': 'api', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': 'Telefonisch', 'date_downloaded': '2026-02-10T19:06:47.611499'}
+2026-02-10 19:06:47,631 - dawum - INFO -   {'publish_date': '2026-02-10', 'respondents': '2004', 'survey_date_start': '2026-02-06', 'survey_date_end': '2026-02-09', 'parties': {'AfD': 26.0, 'CDU/CSU': 25.5, 'SPD': 15.5, 'Grüne': 11.0, 'Linke': 10.0, 'Sonstige': 5.0, 'BSW': 4.0, 'FDP': 3.0}, 'institute_id': 'INSA', 'tasker': 'BILD', 'source': 'api', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': 'Online', 'date_downloaded': '2026-02-10T19:06:47.611499'}
+2026-02-10 19:06:47,631 - dawum - INFO -   {'publish_date': '2026-02-07', 'respondents': '1202', 'survey_date_start': '2026-02-02', 'survey_date_end': '2026-02-06', 'parties': {'AfD': 26.0, 'CDU/CSU': 25.0, 'SPD': 16.0, 'Grüne': 11.0, 'Linke': 10.0, 'Sonstige': 5.0, 'BSW': 4.0, 'FDP': 3.0}, 'institute_id': 'INSA', 'tasker': 'BILD am Sonntag', 'source': 'api', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': 'Telefon & Online', 'date_downloaded': '2026-02-10T19:06:47.611499'}
+2026-02-10 19:06:47,631 - dawum - INFO -   ... and 3710 more
+2026-02-10 19:06:47,631 - dawum - INFO - Successfully inserted 3713 polls from DAWUM
+2026-02-10 19:07:01,800 - bayern - INFO - Processing 1 URLs for bayern
+2026-02-10 19:07:01,800 - bayern - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:07:03,450 - bayern - INFO - [DRY RUN] Would insert 0 polls
+2026-02-10 19:07:03,450 - bayern - INFO - Inserted 0 polls from https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:07:03,450 - bayern - INFO - Total inserted: 0
+2026-02-10 19:08:10,173 - bayern - INFO - Processing 1 URLs for bayern
+2026-02-10 19:08:10,173 - bayern - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:08:11,913 - bayern - INFO - [DRY RUN] Would insert 0 polls
+2026-02-10 19:08:11,913 - bayern - INFO - Inserted 0 polls from https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:08:11,913 - bayern - INFO - Total inserted: 0
+2026-02-10 19:08:46,258 - bayern - INFO - Processing 1 URLs for bayern
+2026-02-10 19:08:46,258 - bayern - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:08:47,979 - bayern - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CSU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'FW', 'AfD', 'Sonstige']
+2026-02-10 19:08:47,986 - bayern - INFO - [DRY RUN] Would insert 0 polls
+2026-02-10 19:08:47,986 - bayern - INFO - Inserted 0 polls from https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:08:47,986 - bayern - INFO - Total inserted: 0
+2026-02-10 19:10:21,952 - bayern - INFO - Processing 1 URLs for bayern
+2026-02-10 19:10:21,952 - bayern - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:10:23,631 - bayern - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CSU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'FW', 'AfD', 'Sonstige']
+2026-02-10 19:10:23,638 - bayern - INFO - [DRY RUN] Would insert 142 polls
+2026-02-10 19:10:23,639 - bayern - INFO -   {'publish_date': '05.01.2026', 'respondents': '1006', 'parties': {'CSU': 39.0, 'SPD': 6.0, 'GRÜNE': 11.0, 'FDP': 2.0, 'LINKE': 3.0, 'FW': 12.0, 'AfD': 19.0}, 'institute_id': 'various', 'provider': 'Wahlrecht.de', 'tasker': 'Sat.1 Bayern', 'source': 'html_scraper', 'scope': 'bayern', 'election_id': 'Landtagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:23.637448'}
+2026-02-10 19:10:23,639 - bayern - INFO -   {'publish_date': '11.12.2025', 'respondents': '1005', 'parties': {'CSU': 40.0, 'SPD': 6.0, 'GRÜNE': 12.0, 'FDP': 2.0, 'LINKE': 3.0, 'FW': 10.0, 'AfD': 19.0}, 'institute_id': 'various', 'provider': 'Wahlrecht.de', 'tasker': 'CSU', 'source': 'html_scraper', 'scope': 'bayern', 'election_id': 'Landtagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:23.637448'}
+2026-02-10 19:10:23,639 - bayern - INFO -   {'publish_date': '30.09.2025', 'respondents': '1017', 'parties': {'CSU': 39.0, 'SPD': 7.0, 'GRÜNE': 11.0, 'FDP': 2.0, 'LINKE': 4.0, 'FW': 11.0, 'AfD': 19.0}, 'institute_id': 'various', 'provider': 'Wahlrecht.de', 'tasker': 'Sat.1 Bayern', 'source': 'html_scraper', 'scope': 'bayern', 'election_id': 'Landtagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:23.637448'}
+2026-02-10 19:10:23,639 - bayern - INFO -   ... and 139 more
+2026-02-10 19:10:23,639 - bayern - INFO - Inserted 142 polls from https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:10:23,639 - bayern - INFO - Total inserted: 142
+2026-02-10 19:10:30,241 - berlin - INFO - Processing 1 URLs for berlin
+2026-02-10 19:10:30,241 - berlin - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/berlin.htm
+2026-02-10 19:10:31,913 - berlin - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'PIRATEN', 'AfD', 'Sonstige']
+2026-02-10 19:10:31,920 - berlin - INFO - [DRY RUN] Would insert 188 polls
+2026-02-10 19:10:31,920 - berlin - INFO -   {'publish_date': '14.01.2026', 'respondents': '1000', 'parties': {'CDU': 22.0, 'SPD': 17.0, 'GRÜNE': 14.0, 'FDP': 3.0, 'LINKE': 17.0, 'AfD': 16.0}, 'institute_id': 'various', 'provider': 'Wahlrecht.de', 'tasker': 'NIUS', 'source': 'html_scraper', 'scope': 'berlin', 'election_id': 'Landtagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:31.919047'}
+2026-02-10 19:10:31,920 - berlin - INFO -   {'publish_date': '19.11.2025', 'respondents': '1185', 'parties': {'CDU': 22.0, 'SPD': 13.0, 'GRÜNE': 16.0, 'LINKE': 19.0, 'AfD': 16.0}, 'institute_id': 'various', 'provider': 'Wahlrecht.de', 'tasker': 'RBB', 'source': 'html_scraper', 'scope': 'berlin', 'election_id': 'Landtagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:31.919047'}
+2026-02-10 19:10:31,920 - berlin - INFO -   {'publish_date': '28.10.2025', 'respondents': '1000', 'parties': {'CDU': 23.0, 'SPD': 16.0, 'GRÜNE': 14.0, 'FDP': 4.0, 'LINKE': 17.0, 'AfD': 15.0}, 'institute_id': 'various', 'provider': 'Wahlrecht.de', 'tasker': 'NIUS', 'source': 'html_scraper', 'scope': 'berlin', 'election_id': 'Landtagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:31.919047'}
+2026-02-10 19:10:31,920 - berlin - INFO -   ... and 185 more
+2026-02-10 19:10:31,920 - berlin - INFO - Inserted 188 polls from https://www.wahlrecht.de/umfragen/landtage/berlin.htm
+2026-02-10 19:10:31,920 - berlin - INFO - Total inserted: 188
+2026-02-10 19:10:36,879 - insa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/insa/2013.htm
+2026-02-10 19:10:36,879 - insa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/insa/2017.htm
+2026-02-10 19:10:36,879 - insa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/insa/2021.htm
+2026-02-10 19:10:36,879 - insa - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/insa.htm
+2026-02-10 19:10:36,879 - insa - INFO - Processing 4 URLs for insa
+2026-02-10 19:10:36,879 - insa - INFO - Processing: https://www.wahlrecht.de/umfragen/insa/2013.htm
+2026-02-10 19:10:39,568 - insa - INFO - [DRY RUN] Would insert 81 polls
+2026-02-10 19:10:39,568 - insa - INFO -   {'publish_date': '22.09.2013', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 41.5, 'SPD': 25.7, 'GRÜNE': 8.4, 'FDP': 4.8, 'LINKE': 8.6, 'PIRATEN': 2.2, 'FW': 1.0, 'AfD': 4.7, 'Sonstige': 3.1}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:39.566615'}
+2026-02-10 19:10:39,568 - insa - INFO -   {'publish_date': '19.09.2013', 'respondents': 'O • 2.248', 'zeitraum': '15.09.–18.09.', 'parties': {'CDU/CSU': 38.0, 'SPD': 28.0, 'GRÜNE': 8.0, 'FDP': 6.0, 'LINKE': 9.0, 'PIRATEN': 2.0, 'FW': 1.0, 'AfD': 5.0, 'Sonstige': 3.0}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:39.566615'}
+2026-02-10 19:10:39,568 - insa - INFO -   {'publish_date': '15.09.2013', 'respondents': 'O • 2.132', 'zeitraum': '??.09.–??.09.', 'parties': {'CDU/CSU': 38.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 4.0, 'LINKE': 8.0, 'PIRATEN': 3.0, 'AfD': 4.0}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:39.566615'}
+2026-02-10 19:10:39,568 - insa - INFO -   ... and 78 more
+2026-02-10 19:10:39,568 - insa - INFO - Inserted 81 polls from https://www.wahlrecht.de/umfragen/insa/2013.htm
+2026-02-10 19:10:39,568 - insa - INFO - Processing: https://www.wahlrecht.de/umfragen/insa/2017.htm
+2026-02-10 19:10:41,867 - insa - INFO - [DRY RUN] Would insert 206 polls
+2026-02-10 19:10:41,867 - insa - INFO -   {'publish_date': '24.09.2017', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 32.9, 'SPD': 20.5, 'GRÜNE': 8.9, 'FDP': 10.7, 'LINKE': 9.2, 'PIRATEN': 0.4, 'FW': 1.0, 'AfD': 12.6, 'Sonstige': 3.6}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:41.863871'}
+2026-02-10 19:10:41,867 - insa - INFO -   {'publish_date': '22.09.2017', 'respondents': 'O • 2.000', 'zeitraum': '21.09.–22.09.', 'parties': {'CDU/CSU': 34.0, 'SPD': 21.0, 'GRÜNE': 8.0, 'FDP': 9.0, 'LINKE': 11.0, 'AfD': 13.0, 'Sonstige': 4.0}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:41.863871'}
+2026-02-10 19:10:41,867 - insa - INFO -   {'publish_date': '18.09.2017', 'respondents': 'O • 2.042', 'zeitraum': '15.09.–18.09.', 'parties': {'CDU/CSU': 36.0, 'SPD': 22.0, 'GRÜNE': 7.0, 'FDP': 9.0, 'LINKE': 11.0, 'AfD': 11.0, 'Sonstige': 4.0}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:41.863871'}
+2026-02-10 19:10:41,867 - insa - INFO -   ... and 203 more
+2026-02-10 19:10:41,867 - insa - INFO - Inserted 206 polls from https://www.wahlrecht.de/umfragen/insa/2017.htm
+2026-02-10 19:10:41,867 - insa - INFO - Processing: https://www.wahlrecht.de/umfragen/insa/2021.htm
+2026-02-10 19:10:44,143 - insa - INFO - [DRY RUN] Would insert 236 polls
+2026-02-10 19:10:44,143 - insa - INFO -   {'publish_date': '26.09.2021', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 24.1, 'SPD': 25.7, 'GRÜNE': 14.8, 'FDP': 11.5, 'LINKE': 4.9, 'PIRATEN': 0.4, 'FW': 2.4, 'AfD': 10.3, 'Sonstige': 6.0}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:44.140165'}
+2026-02-10 19:10:44,143 - insa - INFO -   {'publish_date': '20.09.2021', 'respondents': 'O • 2.054', 'zeitraum': '17.09.–20.09.', 'parties': {'CDU/CSU': 22.0, 'SPD': 25.0, 'GRÜNE': 15.0, 'FDP': 12.0, 'LINKE': 6.5, 'AfD': 11.0, 'Sonstige': 8.5}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:44.140165'}
+2026-02-10 19:10:44,143 - insa - INFO -   {'publish_date': '18.09.2021', 'respondents': 'TOM • 1.502', 'zeitraum': '13.09.–17.09.', 'parties': {'CDU/CSU': 21.0, 'SPD': 26.0, 'GRÜNE': 15.0, 'FDP': 12.0, 'LINKE': 6.0, 'FW': 3.0, 'AfD': 11.0, 'Sonstige': 6.0}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:44.140165'}
+2026-02-10 19:10:44,143 - insa - INFO -   ... and 233 more
+2026-02-10 19:10:44,143 - insa - INFO - Inserted 236 polls from https://www.wahlrecht.de/umfragen/insa/2021.htm
+2026-02-10 19:10:44,143 - insa - INFO - Processing: https://www.wahlrecht.de/umfragen/insa.htm
+2026-02-10 19:10:46,708 - insa - INFO - [DRY RUN] Would insert 455 polls
+2026-02-10 19:10:46,708 - insa - INFO -   {'publish_date': '10.02.2026', 'respondents': 'O • 2.004', 'zeitraum': '06.02.–09.02.', 'parties': {'CDU/CSU': 25.5, 'SPD': 15.5, 'GRÜNE': 11.0, 'FDP': 3.0, 'LINKE': 10.0, 'AfD': 26.0, 'BSW': 4.0, 'Sonstige': 5.0}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:46.703049'}
+2026-02-10 19:10:46,708 - insa - INFO -   {'publish_date': '07.02.2026', 'respondents': 'TOM • 1.202', 'zeitraum': '02.02.–06.02.', 'parties': {'CDU/CSU': 25.0, 'SPD': 16.0, 'GRÜNE': 11.0, 'FDP': 3.0, 'LINKE': 10.0, 'AfD': 26.0, 'BSW': 4.0, 'Sonstige': 5.0}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:46.703049'}
+2026-02-10 19:10:46,708 - insa - INFO -   {'publish_date': '03.02.2026', 'respondents': 'O • 2.006', 'zeitraum': '30.01.–02.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 15.5, 'GRÜNE': 11.5, 'FDP': 3.0, 'LINKE': 10.0, 'AfD': 26.0, 'BSW': 4.0, 'Sonstige': 4.0}, 'institute_id': 'insa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:10:46.703049'}
+2026-02-10 19:10:46,708 - insa - INFO -   ... and 452 more
+2026-02-10 19:10:46,708 - insa - INFO - Inserted 455 polls from https://www.wahlrecht.de/umfragen/insa.htm
+2026-02-10 19:10:46,708 - insa - INFO - Historic URLs marked as processed
+2026-02-10 19:10:46,708 - insa - INFO - Total inserted: 978
+2026-02-10 19:16:17,828 - runner - WARNING - Failed to load worker forsa_2001: No module named 'pollingapi.scraper.manual_table'
+2026-02-10 19:16:49,619 - runner - WARNING - No scraper class registered for type: manual_table
+2026-02-10 19:17:08,496 - runner - INFO - Discovered 25 HTML workers
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-10 19:17:08,496 - forsa - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:17:08,496 - forsa - INFO - Processing 1 URLs for forsa
+2026-02-10 19:17:08,496 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:17:11,636 - forsa - INFO - [DRY RUN] Would insert 649 polls
+2026-02-10 19:17:11,636 - forsa - INFO -   {'publish_date': '10.02.2026', 'respondents': '2.503', 'zeitraum': '03.02.–09.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 13.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 6.0, 'Nichtwähler/ Unentschl.': 27.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:11.629976'}
+2026-02-10 19:17:11,636 - forsa - INFO -   {'publish_date': '03.02.2026', 'respondents': '2.503', 'zeitraum': '27.01.–02.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:11.629976'}
+2026-02-10 19:17:11,636 - forsa - INFO -   {'publish_date': '27.01.2026', 'respondents': '2.501', 'zeitraum': '20.01.–26.01.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0, 'Nichtwähler/ Unentschl.': 28.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:11.629976'}
+2026-02-10 19:17:11,636 - forsa - INFO -   ... and 646 more
+2026-02-10 19:17:11,636 - forsa - INFO - Inserted 649 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:17:11,636 - forsa - INFO - Total inserted: 649
+2026-02-10 19:17:11,637 - yougov - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/yougov.htm
+2026-02-10 19:17:11,637 - yougov - INFO - Processing 1 URLs for yougov
+2026-02-10 19:17:11,637 - yougov - INFO - Processing: https://www.wahlrecht.de/umfragen/yougov.htm
+2026-02-10 19:17:14,374 - yougov - INFO - [DRY RUN] Would insert 126 polls
+2026-02-10 19:17:14,374 - yougov - INFO -   {'publish_date': '14.01.2026', 'respondents': 'O • 1.673', 'zeitraum': '09.01.–12.01.', 'parties': {'CDU/CSU': 25.0, 'SPD': 16.0, 'GRÜNE': 12.0, 'FDP': 4.0, 'LINKE': 10.0, 'AfD': 25.0, 'BSW': 3.0, 'Sonstige': 5.0}, 'institute_id': 'yougov', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:14.370009'}
+2026-02-10 19:17:14,374 - yougov - INFO -   {'publish_date': '17.12.2025', 'respondents': 'O • 1.743', 'zeitraum': '12.12.–15.12.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 4.0, 'LINKE': 10.0, 'AfD': 26.0, 'BSW': 4.0, 'Sonstige': 5.0}, 'institute_id': 'yougov', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:14.370009'}
+2026-02-10 19:17:14,374 - yougov - INFO -   {'publish_date': '19.11.2025', 'respondents': 'O • 2.005', 'zeitraum': '14.11.–17.11.', 'parties': {'CDU/CSU': 27.0, 'SPD': 14.0, 'GRÜNE': 11.0, 'FDP': 4.0, 'LINKE': 11.0, 'AfD': 25.0, 'BSW': 4.0, 'Sonstige': 5.0}, 'institute_id': 'yougov', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:14.370009'}
+2026-02-10 19:17:14,374 - yougov - INFO -   ... and 123 more
+2026-02-10 19:17:14,374 - yougov - INFO - Inserted 126 polls from https://www.wahlrecht.de/umfragen/yougov.htm
+2026-02-10 19:17:14,374 - yougov - INFO - Total inserted: 126
+2026-02-10 19:17:14,375 - infratest - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/dimap/2001.htm
+2026-02-10 19:17:14,375 - infratest - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/dimap/2002.htm
+2026-02-10 19:17:14,375 - infratest - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/dimap/2005.htm
+2026-02-10 19:17:14,375 - infratest - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/dimap/2009.htm
+2026-02-10 19:17:14,375 - infratest - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/dimap/2013.htm
+2026-02-10 19:17:14,375 - infratest - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/dimap/2017.htm
+2026-02-10 19:17:14,375 - infratest - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/dimap/2021.htm
+2026-02-10 19:17:14,375 - infratest - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/dimap.htm
+2026-02-10 19:17:14,375 - infratest - INFO - Processing 8 URLs for infratest
+2026-02-10 19:17:14,376 - infratest - INFO - Processing: https://www.wahlrecht.de/umfragen/dimap/2001.htm
+2026-02-10 19:17:17,018 - infratest - INFO - [DRY RUN] Would insert 0 polls
+2026-02-10 19:17:17,018 - infratest - INFO - Inserted 0 polls from https://www.wahlrecht.de/umfragen/dimap/2001.htm
+2026-02-10 19:17:17,018 - infratest - INFO - Processing: https://www.wahlrecht.de/umfragen/dimap/2002.htm
+2026-02-10 19:17:19,315 - infratest - INFO - [DRY RUN] Would insert 26 polls
+2026-02-10 19:17:19,315 - infratest - INFO -   {'publish_date': '20.12.2002', 'respondents': '1.000', 'zeitraum': '16.12.–17.12.', 'parties': {'CDU/CSU': 47.0, 'SPD': 30.0, 'GRÜNE': 11.0, 'FDP': 5.0, 'PDS': 4.0, 'Sonstige': 3.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:19.311503'}
+2026-02-10 19:17:19,315 - infratest - INFO -   {'publish_date': '06.12.2002', 'respondents': '1.300', 'zeitraum': '02.12.–04.12.', 'parties': {'CDU/CSU': 48.0, 'SPD': 28.0, 'GRÜNE': 12.0, 'FDP': 5.0, 'PDS': 4.0, 'Sonstige': 3.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:19.311503'}
+2026-02-10 19:17:19,315 - infratest - INFO -   {'publish_date': '29.11.2002', 'respondents': '1.000', 'zeitraum': '25.11.–27.11.', 'parties': {'CDU/CSU': 48.0, 'SPD': 30.0, 'GRÜNE': 11.0, 'FDP': 5.0, 'PDS': 4.0, 'Sonstige': 2.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:19.311503'}
+2026-02-10 19:17:19,315 - infratest - INFO -   ... and 23 more
+2026-02-10 19:17:19,315 - infratest - INFO - Inserted 26 polls from https://www.wahlrecht.de/umfragen/dimap/2002.htm
+2026-02-10 19:17:19,316 - infratest - INFO - Processing: https://www.wahlrecht.de/umfragen/dimap/2005.htm
+2026-02-10 19:17:21,566 - infratest - INFO - [DRY RUN] Would insert 51 polls
+2026-02-10 19:17:21,566 - infratest - INFO -   {'publish_date': '21.12.2005', 'respondents': '1.000', 'zeitraum': '19.12.–20.12.', 'parties': {'CDU/CSU': 36.0, 'SPD': 32.0, 'GRÜNE': 9.0, 'FDP': 9.0, 'Linke.PDS': 10.0, 'Sonstige': 4.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:21.564068'}
+2026-02-10 19:17:21,566 - infratest - INFO -   {'publish_date': '15.12.2005', 'respondents': '998', 'zeitraum': '13.12.–14.12.', 'parties': {'CDU/CSU': 35.0, 'SPD': 33.0, 'GRÜNE': 9.0, 'FDP': 10.0, 'Linke.PDS': 9.0, 'Sonstige': 4.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:21.564068'}
+2026-02-10 19:17:21,566 - infratest - INFO -   {'publish_date': '08.12.2005', 'respondents': '1.000', 'zeitraum': '06.12.–07.12.', 'parties': {'CDU/CSU': 36.0, 'SPD': 34.0, 'GRÜNE': 9.0, 'FDP': 10.0, 'Linke.PDS': 8.0, 'Sonstige': 3.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:21.564068'}
+2026-02-10 19:17:21,567 - infratest - INFO -   ... and 48 more
+2026-02-10 19:17:21,567 - infratest - INFO - Inserted 51 polls from https://www.wahlrecht.de/umfragen/dimap/2005.htm
+2026-02-10 19:17:21,567 - infratest - INFO - Processing: https://www.wahlrecht.de/umfragen/dimap/2009.htm
+2026-02-10 19:17:22,680 - infratest - ERROR - Error processing https://www.wahlrecht.de/umfragen/dimap/2009.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/dimap/2009.htm
+2026-02-10 19:17:22,681 - infratest - INFO - Processing: https://www.wahlrecht.de/umfragen/dimap/2013.htm
+2026-02-10 19:17:24,991 - infratest - INFO - [DRY RUN] Would insert 150 polls
+2026-02-10 19:17:24,991 - infratest - INFO -   {'publish_date': '22.09.2013', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 41.5, 'SPD': 25.7, 'GRÜNE': 8.4, 'FDP': 4.8, 'LINKE': 8.6, 'PIRATEN': 2.2, 'AfD': 4.7, 'Sonstige': 4.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:24.987218'}
+2026-02-10 19:17:24,991 - infratest - INFO -   {'publish_date': '12.09.2013', 'respondents': '2.012', 'zeitraum': '10.09.–12.09.', 'parties': {'CDU/CSU': 40.0, 'SPD': 28.0, 'GRÜNE': 10.0, 'FDP': 5.0, 'LINKE': 8.0, 'PIRATEN': 2.5, 'AfD': 2.5, 'Sonstige': 4.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:24.987218'}
+2026-02-10 19:17:24,991 - infratest - INFO -   {'publish_date': '05.09.2013', 'respondents': '1.502', 'zeitraum': '02.09.–04.09.', 'parties': {'CDU/CSU': 41.0, 'SPD': 27.0, 'GRÜNE': 10.0, 'FDP': 5.0, 'LINKE': 8.0, 'PIRATEN': 2.0, 'AfD': 3.0, 'Sonstige': 4.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:24.987218'}
+2026-02-10 19:17:24,991 - infratest - INFO -   ... and 147 more
+2026-02-10 19:17:24,991 - infratest - INFO - Inserted 150 polls from https://www.wahlrecht.de/umfragen/dimap/2013.htm
+2026-02-10 19:17:24,991 - infratest - INFO - Processing: https://www.wahlrecht.de/umfragen/dimap/2017.htm
+2026-02-10 19:17:26,115 - infratest - ERROR - Error processing https://www.wahlrecht.de/umfragen/dimap/2017.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/dimap/2017.htm
+2026-02-10 19:17:26,115 - infratest - INFO - Processing: https://www.wahlrecht.de/umfragen/dimap/2021.htm
+2026-02-10 19:17:27,228 - infratest - ERROR - Error processing https://www.wahlrecht.de/umfragen/dimap/2021.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/dimap/2021.htm
+2026-02-10 19:17:27,229 - infratest - INFO - Processing: https://www.wahlrecht.de/umfragen/dimap.htm
+2026-02-10 19:17:29,506 - infratest - INFO - [DRY RUN] Would insert 281 polls
+2026-02-10 19:17:29,506 - infratest - INFO -   {'publish_date': '05.02.2026', 'respondents': '1.319', 'zeitraum': '02.02.–04.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 15.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 10.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:29.502109'}
+2026-02-10 19:17:29,506 - infratest - INFO -   {'publish_date': '08.01.2026', 'respondents': '1.323', 'zeitraum': '05.01.–07.01.', 'parties': {'CDU/CSU': 28.0, 'SPD': 13.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 10.0, 'AfD': 25.0, 'BSW': 3.0, 'Sonstige': 6.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:29.502109'}
+2026-02-10 19:17:29,506 - infratest - INFO -   {'publish_date': '04.12.2025', 'respondents': '1.306', 'zeitraum': '01.12.–03.12.', 'parties': {'CDU/CSU': 27.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 10.0, 'AfD': 25.0, 'BSW': 4.0, 'Sonstige': 5.0}, 'institute_id': 'infratest', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:17:29.502109'}
+2026-02-10 19:17:29,506 - infratest - INFO -   ... and 278 more
+2026-02-10 19:17:29,506 - infratest - INFO - Inserted 281 polls from https://www.wahlrecht.de/umfragen/dimap.htm
+2026-02-10 19:17:29,506 - infratest - INFO - Historic URLs marked as processed
+2026-02-10 19:17:29,507 - infratest - INFO - Total inserted: 508
+2026-02-10 19:17:29,507 - runner - ERROR - Error running infratest: [Errno 32] Broken pipe
+2026-02-10 19:53:00,944 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-10 19:53:00,945 - forsa - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:53:00,945 - forsa - INFO - Processing 1 URLs for forsa
+2026-02-10 19:53:00,945 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:53:03,993 - forsa - INFO - [DRY RUN] Would insert 649 polls
+2026-02-10 19:53:03,993 - forsa - INFO -   {'publish_date': '10.02.2026', 'respondents': '2.503', 'zeitraum': '03.02.–09.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 13.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 6.0, 'Nichtwähler/ Unentschl.': 27.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:03.986362'}
+2026-02-10 19:53:03,993 - forsa - INFO -   {'publish_date': '03.02.2026', 'respondents': '2.503', 'zeitraum': '27.01.–02.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:03.986362'}
+2026-02-10 19:53:03,993 - forsa - INFO -   {'publish_date': '27.01.2026', 'respondents': '2.501', 'zeitraum': '20.01.–26.01.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0, 'Nichtwähler/ Unentschl.': 28.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:03.986362'}
+2026-02-10 19:53:03,993 - forsa - INFO -   ... and 646 more
+2026-02-10 19:53:03,993 - forsa - INFO - Inserted 649 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:53:03,993 - forsa - INFO - Total inserted: 649
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-10 19:53:37,919 - forsa - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:53:37,919 - forsa - INFO - Processing 12 URLs for forsa
+2026-02-10 19:53:37,919 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:53:40,634 - forsa - ERROR - [forsa] Could not identify party columns using config: {'url': 'https://www.wahlrecht.de/umfragen/forsa/1999.htm', 'drop_footer': 4, 'party_start_after': 'Unnamed: 1', 'party_end_before': 'Befragte'}
+2026-02-10 19:53:40,634 - forsa - WARNING - [forsa] Normalization produced no rows for https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:53:40,634 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:53:40,634 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:53:42,873 - forsa - ERROR - [forsa] Could not identify party columns using config: {'url': 'https://www.wahlrecht.de/umfragen/forsa/2000.htm', 'drop_footer': 4, 'party_start_after': 'Unnamed: 1', 'party_end_before': 'Befragte'}
+2026-02-10 19:53:42,873 - forsa - WARNING - [forsa] Normalization produced no rows for https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:53:42,873 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:53:42,873 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:53:45,118 - forsa - ERROR - [forsa] Could not identify party columns using config: {'url': 'https://www.wahlrecht.de/umfragen/forsa/2001.htm', 'drop_footer': 4, 'party_start_after': 'Unnamed: 1', 'party_end_before': 'Befragte'}
+2026-02-10 19:53:45,118 - forsa - WARNING - [forsa] Normalization produced no rows for https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:53:45,118 - forsa - WARNING - No data found at https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:53:45,119 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-10 19:53:47,440 - forsa - INFO - [DRY RUN] Would insert 41 polls
+2026-02-10 19:53:47,440 - forsa - INFO -   {'publish_date': '17.12.2002', 'respondents': '2.511', 'zeitraum': '09.12.–13.12.', 'parties': {'CDU/CSU': 48.0, 'SPD': 30.0, 'GRÜNE': 10.0, 'FDP': 4.0, 'PDS': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:47.437644'}
+2026-02-10 19:53:47,440 - forsa - INFO -   {'publish_date': '11.12.2002', 'respondents': '2.502', 'zeitraum': '02.12.–06.12.', 'parties': {'CDU/CSU': 48.0, 'SPD': 29.0, 'GRÜNE': 11.0, 'FDP': 4.0, 'PDS': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:47.437644'}
+2026-02-10 19:53:47,441 - forsa - INFO -   {'publish_date': '04.12.2002', 'respondents': '2.501', 'zeitraum': '25.11.–29.11.', 'parties': {'CDU/CSU': 50.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 4.0, 'PDS': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:47.437644'}
+2026-02-10 19:53:47,441 - forsa - INFO -   ... and 38 more
+2026-02-10 19:53:47,441 - forsa - INFO - Inserted 41 polls from https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-10 19:53:47,441 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-10 19:53:49,693 - forsa - INFO - [DRY RUN] Would insert 49 polls
+2026-02-10 19:53:49,693 - forsa - INFO -   {'publish_date': '31.12.2003', 'respondents': '1.009', 'zeitraum': '22.12.–23.12.', 'parties': {'CDU/CSU': 49.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 6.0, 'PDS': 4.0, 'Sonstige': 3.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:49.691468'}
+2026-02-10 19:53:49,693 - forsa - INFO -   {'publish_date': '22.12.2003', 'respondents': '2.502', 'zeitraum': '15.12.–19.12.', 'parties': {'CDU/CSU': 49.0, 'SPD': 28.0, 'GRÜNE': 10.0, 'FDP': 6.0, 'PDS': 4.0, 'Sonstige': 3.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:49.691468'}
+2026-02-10 19:53:49,693 - forsa - INFO -   {'publish_date': '16.12.2003', 'respondents': '2.501', 'zeitraum': '08.12.–12.12.', 'parties': {'CDU/CSU': 47.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 7.0, 'PDS': 5.0, 'Sonstige': 3.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:49.691468'}
+2026-02-10 19:53:49,694 - forsa - INFO -   ... and 46 more
+2026-02-10 19:53:49,694 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-10 19:53:49,694 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-10 19:53:51,945 - forsa - INFO - [DRY RUN] Would insert 49 polls
+2026-02-10 19:53:51,945 - forsa - INFO -   {'publish_date': '28.12.2004', 'respondents': '2.007', 'zeitraum': '20.12.–23.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 34.0, 'GRÜNE': 10.0, 'FDP': 8.0, 'PDS': 5.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:51.944190'}
+2026-02-10 19:53:51,945 - forsa - INFO -   {'publish_date': '21.12.2004', 'respondents': '2.506', 'zeitraum': '11.12.–17.12.', 'parties': {'CDU/CSU': 40.0, 'SPD': 33.0, 'GRÜNE': 10.0, 'FDP': 7.0, 'PDS': 5.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:51.944190'}
+2026-02-10 19:53:51,945 - forsa - INFO -   {'publish_date': '14.12.2004', 'respondents': '2.507', 'zeitraum': '06.12.–10.12.', 'parties': {'CDU/CSU': 39.0, 'SPD': 32.0, 'GRÜNE': 11.0, 'FDP': 8.0, 'PDS': 5.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:51.944190'}
+2026-02-10 19:53:51,945 - forsa - INFO -   ... and 46 more
+2026-02-10 19:53:51,945 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-10 19:53:51,946 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-10 19:53:54,261 - forsa - INFO - [DRY RUN] Would insert 52 polls
+2026-02-10 19:53:54,261 - forsa - INFO -   {'publish_date': '28.12.2005', 'respondents': '2.500', 'zeitraum': '19.12.–23.12.', 'parties': {'CDU/CSU': 37.0, 'SPD': 32.0, 'GRÜNE': 8.0, 'FDP': 11.0, 'Linke.PDS': 8.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:54.258913'}
+2026-02-10 19:53:54,261 - forsa - INFO -   {'publish_date': '21.12.2005', 'respondents': '2.498', 'zeitraum': '15.12.–16.12.', 'parties': {'CDU/CSU': 36.0, 'SPD': 32.0, 'GRÜNE': 8.0, 'FDP': 11.0, 'Linke.PDS': 9.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:54.258913'}
+2026-02-10 19:53:54,261 - forsa - INFO -   {'publish_date': '14.12.2005', 'respondents': '2.502', 'zeitraum': '05.12.–09.12.', 'parties': {'CDU/CSU': 36.0, 'SPD': 31.0, 'GRÜNE': 8.0, 'FDP': 12.0, 'Linke.PDS': 9.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:54.258913'}
+2026-02-10 19:53:54,261 - forsa - INFO -   ... and 49 more
+2026-02-10 19:53:54,261 - forsa - INFO - Inserted 52 polls from https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-10 19:53:54,261 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-10 19:53:56,515 - forsa - INFO - [DRY RUN] Would insert 49 polls
+2026-02-10 19:53:56,515 - forsa - INFO -   {'publish_date': '27.12.2006', 'respondents': '2.501', 'zeitraum': '18.12.–22.12.', 'parties': {'CDU/CSU': 33.0, 'SPD': 28.0, 'GRÜNE': 11.0, 'FDP': 13.0, 'Linke.PDS': 9.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:56.512640'}
+2026-02-10 19:53:56,515 - forsa - INFO -   {'publish_date': '20.12.2006', 'respondents': '2.498', 'zeitraum': '11.12.–15.12.', 'parties': {'CDU/CSU': 31.0, 'SPD': 29.0, 'GRÜNE': 10.0, 'FDP': 14.0, 'Linke.PDS': 10.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:56.512640'}
+2026-02-10 19:53:56,515 - forsa - INFO -   {'publish_date': '13.12.2006', 'respondents': '2.505', 'zeitraum': '04.12.–08.12.', 'parties': {'CDU/CSU': 32.0, 'SPD': 27.0, 'GRÜNE': 11.0, 'FDP': 14.0, 'Linke.PDS': 10.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:56.512640'}
+2026-02-10 19:53:56,515 - forsa - INFO -   ... and 46 more
+2026-02-10 19:53:56,515 - forsa - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-10 19:53:56,515 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-10 19:53:58,871 - forsa - INFO - [DRY RUN] Would insert 50 polls
+2026-02-10 19:53:58,871 - forsa - INFO -   {'publish_date': '26.12.2007', 'respondents': '2.501', 'zeitraum': '17.12.–21.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 26.0, 'GRÜNE': 10.0, 'FDP': 10.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:58.868998'}
+2026-02-10 19:53:58,871 - forsa - INFO -   {'publish_date': '19.12.2007', 'respondents': '2.503', 'zeitraum': '10.12.–14.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 26.0, 'GRÜNE': 10.0, 'FDP': 10.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:58.868998'}
+2026-02-10 19:53:58,871 - forsa - INFO -   {'publish_date': '12.12.2007', 'respondents': '2.501', 'zeitraum': '03.12.–07.12.', 'parties': {'CDU/CSU': 39.0, 'SPD': 26.0, 'GRÜNE': 9.0, 'FDP': 10.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:53:58.868998'}
+2026-02-10 19:53:58,871 - forsa - INFO -   ... and 47 more
+2026-02-10 19:53:58,871 - forsa - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-10 19:53:58,871 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-10 19:54:01,139 - forsa - INFO - [DRY RUN] Would insert 50 polls
+2026-02-10 19:54:01,139 - forsa - INFO -   {'publish_date': '22.12.2008', 'respondents': '2.503', 'zeitraum': '15.12.–19.12.', 'parties': {'CDU/CSU': 37.0, 'SPD': 24.0, 'GRÜNE': 10.0, 'FDP': 12.0, 'LINKE': 12.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:54:01.137591'}
+2026-02-10 19:54:01,139 - forsa - INFO -   {'publish_date': '16.12.2008', 'respondents': '2.502', 'zeitraum': '08.12.–12.12.', 'parties': {'CDU/CSU': 37.0, 'SPD': 24.0, 'GRÜNE': 10.0, 'FDP': 13.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:54:01.137591'}
+2026-02-10 19:54:01,139 - forsa - INFO -   {'publish_date': '10.12.2008', 'respondents': '2.501', 'zeitraum': '01.12.–05.12.', 'parties': {'CDU/CSU': 38.0, 'SPD': 23.0, 'GRÜNE': 11.0, 'FDP': 12.0, 'LINKE': 11.0, 'Sonstige': 5.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:54:01.137591'}
+2026-02-10 19:54:01,140 - forsa - INFO -   ... and 47 more
+2026-02-10 19:54:01,140 - forsa - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-10 19:54:01,140 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-10 19:54:03,469 - forsa - INFO - [DRY RUN] Would insert 249 polls
+2026-02-10 19:54:03,469 - forsa - INFO -   {'publish_date': '22.09.2013', 'respondents': 'Bundestagswahl', 'zeitraum': 'Bundestagswahl', 'parties': {'CDU/CSU': 41.5, 'SPD': 25.7, 'GRÜNE': 8.4, 'FDP': 4.8, 'LINKE': 8.6, 'PIRATEN': 2.2, 'AfD': 4.7, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:54:03.465285'}
+2026-02-10 19:54:03,469 - forsa - INFO -   {'publish_date': '20.09.2013', 'respondents': '1.995', 'zeitraum': '16.09.–19.09.', 'parties': {'CDU/CSU': 40.0, 'SPD': 26.0, 'GRÜNE': 10.0, 'FDP': 5.0, 'LINKE': 9.0, 'PIRATEN': 2.0, 'AfD': 4.0, 'Sonstige': 4.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:54:03.465285'}
+2026-02-10 19:54:03,469 - forsa - INFO -   {'publish_date': '17.09.2013', 'respondents': '2.502', 'zeitraum': '10.09.–16.09.', 'parties': {'CDU/CSU': 39.0, 'SPD': 25.0, 'GRÜNE': 9.0, 'FDP': 5.0, 'LINKE': 10.0, 'PIRATEN': 3.0, 'AfD': 3.0, 'Sonstige': 6.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:54:03.465285'}
+2026-02-10 19:54:03,469 - forsa - INFO -   ... and 246 more
+2026-02-10 19:54:03,469 - forsa - INFO - Inserted 249 polls from https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-10 19:54:03,469 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:54:06,097 - forsa - INFO - [DRY RUN] Would insert 649 polls
+2026-02-10 19:54:06,097 - forsa - INFO -   {'publish_date': '10.02.2026', 'respondents': '2.503', 'zeitraum': '03.02.–09.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 13.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 6.0, 'Nichtwähler/ Unentschl.': 27.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:54:06.090503'}
+2026-02-10 19:54:06,097 - forsa - INFO -   {'publish_date': '03.02.2026', 'respondents': '2.503', 'zeitraum': '27.01.–02.02.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:54:06.090503'}
+2026-02-10 19:54:06,097 - forsa - INFO -   {'publish_date': '27.01.2026', 'respondents': '2.501', 'zeitraum': '20.01.–26.01.', 'parties': {'CDU/CSU': 26.0, 'SPD': 14.0, 'GRÜNE': 12.0, 'FDP': 3.0, 'LINKE': 11.0, 'AfD': 24.0, 'BSW': 3.0, 'Sonstige': 7.0, 'Nichtwähler/ Unentschl.': 28.0}, 'institute_id': 'forsa', 'provider': 'Wahlrecht.de', 'source': 'html_scraper', 'scope': 'federal', 'election_id': 'Bundestagswahl', 'method_id': '99', 'date_downloaded': '2026-02-10T19:54:06.090503'}
+2026-02-10 19:54:06,097 - forsa - INFO -   ... and 646 more
+2026-02-10 19:54:06,097 - forsa - INFO - Inserted 649 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:54:06,097 - forsa - INFO - Historic URLs marked as processed
+2026-02-10 19:54:06,097 - forsa - INFO - Total inserted: 1238
+2026-02-10 19:54:40,641 - runner - INFO - Discovered 25 HTML workers
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/1999.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2000.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2001.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2002.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2003.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2004.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2005.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2006.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2007.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2008.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/forsa/2013.htm
+2026-02-10 19:54:40,641 - forsa - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:54:40,641 - forsa - INFO - Processing 1 URLs for forsa
+2026-02-10 19:54:40,641 - forsa - INFO - Processing: https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:54:43,775 - forsa - INFO - Inserted 649 polls, skipped 0 duplicates
+2026-02-10 19:54:43,775 - forsa - INFO - Inserted 649 polls from https://www.wahlrecht.de/umfragen/forsa.htm
+2026-02-10 19:54:43,775 - forsa - INFO - Total inserted: 649
+2026-02-10 19:54:43,776 - yougov - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/yougov.htm
+2026-02-10 19:54:43,776 - yougov - INFO - Processing 1 URLs for yougov
+2026-02-10 19:54:43,776 - yougov - INFO - Processing: https://www.wahlrecht.de/umfragen/yougov.htm
+2026-02-10 19:54:46,510 - yougov - INFO - Inserted 126 polls, skipped 0 duplicates
+2026-02-10 19:54:46,510 - yougov - INFO - Inserted 126 polls from https://www.wahlrecht.de/umfragen/yougov.htm
+2026-02-10 19:54:46,510 - yougov - INFO - Total inserted: 126
+2026-02-10 19:54:46,511 - infratest - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/dimap/2001.htm
+2026-02-10 19:54:46,511 - infratest - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/dimap/2002.htm
+2026-02-10 19:54:46,511 - infratest - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/dimap/2005.htm
+2026-02-10 19:54:46,511 - infratest - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/dimap/2009.htm
+2026-02-10 19:54:46,511 - infratest - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/dimap/2013.htm
+2026-02-10 19:54:46,511 - infratest - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/dimap/2017.htm
+2026-02-10 19:54:46,511 - infratest - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/dimap/2021.htm
+2026-02-10 19:54:46,511 - infratest - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/dimap.htm
+2026-02-10 19:54:46,511 - infratest - INFO - Processing 1 URLs for infratest
+2026-02-10 19:54:46,511 - infratest - INFO - Processing: https://www.wahlrecht.de/umfragen/dimap.htm
+2026-02-10 19:54:49,385 - infratest - INFO - Inserted 281 polls, skipped 0 duplicates
+2026-02-10 19:54:49,385 - infratest - INFO - Inserted 281 polls from https://www.wahlrecht.de/umfragen/dimap.htm
+2026-02-10 19:54:49,385 - infratest - INFO - Total inserted: 281
+2026-02-10 19:54:49,386 - allensbach - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/allensbach/2002.htm
+2026-02-10 19:54:49,386 - allensbach - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/allensbach/2005.htm
+2026-02-10 19:54:49,386 - allensbach - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/allensbach/2009.htm
+2026-02-10 19:54:49,386 - allensbach - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/allensbach/2013.htm
+2026-02-10 19:54:49,386 - allensbach - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/allensbach/2017.htm
+2026-02-10 19:54:49,386 - allensbach - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/allensbach.htm
+2026-02-10 19:54:49,386 - allensbach - INFO - Processing 1 URLs for allensbach
+2026-02-10 19:54:49,386 - allensbach - INFO - Processing: https://www.wahlrecht.de/umfragen/allensbach.htm
+2026-02-10 19:54:52,061 - allensbach - INFO - Inserted 107 polls, skipped 0 duplicates
+2026-02-10 19:54:52,061 - allensbach - INFO - Inserted 107 polls from https://www.wahlrecht.de/umfragen/allensbach.htm
+2026-02-10 19:54:52,062 - allensbach - INFO - Total inserted: 107
+2026-02-10 19:54:52,062 - verian - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/emnid/1998.htm
+2026-02-10 19:54:52,062 - verian - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/emnid/2002.htm
+2026-02-10 19:54:52,062 - verian - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/emnid/2005.htm
+2026-02-10 19:54:52,062 - verian - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/emnid/2009.htm
+2026-02-10 19:54:52,062 - verian - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/emnid/2013.htm
+2026-02-10 19:54:52,062 - verian - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/emnid/2017.htm
+2026-02-10 19:54:52,062 - verian - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/emnid/2021.htm
+2026-02-10 19:54:52,062 - verian - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/emnid.htm
+2026-02-10 19:54:52,062 - verian - INFO - Processing 8 URLs for verian
+2026-02-10 19:54:52,062 - verian - INFO - Processing: https://www.wahlrecht.de/umfragen/emnid/1998.htm
+2026-02-10 19:54:54,806 - verian - ERROR - [verian] Could not identify party columns using config: {'url': 'https://www.wahlrecht.de/umfragen/emnid/1998.htm', 'drop_footer': 4}
+2026-02-10 19:54:54,806 - verian - WARNING - [verian] Normalization produced no rows for https://www.wahlrecht.de/umfragen/emnid/1998.htm
+2026-02-10 19:54:54,806 - verian - WARNING - No data found at https://www.wahlrecht.de/umfragen/emnid/1998.htm
+2026-02-10 19:54:54,807 - verian - INFO - Processing: https://www.wahlrecht.de/umfragen/emnid/2002.htm
+2026-02-10 19:54:57,193 - verian - INFO - Inserted 23 polls, skipped 0 duplicates
+2026-02-10 19:54:57,193 - verian - INFO - Inserted 23 polls from https://www.wahlrecht.de/umfragen/emnid/2002.htm
+2026-02-10 19:54:57,193 - verian - INFO - Processing: https://www.wahlrecht.de/umfragen/emnid/2005.htm
+2026-02-10 19:54:59,461 - verian - INFO - Inserted 49 polls, skipped 0 duplicates
+2026-02-10 19:54:59,461 - verian - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/emnid/2005.htm
+2026-02-10 19:54:59,461 - verian - INFO - Processing: https://www.wahlrecht.de/umfragen/emnid/2009.htm
+2026-02-10 19:55:00,576 - verian - ERROR - Error processing https://www.wahlrecht.de/umfragen/emnid/2009.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/emnid/2009.htm
+2026-02-10 19:55:00,576 - verian - INFO - Processing: https://www.wahlrecht.de/umfragen/emnid/2013.htm
+2026-02-10 19:55:03,028 - verian - INFO - Inserted 242 polls, skipped 0 duplicates
+2026-02-10 19:55:03,028 - verian - INFO - Inserted 242 polls from https://www.wahlrecht.de/umfragen/emnid/2013.htm
+2026-02-10 19:55:03,028 - verian - INFO - Processing: https://www.wahlrecht.de/umfragen/emnid/2017.htm
+2026-02-10 19:55:04,144 - verian - ERROR - Error processing https://www.wahlrecht.de/umfragen/emnid/2017.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/emnid/2017.htm
+2026-02-10 19:55:04,145 - verian - INFO - Processing: https://www.wahlrecht.de/umfragen/emnid/2021.htm
+2026-02-10 19:55:05,263 - verian - ERROR - Error processing https://www.wahlrecht.de/umfragen/emnid/2021.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/emnid/2021.htm
+2026-02-10 19:55:05,263 - verian - INFO - Processing: https://www.wahlrecht.de/umfragen/emnid.htm
+2026-02-10 19:55:07,942 - verian - INFO - Inserted 547 polls, skipped 0 duplicates
+2026-02-10 19:55:07,942 - verian - INFO - Inserted 547 polls from https://www.wahlrecht.de/umfragen/emnid.htm
+2026-02-10 19:55:07,942 - verian - INFO - Historic URLs marked as processed
+2026-02-10 19:55:07,942 - verian - INFO - Total inserted: 861
+2026-02-10 19:55:07,943 - insa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/insa/2013.htm
+2026-02-10 19:55:07,943 - insa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/insa/2017.htm
+2026-02-10 19:55:07,943 - insa - DEBUG - Skipping already processed historic URL: https://www.wahlrecht.de/umfragen/insa/2021.htm
+2026-02-10 19:55:07,943 - insa - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/insa.htm
+2026-02-10 19:55:07,943 - insa - INFO - Processing 1 URLs for insa
+2026-02-10 19:55:07,943 - insa - INFO - Processing: https://www.wahlrecht.de/umfragen/insa.htm
+2026-02-10 19:55:11,137 - insa - INFO - Inserted 455 polls, skipped 0 duplicates
+2026-02-10 19:55:11,137 - insa - INFO - Inserted 455 polls from https://www.wahlrecht.de/umfragen/insa.htm
+2026-02-10 19:55:11,137 - insa - INFO - Total inserted: 455
+2026-02-10 19:55:11,138 - gms - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/gms/projektion-2005.htm
+2026-02-10 19:55:11,138 - gms - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/gms/projektion-2009.htm
+2026-02-10 19:55:11,138 - gms - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/gms/projektion-2013.htm
+2026-02-10 19:55:11,138 - gms - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/gms/projektion-2017.htm
+2026-02-10 19:55:11,138 - gms - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/gms.htm
+2026-02-10 19:55:11,138 - gms - INFO - Processing 5 URLs for gms
+2026-02-10 19:55:11,138 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2005.htm
+2026-02-10 19:55:13,779 - gms - INFO - Inserted 38 polls, skipped 0 duplicates
+2026-02-10 19:55:13,779 - gms - INFO - Inserted 38 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2005.htm
+2026-02-10 19:55:13,779 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2009.htm
+2026-02-10 19:55:16,074 - gms - INFO - Inserted 49 polls, skipped 0 duplicates
+2026-02-10 19:55:16,074 - gms - INFO - Inserted 49 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2009.htm
+2026-02-10 19:55:16,074 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2013.htm
+2026-02-10 19:55:18,349 - gms - INFO - Inserted 50 polls, skipped 0 duplicates
+2026-02-10 19:55:18,349 - gms - INFO - Inserted 50 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2013.htm
+2026-02-10 19:55:18,349 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms/projektion-2017.htm
+2026-02-10 19:55:20,700 - gms - INFO - Inserted 45 polls, skipped 1 duplicates
+2026-02-10 19:55:20,700 - gms - INFO - Inserted 45 polls from https://www.wahlrecht.de/umfragen/gms/projektion-2017.htm
+2026-02-10 19:55:20,700 - gms - INFO - Processing: https://www.wahlrecht.de/umfragen/gms.htm
+2026-02-10 19:55:22,990 - gms - INFO - Inserted 73 polls, skipped 0 duplicates
+2026-02-10 19:55:22,990 - gms - INFO - Inserted 73 polls from https://www.wahlrecht.de/umfragen/gms.htm
+2026-02-10 19:55:22,990 - gms - INFO - Total inserted: 255
+2026-02-10 19:55:22,990 - forsa_2001 - ERROR - Error in forsa_2001: Subclasses must implement build_table()
+2026-02-10 19:55:22,991 - forschwahlen - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forschungsgruppe/2002.htm
+2026-02-10 19:55:22,991 - forschwahlen - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forschungsgruppe/2005.htm
+2026-02-10 19:55:22,991 - forschwahlen - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forschungsgruppe/2009.htm
+2026-02-10 19:55:22,991 - forschwahlen - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forschungsgruppe/2013.htm
+2026-02-10 19:55:22,991 - forschwahlen - DEBUG - Including historic URL: https://www.wahlrecht.de/umfragen/forschungsgruppe/2017.htm
+2026-02-10 19:55:22,991 - forschwahlen - DEBUG - Including current URL: https://www.wahlrecht.de/umfragen/forschungsgruppe.htm
+2026-02-10 19:55:22,991 - forschwahlen - INFO - Processing 6 URLs for forschwahlen
+2026-02-10 19:55:22,991 - forschwahlen - INFO - Processing: https://www.wahlrecht.de/umfragen/forschungsgruppe/2002.htm
+2026-02-10 19:55:24,472 - forschwahlen - ERROR - Error processing https://www.wahlrecht.de/umfragen/forschungsgruppe/2002.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/forschungsgruppe/2002.htm
+2026-02-10 19:55:24,473 - forschwahlen - INFO - Processing: https://www.wahlrecht.de/umfragen/forschungsgruppe/2005.htm
+2026-02-10 19:55:25,593 - forschwahlen - ERROR - Error processing https://www.wahlrecht.de/umfragen/forschungsgruppe/2005.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/forschungsgruppe/2005.htm
+2026-02-10 19:55:25,593 - forschwahlen - INFO - Processing: https://www.wahlrecht.de/umfragen/forschungsgruppe/2009.htm
+2026-02-10 19:55:26,705 - forschwahlen - ERROR - Error processing https://www.wahlrecht.de/umfragen/forschungsgruppe/2009.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/forschungsgruppe/2009.htm
+2026-02-10 19:55:26,705 - forschwahlen - INFO - Processing: https://www.wahlrecht.de/umfragen/forschungsgruppe/2013.htm
+2026-02-10 19:55:27,822 - forschwahlen - ERROR - Error processing https://www.wahlrecht.de/umfragen/forschungsgruppe/2013.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/forschungsgruppe/2013.htm
+2026-02-10 19:55:27,823 - forschwahlen - INFO - Processing: https://www.wahlrecht.de/umfragen/forschungsgruppe/2017.htm
+2026-02-10 19:55:28,934 - forschwahlen - ERROR - Error processing https://www.wahlrecht.de/umfragen/forschungsgruppe/2017.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/forschungsgruppe/2017.htm
+2026-02-10 19:55:28,934 - forschwahlen - INFO - Processing: https://www.wahlrecht.de/umfragen/forschungsgruppe.htm
+2026-02-10 19:55:30,093 - forschwahlen - ERROR - Error processing https://www.wahlrecht.de/umfragen/forschungsgruppe.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/forschungsgruppe.htm
+2026-02-10 19:55:30,094 - forschwahlen - INFO - Historic URLs marked as processed
+2026-02-10 19:55:30,095 - forschwahlen - INFO - Total inserted: 0
+2026-02-10 19:55:30,097 - wahlrecht_hamburg - INFO - Processing 3 URLs for wahlrecht_hamburg
+2026-02-10 19:55:30,097 - wahlrecht_hamburg - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/hamburg.htm
+2026-02-10 19:55:31,810 - wahlrecht_hamburg - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'PIRATEN', 'AfD', 'Sonstige']
+2026-02-10 19:55:31,841 - wahlrecht_hamburg - INFO - Inserted 60 polls, skipped 0 duplicates
+2026-02-10 19:55:31,841 - wahlrecht_hamburg - INFO - Inserted 60 polls from https://www.wahlrecht.de/umfragen/landtage/hamburg.htm
+2026-02-10 19:55:31,841 - wahlrecht_hamburg - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/hamburg.htm
+2026-02-10 19:55:31,849 - wahlrecht_hamburg - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GAL', 'FDP', 'LINKE', 'Sonstige']
+2026-02-10 19:55:31,872 - wahlrecht_hamburg - INFO - Inserted 63 polls, skipped 0 duplicates
+2026-02-10 19:55:31,873 - wahlrecht_hamburg - INFO - Inserted 63 polls from https://www.wahlrecht.de/umfragen/landtage/hamburg.htm
+2026-02-10 19:55:31,873 - wahlrecht_hamburg - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/hamburg.htm
+2026-02-10 19:55:31,880 - wahlrecht_hamburg - DEBUG - Table columns: ['Institut', 'Quelle', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GAL', 'FDP', 'Offensive (Ex-Schill)', 'Pro DM Schill', 'Sonstige']
+2026-02-10 19:55:31,896 - wahlrecht_hamburg - INFO - Inserted 44 polls, skipped 0 duplicates
+2026-02-10 19:55:31,896 - wahlrecht_hamburg - INFO - Inserted 44 polls from https://www.wahlrecht.de/umfragen/landtage/hamburg.htm
+2026-02-10 19:55:31,896 - wahlrecht_hamburg - INFO - Total inserted: 167
+2026-02-10 19:55:31,897 - wahlrecht_nsach - INFO - Processing 3 URLs for wahlrecht_nsach
+2026-02-10 19:55:31,897 - wahlrecht_nsach - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/niedersachsen.htm
+2026-02-10 19:55:33,396 - wahlrecht_nsach - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'AfD', 'Sonstige']
+2026-02-10 19:55:33,428 - wahlrecht_nsach - INFO - Inserted 59 polls, skipped 0 duplicates
+2026-02-10 19:55:33,428 - wahlrecht_nsach - INFO - Inserted 59 polls from https://www.wahlrecht.de/umfragen/landtage/niedersachsen.htm
+2026-02-10 19:55:33,428 - wahlrecht_nsach - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/niedersachsen.htm
+2026-02-10 19:55:33,435 - wahlrecht_nsach - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'PIRATEN', 'Sonstige']
+2026-02-10 19:55:33,446 - wahlrecht_nsach - INFO - Inserted 21 polls, skipped 0 duplicates
+2026-02-10 19:55:33,446 - wahlrecht_nsach - INFO - Inserted 21 polls from https://www.wahlrecht.de/umfragen/landtage/niedersachsen.htm
+2026-02-10 19:55:33,446 - wahlrecht_nsach - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/niedersachsen.htm
+2026-02-10 19:55:33,453 - wahlrecht_nsach - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'Sonstige']
+2026-02-10 19:55:33,470 - wahlrecht_nsach - INFO - Inserted 47 polls, skipped 0 duplicates
+2026-02-10 19:55:33,470 - wahlrecht_nsach - INFO - Inserted 47 polls from https://www.wahlrecht.de/umfragen/landtage/niedersachsen.htm
+2026-02-10 19:55:33,470 - wahlrecht_nsach - INFO - Total inserted: 127
+2026-02-10 19:55:33,471 - wahlrecht_bremen - INFO - Processing 2 URLs for wahlrecht_bremen
+2026-02-10 19:55:33,471 - wahlrecht_bremen - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/bremen.htm
+2026-02-10 19:55:34,957 - wahlrecht_bremen - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Befragte.1', 'Datum', 'Unnamed: 5', 'CDU', 'CDU.1', 'SPD', 'SPD.1', 'GRÜNE', 'GRÜNE.1', 'FDP', 'FDP.1', 'LINKE', 'LINKE.1', 'AfD', 'AfD.1', 'BIW/BD', 'BIW/BD.1', 'Sonstige', 'Sonstige.1']
+2026-02-10 19:55:34,981 - wahlrecht_bremen - INFO - Inserted 30 polls, skipped 0 duplicates
+2026-02-10 19:55:34,981 - wahlrecht_bremen - INFO - Inserted 30 polls from https://www.wahlrecht.de/umfragen/landtage/bremen.htm
+2026-02-10 19:55:34,981 - wahlrecht_bremen - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/bremen.htm
+2026-02-10 19:55:34,987 - wahlrecht_bremen - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Befragte.1', 'Datum', 'Unnamed: 5', 'CDU', 'CDU.1', 'SPD', 'SPD.1', 'GRÜNE', 'GRÜNE.1', 'FDP', 'FDP.1', 'LINKE', 'LINKE.1', 'Sonstige', 'Sonstige.1', 'Unnamed: 18']
+2026-02-10 19:55:34,998 - wahlrecht_bremen - INFO - Inserted 17 polls, skipped 0 duplicates
+2026-02-10 19:55:34,998 - wahlrecht_bremen - INFO - Inserted 17 polls from https://www.wahlrecht.de/umfragen/landtage/bremen.htm
+2026-02-10 19:55:34,998 - wahlrecht_bremen - INFO - Total inserted: 47
+2026-02-10 19:55:34,999 - wahlrecht_brand - INFO - Processing 2 URLs for wahlrecht_brand
+2026-02-10 19:55:34,999 - wahlrecht_brand - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/brandenburg.htm
+2026-02-10 19:55:36,621 - wahlrecht_brand - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'AfD', 'BVB/FW', 'BSW', 'Sonstige']
+2026-02-10 19:55:36,674 - wahlrecht_brand - INFO - Inserted 67 polls, skipped 0 duplicates
+2026-02-10 19:55:36,674 - wahlrecht_brand - INFO - Inserted 67 polls from https://www.wahlrecht.de/umfragen/landtage/brandenburg.htm
+2026-02-10 19:55:36,674 - wahlrecht_brand - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/brandenburg.htm
+2026-02-10 19:55:36,682 - wahlrecht_brand - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'PIRATEN', 'AfD', 'BVB/FW', 'Sonstige']
+2026-02-10 19:55:36,693 - wahlrecht_brand - INFO - Inserted 27 polls, skipped 0 duplicates
+2026-02-10 19:55:36,693 - wahlrecht_brand - INFO - Inserted 27 polls from https://www.wahlrecht.de/umfragen/landtage/brandenburg.htm
+2026-02-10 19:55:36,694 - wahlrecht_brand - INFO - Total inserted: 94
+2026-02-10 19:55:36,694 - wahlrecht_bawu - INFO - Processing 2 URLs for wahlrecht_bawu
+2026-02-10 19:55:36,694 - wahlrecht_bawu - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/baden-wuerttemberg.htm
+2026-02-10 19:55:38,218 - wahlrecht_bawu - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'AfD', 'Sonstige']
+2026-02-10 19:55:38,266 - wahlrecht_bawu - INFO - Inserted 91 polls, skipped 0 duplicates
+2026-02-10 19:55:38,266 - wahlrecht_bawu - INFO - Inserted 91 polls from https://www.wahlrecht.de/umfragen/landtage/baden-wuerttemberg.htm
+2026-02-10 19:55:38,266 - wahlrecht_bawu - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/baden-wuerttemberg.htm
+2026-02-10 19:55:38,274 - wahlrecht_bawu - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'Sonstige']
+2026-02-10 19:55:38,302 - wahlrecht_bawu - INFO - Inserted 76 polls, skipped 0 duplicates
+2026-02-10 19:55:38,303 - wahlrecht_bawu - INFO - Inserted 76 polls from https://www.wahlrecht.de/umfragen/landtage/baden-wuerttemberg.htm
+2026-02-10 19:55:38,303 - wahlrecht_bawu - INFO - Total inserted: 167
+2026-02-10 19:55:38,303 - rheinland-pfalz - INFO - Processing 1 URLs for rheinland-pfalz
+2026-02-10 19:55:38,303 - rheinland-pfalz - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/rheinland-pfalz.htm
+2026-02-10 19:55:39,905 - rheinland-pfalz - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'AfD', 'FW', 'Sonstige', 'Unnamed: 13']
+2026-02-10 19:55:39,935 - rheinland-pfalz - INFO - Inserted 54 polls, skipped 0 duplicates
+2026-02-10 19:55:39,935 - rheinland-pfalz - INFO - Inserted 54 polls from https://www.wahlrecht.de/umfragen/landtage/rheinland-pfalz.htm
+2026-02-10 19:55:39,935 - rheinland-pfalz - INFO - Total inserted: 54
+2026-02-10 19:55:39,936 - schleswig-holstein - INFO - Processing 1 URLs for schleswig-holstein
+2026-02-10 19:55:39,936 - schleswig-holstein - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/schleswig-holstein.htm
+2026-02-10 19:55:41,497 - schleswig-holstein - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'SSW', 'PIRATEN', 'AfD', 'Sonstige']
+2026-02-10 19:55:41,521 - schleswig-holstein - INFO - Inserted 34 polls, skipped 0 duplicates
+2026-02-10 19:55:41,521 - schleswig-holstein - INFO - Inserted 34 polls from https://www.wahlrecht.de/umfragen/landtage/schleswig-holstein.htm
+2026-02-10 19:55:41,521 - schleswig-holstein - INFO - Total inserted: 34
+2026-02-10 19:55:41,522 - saarland - INFO - Processing 1 URLs for saarland
+2026-02-10 19:55:41,522 - saarland - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/saarland.htm
+2026-02-10 19:55:43,051 - saarland - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'AfD', 'Sonstige']
+2026-02-10 19:55:43,066 - saarland - INFO - Inserted 16 polls, skipped 0 duplicates
+2026-02-10 19:55:43,066 - saarland - INFO - Inserted 16 polls from https://www.wahlrecht.de/umfragen/landtage/saarland.htm
+2026-02-10 19:55:43,066 - saarland - INFO - Total inserted: 16
+2026-02-10 19:55:43,067 - bayern - INFO - Processing 1 URLs for bayern
+2026-02-10 19:55:43,067 - bayern - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:55:44,803 - bayern - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CSU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'FW', 'AfD', 'Sonstige']
+2026-02-10 19:55:44,867 - bayern - INFO - Inserted 142 polls, skipped 0 duplicates
+2026-02-10 19:55:44,867 - bayern - INFO - Inserted 142 polls from https://www.wahlrecht.de/umfragen/landtage/bayern.htm
+2026-02-10 19:55:44,867 - bayern - INFO - Total inserted: 142
+2026-02-10 19:55:44,868 - wahlrecht_hessen - INFO - Processing 3 URLs for wahlrecht_hessen
+2026-02-10 19:55:44,868 - wahlrecht_hessen - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/hessen.htm
+2026-02-10 19:55:46,484 - wahlrecht_hessen - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'AfD', 'FW', 'Sonstige']
+2026-02-10 19:55:46,516 - wahlrecht_hessen - INFO - Inserted 53 polls, skipped 0 duplicates
+2026-02-10 19:55:46,516 - wahlrecht_hessen - INFO - Inserted 53 polls from https://www.wahlrecht.de/umfragen/landtage/hessen.htm
+2026-02-10 19:55:46,516 - wahlrecht_hessen - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/hessen.htm
+2026-02-10 19:55:46,524 - wahlrecht_hessen - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'PIRATEN', 'AfD', 'Sonstige']
+2026-02-10 19:55:46,532 - wahlrecht_hessen - INFO - Inserted 14 polls, skipped 0 duplicates
+2026-02-10 19:55:46,532 - wahlrecht_hessen - INFO - Inserted 14 polls from https://www.wahlrecht.de/umfragen/landtage/hessen.htm
+2026-02-10 19:55:46,532 - wahlrecht_hessen - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/hessen.htm
+2026-02-10 19:55:46,539 - wahlrecht_hessen - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'Sonstige']
+2026-02-10 19:55:46,569 - wahlrecht_hessen - INFO - Inserted 63 polls, skipped 0 duplicates
+2026-02-10 19:55:46,569 - wahlrecht_hessen - INFO - Inserted 63 polls from https://www.wahlrecht.de/umfragen/landtage/hessen.htm
+2026-02-10 19:55:46,569 - wahlrecht_hessen - INFO - Total inserted: 130
+2026-02-10 19:55:46,570 - sachsenanhalt - INFO - Processing 1 URLs for sachsenanhalt
+2026-02-10 19:55:46,570 - sachsenanhalt - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/sachsenanhalt.htm
+2026-02-10 19:55:48,047 - sachsenanhalt - ERROR - Error processing https://www.wahlrecht.de/umfragen/landtage/sachsenanhalt.htm: 404 Client Error: Not Found for url: https://www.wahlrecht.de/umfragen/landtage/sachsenanhalt.htm
+2026-02-10 19:55:48,049 - sachsenanhalt - INFO - Total inserted: 0
+2026-02-10 19:55:48,051 - wahlrecht_meckpom - INFO - Processing 2 URLs for wahlrecht_meckpom
+2026-02-10 19:55:48,051 - wahlrecht_meckpom - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/mecklenburg-vorpommern.htm
+2026-02-10 19:55:49,633 - wahlrecht_meckpom - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'AfD', 'NPD', 'BSW', 'Sonstige']
+2026-02-10 19:55:49,670 - wahlrecht_meckpom - INFO - Inserted 58 polls, skipped 0 duplicates
+2026-02-10 19:55:49,670 - wahlrecht_meckpom - INFO - Inserted 58 polls from https://www.wahlrecht.de/umfragen/landtage/mecklenburg-vorpommern.htm
+2026-02-10 19:55:49,670 - wahlrecht_meckpom - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/mecklenburg-vorpommern.htm
+2026-02-10 19:55:49,677 - wahlrecht_meckpom - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'NPD', 'Sonstige']
+2026-02-10 19:55:49,702 - wahlrecht_meckpom - INFO - Inserted 53 polls, skipped 0 duplicates
+2026-02-10 19:55:49,702 - wahlrecht_meckpom - INFO - Inserted 53 polls from https://www.wahlrecht.de/umfragen/landtage/mecklenburg-vorpommern.htm
+2026-02-10 19:55:49,702 - wahlrecht_meckpom - INFO - Total inserted: 111
+2026-02-10 19:55:49,702 - nrw - INFO - Processing 1 URLs for nrw
+2026-02-10 19:55:49,702 - nrw - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/nrw.htm
+2026-02-10 19:55:51,318 - nrw - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'AfD', 'Sonstige', 'Unnamed: 12']
+2026-02-10 19:55:51,354 - nrw - INFO - Inserted 61 polls, skipped 0 duplicates
+2026-02-10 19:55:51,354 - nrw - INFO - Inserted 61 polls from https://www.wahlrecht.de/umfragen/landtage/nrw.htm
+2026-02-10 19:55:51,354 - nrw - INFO - Total inserted: 61
+2026-02-10 19:55:51,355 - berlin - INFO - Processing 1 URLs for berlin
+2026-02-10 19:55:51,355 - berlin - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/berlin.htm
+2026-02-10 19:55:53,023 - berlin - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'PIRATEN', 'AfD', 'Sonstige']
+2026-02-10 19:55:53,108 - berlin - INFO - Inserted 188 polls, skipped 0 duplicates
+2026-02-10 19:55:53,108 - berlin - INFO - Inserted 188 polls from https://www.wahlrecht.de/umfragen/landtage/berlin.htm
+2026-02-10 19:55:53,108 - berlin - INFO - Total inserted: 188
+2026-02-10 19:55:53,109 - sachsen - INFO - Processing 1 URLs for sachsen
+2026-02-10 19:55:53,109 - sachsen - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/sachsen.htm
+2026-02-10 19:55:54,610 - sachsen - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'AfD', 'FW', 'BSW', 'Sonstige']
+2026-02-10 19:55:54,643 - sachsen - INFO - Inserted 47 polls, skipped 0 duplicates
+2026-02-10 19:55:54,643 - sachsen - INFO - Inserted 47 polls from https://www.wahlrecht.de/umfragen/landtage/sachsen.htm
+2026-02-10 19:55:54,643 - sachsen - INFO - Total inserted: 47
+2026-02-10 19:55:54,644 - thueringen - INFO - Processing 1 URLs for thueringen
+2026-02-10 19:55:54,644 - thueringen - INFO - Processing: https://www.wahlrecht.de/umfragen/landtage/thueringen.htm
+2026-02-10 19:55:56,328 - thueringen - DEBUG - Table columns: ['Institut', 'Auftraggeber', 'Befragte', 'Datum', 'Unnamed: 4', 'CDU', 'SPD', 'GRÜNE', 'FDP', 'LINKE', 'AfD', 'BSW', 'Sonstige']
+2026-02-10 19:55:56,391 - thueringen - INFO - Inserted 109 polls, skipped 0 duplicates
+2026-02-10 19:55:56,391 - thueringen - INFO - Inserted 109 polls from https://www.wahlrecht.de/umfragen/landtage/thueringen.htm
+2026-02-10 19:55:56,391 - thueringen - INFO - Total inserted: 109
+2026-02-10 19:55:56,391 - dawum - INFO - Starting DAWUM scraper
+2026-02-10 19:55:56,391 - dawum - INFO - Fetching data from DAWUM API: https://api.dawum.de/
+2026-02-10 19:55:57,957 - dawum - INFO - Processed 3713 surveys from DAWUM
+2026-02-10 19:55:57,977 - dawum - INFO - Prepared 3713 payloads for insertion
+2026-02-10 19:55:59,330 - dawum - INFO - Inserted 3713 DAWUM polls, skipped 0 duplicates
+2026-02-10 19:55:59,330 - dawum - INFO - Successfully inserted 3713 polls from DAWUM

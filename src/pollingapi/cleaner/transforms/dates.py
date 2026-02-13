@@ -1,0 +1,87 @@
+"""Date transformation utilities."""
+
+from datetime import date, datetime
+
+import dateparser
+
+
+def normalize_publish_date(date_str: str, fallback_year: int | None = None) -> date | None:
+    """Parse publish date string to date object.
+
+    Args:
+        date_str: Date string to parse
+        fallback_year: Year to use if not in date string
+
+    Returns:
+        Parsed date or None
+    """
+    if not date_str:
+        return None
+
+    raw = str(date_str).strip()
+
+    # Fast-path common ISO formats from scrapers / DB.
+    # Examples: 2026-01-31, 2026-01-31T00:00:00, 2026-01-31T00:00:00Z
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        pass
+
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00")).date()
+    except ValueError:
+        pass
+
+    settings = {
+        "DATE_ORDER": "DMY",
+        "PREFER_DAY_OF_MONTH": "first",
+        "RETURN_AS_TIMEZONE_AWARE": False,
+    }
+
+    parsed = dateparser.parse(raw, settings=settings)  # type: ignore[arg-type]
+    if parsed:
+        return parsed.date()
+
+    return None
+
+
+def normalize_survey_dates(
+    start_date_str: str | None,
+    end_date_str: str | None,
+    zeitraum: str | None = None,
+    publish_date: date | None = None,
+) -> tuple[date | None, date | None]:
+    """Normalize survey start and end dates.
+
+    Args:
+        start_date_str: Survey start date string
+        end_date_str: Survey end date string
+        zeitraum: Zeitraum text (e.g., "01.–05.03.2024")
+        publish_date: Publish date for fallback year
+
+    Returns:
+        Tuple of (start_date, end_date)
+    """
+    start_date = None
+    end_date = None
+
+    # Parse explicit dates
+    if start_date_str:
+        start_date = normalize_publish_date(start_date_str)
+    if end_date_str:
+        end_date = normalize_publish_date(end_date_str)
+
+    # Try parsing Zeitraum if dates not found
+    if not (start_date and end_date) and zeitraum:
+        from pollingapi.cleaner.steps.normalize_timeframe import parse_timeframe
+
+        # Extract year from publish_date for parsing zeitraum without year
+        default_year = publish_date.year if publish_date else None
+
+        start_str, end_str = parse_timeframe(zeitraum, default_year=default_year)
+        if start_str and not start_date:
+            start_date = normalize_publish_date(start_str)
+        if end_str and not end_date:
+            end_date = normalize_publish_date(end_str)
+
+    return start_date, end_date

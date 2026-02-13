@@ -1,157 +1,446 @@
-# polling-api
+# Zweitstimme
 
-FastAPI service that ingests German polling data, stores the raw payloads in Postgres, and exposes download/export endpoints for downstream consumers. A hosted test deployment with interactive docs lives at https://api.fasttrack29.com/docs.
+German election polling data collection, cleaning, and API service.
 
-## Features
-- `POST /ingest/polls` accepts batches of raw polls and persists them to the `polls_raw` table via SQLAlchemy.
-- Read endpoints serve cleaned JSON (`GET /polls`) and raw data via file/streaming paths under `/raw`.
-- File exports stream pre-generated snapshots from the `data/` directory (JSON, CSV, SQLite, Parquet).
-- Startup bootstrap automatically ensures the configured Postgres database exists and applies metadata.
-- Optional data fetcher downloads the latest release assets from a private GitHub repo to refresh `data/`.
+## Overview
 
-## Requirements
-- Python 3.13 with [uv](https://github.com/astral-sh/uv) installed
-- Docker + Docker Compose (for Postgres and/or running the API in containers)
-- Local `.env` providing database credentials and optional API metadata (see below)
+Zweitstimme is a unified Python application for collecting, cleaning, and serving German election polling data. It scrapes polling data from various sources (Wahlrecht.de, DAWUM API) and provides a cleaned, normalized dataset via REST API.
 
-## Local Development
-1. **Install dependencies**
-   ```bash
-   uv sync
-   ```
-2. **Create `.env`** (example values match `compose.yaml`):
-   ```bash
-   cat <<'ENV' > .env
-   DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/pollingapi_dev
-   ASYNC_DATABASE_URL=${DATABASE_URL}
-   API_TITLE=Zweitstimme Polling API
-   API_VERSION=0.0.1
-   API_DESCRIPTION=The one stop API for German elections.
-   GITHUB_TOKEN=
-   GITHUB_REPO=
-   ENV
-   ```
-3. **Start Postgres**
-   ```bash
-   docker compose up db
-   ```
-4. **Create/upgrade the schema**
-   ```bash
-   uv run python scripts/init_db.py
-   ```
-5. **Run the API** (reload + auto-watch):
-   ```bash
-   uv run fastapi dev app/main.py
-   ```
-6. Visit http://localhost:8000/docs for interactive API docs; `/health` returns a simple status payload.
+## Architecture
 
-### Docker Compose Dev Stack
-Instead of running the API directly, use the dev compose file which mounts your working tree and keeps a persistent uv virtualenv:
-```bash
-docker compose -f dev.compose.yaml up --build
 ```
-This brings up the Postgres service, runs a one-shot `db-init` job to apply the `app/models.py` metadata, and then starts the API with automatic restarts. The production-style manifest is `compose.yaml` and uses `fastapi run` inside the container image.
-
-### Collect polls via pollv (CLI container)
-The poll scraper CLI is built into the `poll-vault` image but exposed as `pollv`. Bring up the usual dev stack (DB, db-init, API) as above, then run the scraper ad hoc using the `scraper` profile:
-```bash
-# start db + api (if not already running)
-docker compose -f dev.compose.yaml up -d db db-init api
-
-# trigger the scraper (image entrypoint runs `uv run --frozen pollv`, we pass `run-all`)
-docker compose -f dev.compose.yaml run --rm pollv run-all
+zweitstimme/
+├── json/                      # Reference data (primary keys for relations)
+│   ├── institutes.json        # Polling institute IDs
+│   ├── methods.json           # Survey method IDs
+│   ├── parliaments.json       # Parliament/election IDs
+│   ├── parties.json           # Political party IDs
+│   └── taskers.json           # Tasker/commissioner IDs
+├── src/pollingapi/
+│   ├── main.py                # FastAPI application
+│   ├── cli.py                 # CLI entry points (zweitstimme command)
+│   ├── database.py            # SQLite database configuration
+│   ├── database_seed.py       # JSON-based database seeding
+│   ├── models.py              # SQLAlchemy ORM models
+│   ├── schemas.py             # Pydantic schemas
+│   ├── api/                   # API routers
+│   │   ├── polls.py
+│   │   ├── download.py
+│   │   ├── dictionaries.py
+│   │   ├── elections.py
+│   │   └── webhooks.py
+│   ├── scraper/               # Web scraping module
+│   │   ├── base.py            # Base scraper class
+│   │   ├── runner.py          # Scraper orchestration
+│   │   ├── wahlrecht.py       # Wahlrecht.de scrapers
+│   │   ├── dawum.py           # DAWUM API scraper
+│   │   └── workers/           # Scraper worker configs
+│   │       ├── sites_bund/    # Federal election scrapers
+│   │       └── sites_land/    # State election scrapers
+│   └── cleaner/               # Data cleaning ETL pipeline
+│       ├── pipeline.py
+│       └── mappings/          # Data normalization mappings
+├── data/                      # SQLite database and exports
+│   └── polling.db             # Main database file
+├── pyproject.toml
+└── README.md
 ```
-The scraper container exits after completion and does not auto-restart.
 
-### Data-cleaner CLI via docker compose
-The `data-cleaner` service in `dev.compose.yaml` points the CLI image at the dev database and mounts `./data/export` to `/app/data/export` (shared with the API container). The default command runs `db export --output-dir /app/data/export --format json`, producing `polls.json`, `poll_results.json`, and `raw_polls.json` inside `data/export/` on the host:
+## Quick Start
+
+### Installation
+
 ```bash
-# one-shot export (default command)
-docker compose -f dev.compose.yaml run --rm data-cleaner
+# Clone and navigate to project
+cd zweitstimme
 
-# other commands (override the command as needed)
-docker compose -f dev.compose.yaml run --rm data-cleaner db ping
-docker compose -f dev.compose.yaml run --rm data-cleaner db init
-docker compose -f dev.compose.yaml run --rm data-cleaner db seed
-docker compose -f dev.compose.yaml run --rm data-cleaner db tables
-docker compose -f dev.compose.yaml run --rm data-cleaner db polls-head --limit 50
-docker compose -f dev.compose.yaml run --rm data-cleaner db export-raw --output-path /data/export/polls_raw.json
-docker compose -f dev.compose.yaml run --rm data-cleaner pipeline process-new
-docker compose -f dev.compose.yaml run --rm data-cleaner pipeline inspect 123   # replace 123 with polls_raw.id
-docker compose -f dev.compose.yaml run --rm data-cleaner party-mapping
+# Install with UV (recommended)
+uv sync
+
+# Or install with pip
+pip install -e .
 ```
-Ensure `db` and `db-init` are up before commands that read or write tables.
 
-### Daily export helper (exclude raw polls)
-Export all tables except `polls_raw` to a JSON file (default `data/daily_export.json`):
+### Initialize Database
+
 ```bash
-uv run python scripts/export_daily.py
-# or choose a different path:
-uv run python scripts/export_daily.py --output data/export-$(date +%F).json
-```
-The script uses `DATABASE_URL` from your `.env`. Output directories are created automatically.
+# Initialize database tables
+zweitstimme db:init
 
-## Environment Variables
-| Name | Purpose | Default |
-| --- | --- | --- |
-| `DATABASE_URL` | Sync SQLAlchemy engine string | `postgresql+psycopg://postgres:postgres@localhost:5432/pollingapi_dev` |
-| `ASYNC_DATABASE_URL` | Async engine string used by ingestion router | Falls back to `DATABASE_URL` |
-| `API_TITLE`, `API_VERSION`, `API_DESCRIPTION` | Customize FastAPI metadata | Hard-coded defaults in `app/main.py` |
-| `GITHUB_TOKEN`, `GITHUB_REPO` | Needed by `app/utils/data_fetcher.py` to pull release assets into `data/` | unset |
+# Seed reference tables from JSON files (institutes, parties, methods, etc.)
+zweitstimme db:seed
+
+# Verify database setup
+zweitstimme db:tables
+```
+
+### Run API Server
+
+```bash
+# Start the API server
+zweitstimme server:start
+
+# With custom host/port
+zweitstimme server:start --host 0.0.0.0 --port 8080
+
+# With auto-reload (development)
+zweitstimme server:start --reload
+```
+
+The API will be available at `http://localhost:8000`
+
+## CLI Commands
+
+Zweitstimme uses a colon-separated command structure for organization:
+
+### Database Commands (`db:*`)
+
+```bash
+# Initialize database tables
+zweitstimme db:init
+
+# Reset database (destructive - drops all tables)
+zweitstimme db:reset --confirm
+
+# Seed reference tables from JSON files
+zweitstimme db:seed
+
+# Seed from Python mappings (legacy)
+zweitstimme db:seed --mapping
+
+# List database tables with row counts
+zweitstimme db:tables
+
+# Verify database connectivity
+zweitstimme db:ping
+
+# Export data to JSON files
+zweitstimme db:export
+```
+
+### Scraper Commands (`scraper:*`)
+
+```bash
+# List all available scraper workers
+zweitstimme scraper:list
+
+# Run all scrapers
+zweitstimme scraper:run all
+
+# Run specific scraper
+zweitstimme scraper:run forsa
+zweitstimme scraper:run bayern
+zweitstimme scraper:run dawum
+
+# Dry run (don't insert to database)
+zweitstimme scraper:run all --dry-run
+
+# Debug mode (verbose logging)
+zweitstimme scraper:run all --debug
+
+# Check scraper status
+zweitstimme scraper:status
+```
+
+### Pipeline Commands (`pipeline:*`)
+
+```bash
+# Run full pipeline (scraper + cleaner)
+zweitstimme pipeline:run
+
+# Run only scraper
+zweitstimme pipeline:run --skip-clean
+
+# Run only cleaner
+zweitstimme pipeline:clean
+
+# Inspect a specific raw poll
+zweitstimme pipeline:inspect 123
+```
+
+## JSON Reference Data
+
+The `json/` directory contains reference data with primary keys that are used throughout the system:
+
+- **`institutes.json`** - Polling institutes (Forsa, INSA, etc.) with their IDs
+- **`methods.json`** - Survey methods (Telefonisch, Online, etc.) with their IDs
+- **`parliaments.json`** - Parliaments/elections (Bundestag, Bayern, etc.) mapped to elections table
+- **`parties.json`** - Political parties (CDU/CSU, SPD, AfD, etc.) with their IDs
+- **`taskers.json`** - Taskers/commissioners (BILD, RTL/n-tv, etc.) with their IDs
+
+These JSON files define the exact primary keys used in the database relations. When seeding with `zweitstimme db:seed`, these IDs are preserved exactly as defined in the JSON.
+
+Example from `parties.json`:
+```json
+{
+  "1": {
+    "Shortcut": "CDU/CSU",
+    "Name": "Christlich Demokratische Union / Christlich-Soziale Union"
+  },
+  "2": {
+    "Shortcut": "SPD",
+    "Name": "Sozialdemokratische Partei Deutschlands"
+  }
+}
+```
+
+## Data Cleaning Pipeline
+
+The cleaning pipeline (`zweitstimme pipeline:clean`) transforms raw scraped data into clean, normalized data:
+
+### Philosophy
+
+- **Never modifies** `polls_raw` table - raw data is preserved
+- Uses **JSON-based mappings** to normalize names to canonical IDs
+- Inserts cleaned data into `polls` and `poll_results` tables
+- Prevents duplicates by checking existing cleaned polls
+
+### JSON Mappings in Cleaning
+
+The cleaner uses the JSON files to map scraper output to canonical IDs:
+
+**Institute Mapping:**
+- Scraper outputs: `"forsa"`, `"INSA"`, `"Allensbach"`
+- JSON maps these to IDs: `2`, `5`, `9`
+- Result: Clean poll has `institute_id = 2` (Forsa)
+
+**Party Mapping:**
+- Scraper outputs: `"AfD"`, `"SPD"`, `"GRÜNE"`
+- JSON maps these to IDs: `7`, `2`, `4`
+- Result: Clean poll results reference party IDs correctly
+
+**Method Mapping:**
+- Scraper outputs: `"Telefonisch"`, `"Online"`, `"Persönlich"`
+- JSON maps these to IDs: `1`, `3`, `2`
+- Result: Clean poll has correct `method_id`
+
+**Election/Parliament Mapping:**
+- Scraper outputs scope: `"bayern"`, `"berlin"`, `"federal"`
+- JSON maps these to parliament IDs: `2`, `3`, `0`
+- Result: Clean poll has correct `election_id`
+
+### Example Transformation
+
+Raw data in `polls_raw`:
+```json
+{
+  "institute_id": "forsa",
+  "parties": "{\"AfD\": 24.0, \"SPD\": 14.0}",
+  "scope": "federal",
+  "respondents": "2.503"
+}
+```
+
+Cleaned data in `polls`:
+```json
+{
+  "institute_id": 2,
+  "scope": "federal",
+  "respondents": 2503
+}
+```
+
+Cleaned data in `poll_results`:
+```json
+[
+  {"party_id": 7, "percentage": 24.0},
+  {"party_id": 2, "percentage": 14.0}
+]
+```
+
+## Scrapers
+
+### Federal Election Scrapers (Bund)
+
+- **allensbach** - Allensbach Institute
+- **forsa** - Forsa polling data
+- **infratest** - Infratest dimap
+- **insa** - INSA polling data
+- **verian** - Verian (formerly Emnid)
+- **gms** - GMS polling
+- **yougov** - YouGov polling
+
+### State Election Scrapers (Land)
+
+- **bayern** - Bavaria state polls
+- **berlin** - Berlin state polls
+- **brandenburg** - Brandenburg state polls
+- **bremen** - Bremen state polls
+- **hamburg** - Hamburg state polls
+- **hessen** - Hesse state polls
+- **mecklenburg-vorpommern** - Mecklenburg-Vorpommern polls
+- **niedersachsen** - Lower Saxony polls
+- **nrw** - North Rhine-Westphalia polls
+- **rheinland-pfalz** - Rhineland-Palatinate polls
+- **saarland** - Saarland polls
+- **sachsen** - Saxony polls
+- **sachsenanhalt** - Saxony-Anhalt polls
+- **schleswig-holstein** - Schleswig-Holstein polls
+- **thüringen** - Thuringia polls
+
+### API Scrapers
+
+- **dawum** - DAWUM API (comprehensive polling data)
+
+## URL Handling Strategy
+
+Scrapers automatically handle historic vs current URLs:
+
+- **Historic URLs** (containing year like `2002.htm`, `2017.htm`) - Processed once and marked as complete
+- **Current URLs** (no year in filename) - Processed on every run to get fresh data
+
+This prevents re-processing old data while ensuring current data is always up-to-date.
+
+## Logging System
+
+Zweitstimme uses a centralized logging system with multiple outputs:
+
+### Log Files
+
+All logs are stored in `data/logs/`:
+
+- **`zweitstimme.log`** - Main application log (all log levels)
+- **`scraper.log`** - Scraper-specific detailed logs
+- **`errors.log`** - Error-level logs only
+
+### Log Format
+
+Logs include:
+- Timestamp
+- Logger name (module)
+- Log level (DEBUG, INFO, WARNING, ERROR)
+- Source file and line number
+- Message
+
+Example:
+```
+2026-02-10 20:00:15,275 - forsa - INFO - [base.py:280] - Processing 1 URLs for forsa
+```
+
+### Debug Mode
+
+Enable debug logging for verbose output:
+
+```bash
+# Run scraper with debug logging
+zweitstimme scraper:run forsa --debug
+
+# This sets log level to DEBUG and shows detailed information
+```
+
+### Log Rotation
+
+Log files automatically rotate when they reach 10 MB, keeping up to 5 backup files. This prevents disk space issues during long-running operations.
+
+## API Endpoints
+
+### Information
+- `GET /` - API information
+- `GET /health` - Health check
+- `GET /docs` - Swagger UI documentation
+
+### Polls
+- `GET /polls/` - Get all cleaned polls
+- `GET /polls/results` - Get all poll results
+- `GET /polls/range?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD` - Filter by date
+- `GET /polls/election/{election_id}` - Filter by election
+
+### Raw Polls
+- `GET /raw/` - Get all raw polls
+- `GET /raw/latest` - Get 100 most recent raw polls
+- `GET /raw/stream` - Stream all raw polls
+
+### Downloads
+- `GET /download/json` - Download polls as JSON
+- `GET /download/sqlite` - Download SQLite database
+- `GET /download/csv` - Download as CSV
+
+### Dictionaries
+- `GET /dict/methods` - List survey methods
+- `GET /dict/parties` - List political parties
+- `GET /dict/providers` - List data providers
+- `GET /dict/institutes` - List polling institutes
+- `GET /dict/elections` - List elections
+
+### Webhooks (requires API secret)
+- `POST /webhooks/scrape` - Trigger scraper
+- `POST /webhooks/clean` - Trigger cleaner
+- `POST /webhooks/pipeline` - Trigger full pipeline
+
+## Configuration
+
+Create a `.env` file:
+
+```env
+# API Configuration
+API_TITLE=Zweitstimme API
+API_VERSION=1.0.0
+API_HOST=0.0.0.0
+API_PORT=8000
+
+# Security
+API_SECRET=your-secret-key
+
+# Database (default: data/polling.db)
+DATABASE_URL=sqlite:///data/polling.db
+
+# GitHub (for data sync)
+GITHUB_TOKEN=your-github-token
+GITHUB_REPO=your-org/data
+```
 
 ## Database Schema
-`app/models.py` defines both the ingestion table and the normalized tables that future ETL jobs will populate. Only `polls_raw` is written to by this API today:
-- `polls_raw`: stores the JSON payload as received; `parties` is serialized as text and `inserted_at` is set automatically.
-- `polls`, `poll_results`, `institutes`, `parties`, `forecast_providers`, `elections`, `methods`: currently empty shells that downstream cleaners will fill by referencing `polls_raw` rows.
 
-Schema creation logic lives in `app/db_init.py` and is shared by the FastAPI startup hook and `scripts/init_db.py`.
+### Reference Tables (Populated from JSON)
+- **institutes** - Polling institutes (22 records)
+- **methods** - Survey methods (5 records)
+- **parties** - Political parties (26 records)
+- **taskers** - Taskers/commissioners (111 records)
+- **elections** - Elections (18 records)
 
-## API Overview
-### Ingest raw polls
-- **Endpoint**: `POST /ingest/polls`
-- **Body schema**:
-  ```json
-  {
-    "polls": [
-      {
-        "source": "bundestag",
-        "publish_date": "2024-04-25",
-        "survey_date_start": "2024-04-20",
-        "survey_date_end": "2024-04-23",
-        "parties": {"CDU": 29.0, "SPD": 17.5},
-        "Befragte": "1000",
-        "scope": "national",
-        "date_downloaded": "2024-04-25T12:00:00Z"
-      }
-    ]
-  }
-  ```
-- **Response**: `{ "inserted": <count>, "record_ids": [<int>, ...] }`
-- `parties` can be sent either as an object or a JSON string; the router normalizes it before insertion.
+### Data Tables
+- **polls_raw** - Raw scraped poll data
+- **polls** - Cleaned, normalized poll data
+- **poll_results** - Individual party results per poll
 
-### Read/Download data
-- `GET /polls` – serves `data/polls.json` for quick JSON consumption.
-- `GET /raw` – serves the pre-generated raw export file (e.g., `data/export/polls_raw.json`).
-- `GET /raw/stream` – streams the full `polls_raw` table as a JSON array in batches without loading everything into memory.
-- `GET /raw/latest` – returns the newest 100 rows from `polls_raw`.
-- `GET /polls/export/json|csv|sqlite|parquet` – streams files from the `data/` directory if present.
-- `GET /polls/recent` – placeholder endpoint reserved for future weekly filtering.
-- Additional routers (`/election/*`, `/hook_*`) are stubs for future integrations and may return `501` until implemented.
+## Development
 
-## Project Layout
-| Path | Description |
-| --- | --- |
-| `app/main.py` | FastAPI application factory, CORS setup, router wiring, and startup DB bootstrap. |
-| `app/database.py` | Sync + async SQLAlchemy engines/session factories. |
-| `app/routers/` | Feature routers (`polls`, `download`, `database_insert`, `hook_*`, etc.). |
-| `app/utils/` | Helper utilities for scraping, GitHub release downloads, notifications, etc. |
-| `data/` | Working directory for JSON/CSV/SQLite/Parquet exports served by the API. |
-| `scripts/init_db.py` | CLI helper to create the database and tables using the shared metadata. |
-| `compose.yaml` / `dev.compose.yaml` | Container definitions for production vs. iterative development. |
+### Run with Auto-reload
 
-## Maintenance Tips
-- If downloads return 404, ensure the corresponding file exists in `./data` or run the GitHub `data_fetcher` utility after setting `GITHUB_TOKEN`/`GITHUB_REPO`.
-- Any migration-like change (new columns/tables) should be reflected in `app/models.py` before rerunning `scripts/init_db.py`.
-- Automated tests are not yet wired up; rely on `uv run fastapi dev app/main.py` locally plus linting/typing via `pyright` if installed.
+```bash
+zweitstimme server:start --reload
+```
 
-Happy polling!
+### Database Management
+
+```bash
+# Check database connection
+zweitstimme db:ping
+
+# View table counts
+zweitstimme db:tables
+
+# Export data
+zweitstimme db:export
+```
+
+### Testing Scrapers
+
+```bash
+# Test a scraper in dry-run mode
+zweitstimme scraper:run forsa --dry-run
+
+# Run with debug output
+zweitstimme scraper:run bayern --debug
+```
+
+## Project Structure
+
+- **API**: FastAPI application serving polling data
+- **Scraper**: Web scraping module for collecting raw data from Wahlrecht.de and DAWUM API
+- **Cleaner**: ETL pipeline for normalizing and cleaning data
+- **Database**: SQLite with SQLAlchemy ORM, populated from JSON reference files
+
+## License
+
+MIT License

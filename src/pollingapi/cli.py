@@ -1,0 +1,489 @@
+"""CLI entry points for zweitstimme."""
+
+import typer
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from pollingapi.cleaner import run_cleaning_pipeline
+from pollingapi.core import settings
+from pollingapi.database import SessionLocal, init_db, seed_all_from_json
+from pollingapi.logging_config import get_logger, setup_logging
+from pollingapi.scraper.context import RunContext
+from pollingapi.scraper.runner import ScraperRunner
+
+# Initialize logging with default settings
+setup_logging()
+
+app = typer.Typer(help="Zweitstimme CLI - German Election Polling Data Management")
+logger = get_logger(__name__)
+
+
+def get_db() -> Session:
+    """Get database session."""
+    return SessionLocal()
+
+
+# ============================================================================
+# Database Commands (db:*)
+# ============================================================================
+
+
+@app.command(name="db:ping")
+def db_ping():
+    """Verify database connectivity."""
+    db = get_db()
+    try:
+        db.execute(text("SELECT 1"))
+        logger.debug("Database ping successful")
+        typer.echo("✓ Database connection: OK")
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
+        typer.echo(f"✗ Database connection failed: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@app.command(name="db:init")
+def db_init(
+    force: bool = typer.Option(False, "--force", "-f", help="Drop and recreate all tables"),
+):
+    """Initialize database tables."""
+    if force:
+        typer.echo("Force mode: dropping all tables...")
+    init_db(drop_all=force)
+    typer.echo("✓ Database initialized successfully")
+
+
+@app.command(name="db:seed")
+def db_seed():
+    """Seed reference tables from JSON files."""
+    db = get_db()
+
+    logger.info("Seeding database from JSON files")
+
+    results = seed_all_from_json(db)
+
+    typer.echo("✓ Seeded reference tables from JSON files:")
+    for table, count in results.items():
+        typer.echo(f"  • {table}: {count} records")
+        logger.info(f"Seeded {count} records into {table}")
+
+
+@app.command(name="db:tables")
+def db_tables():
+    """List database tables with row counts."""
+    from pollingapi.models import (
+        Election,
+        Institute,
+        Method,
+        Party,
+        Poll,
+        PollResult,
+        Provider,
+        RawPoll,
+        Tasker,
+    )
+
+    db = get_db()
+    tables = [
+        ("polls_raw", RawPoll),
+        ("polls", Poll),
+        ("poll_results", PollResult),
+        ("institutes", Institute),
+        ("parties", Party),
+        ("providers", Provider),
+        ("elections", Election),
+        ("methods", Method),
+        ("taskers", Tasker),
+    ]
+
+    typer.echo("Table row counts:")
+    typer.echo("-" * 40)
+    for name, model in tables:
+        count = db.query(model).count()
+        typer.echo(f"  {name}: {count}")
+
+
+@app.command(name="export:all")
+def db_export():
+    """Export data to JSON, CSV, and Parquet files."""
+    import json
+
+    import pandas as pd
+
+    from pollingapi.models import Poll, RawPoll
+
+    db = get_db()
+
+    # Export polls
+    polls = db.query(Poll).all()
+    polls_data = []
+    for poll in polls:
+        poll_dict = {
+            "id": poll.id,
+            "raw_id": poll.raw_id,
+            "publish_date": poll.publish_date.isoformat() if poll.publish_date else None,
+            "survey_date_start": poll.survey_date_start.isoformat()
+            if poll.survey_date_start
+            else None,
+            "survey_date_end": poll.survey_date_end.isoformat() if poll.survey_date_end else None,
+            "respondents": poll.respondents,
+            "institute_id": poll.institute_id,
+            "provider_id": poll.provider_id,
+            "method_id": poll.method_id,
+            "election_id": poll.election_id,
+            "scope": poll.scope,
+            "results": [{"party_id": r.party_id, "percentage": r.percentage} for r in poll.results],
+        }
+        polls_data.append(poll_dict)
+
+    with open(settings.export_dir / "polls.json", "w", encoding="utf-8") as f:
+        json.dump(polls_data, f, indent=2, ensure_ascii=False)
+
+    # Export flattened poll results
+    poll_results_data = []
+    for poll in polls_data:
+        for result in poll.get("results", []):
+            poll_results_data.append(
+                {
+                    "poll_id": poll["id"],
+                    "raw_id": poll.get("raw_id"),
+                    "publish_date": poll.get("publish_date"),
+                    "scope": poll.get("scope"),
+                    "party_id": result.get("party_id"),
+                    "percentage": result.get("percentage"),
+                }
+            )
+
+    with open(settings.export_dir / "poll_results.json", "w", encoding="utf-8") as f:
+        json.dump(poll_results_data, f, indent=2, ensure_ascii=False)
+
+    # Export CSV (without nested results)
+    polls_df = pd.DataFrame(polls_data)
+    if "results" in polls_df.columns:
+        polls_df = polls_df.drop(columns=["results"])
+    polls_df.to_csv(settings.export_dir / "polls.csv", index=False)
+
+    # Export Parquet if available
+    try:
+        polls_df.to_parquet(settings.export_dir / "polls.parquet", index=False)
+    except Exception as exc:
+        logger.warning(f"Could not export Parquet: {exc}")
+
+    # Export raw polls
+    raw_polls = db.query(RawPoll).all()
+    raw_data = []
+    for raw in raw_polls:
+        raw_dict = {
+            "id": raw.id,
+            "publish_date": raw.publish_date,
+            "survey_date_start": raw.survey_date_start,
+            "survey_date_end": raw.survey_date_end,
+            "respondents": raw.respondents,
+            "zeitraum": raw.zeitraum,
+            "parties": raw.parties,
+            "institute_id": raw.institute_id,
+            "provider": raw.provider,
+            "tasker": raw.tasker,
+            "source": raw.source,
+            "scope": raw.scope,
+            "election_id": raw.election_id,
+            "method_id": raw.method_id,
+            "date_downloaded": raw.date_downloaded,
+        }
+        raw_data.append(raw_dict)
+
+    with open(settings.export_dir / "polls_raw.json", "w", encoding="utf-8") as f:
+        json.dump(raw_data, f, indent=2, ensure_ascii=False, default=str)
+
+    typer.echo(
+        f"✓ Exported {len(polls_data)} polls, {len(poll_results_data)} poll results, "
+        f"and {len(raw_data)} raw polls to {settings.export_dir}"
+    )
+
+
+@app.command(name="db:reset")
+def db_reset(
+    confirm: bool = typer.Option(False, "--confirm", help="Confirm destructive operation"),
+):
+    """Reset database (drop all tables and recreate)."""
+    if not confirm:
+        typer.echo("⚠️  This will delete all data! Use --confirm to proceed.", err=True)
+        raise typer.Exit(1)
+
+    typer.echo("Resetting database...")
+    init_db(drop_all=True)
+    typer.echo("✓ Database reset successfully")
+
+
+# ============================================================================
+# Scraper Commands (scraper:*)
+# ============================================================================
+
+
+@app.command(name="scraper:run")
+def scraper_run(
+    worker: str = typer.Argument(..., help="Worker name (e.g., 'forsa', 'bayern', 'all')"),
+    debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug mode"),
+    dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Dry run (don't insert to DB)"),
+    force: bool = typer.Option(
+        False, "--force", "-f", help="Force run (ignore initial run markers)"
+    ),
+):
+    """Run a specific scraper worker or all workers."""
+    # Reconfigure logging for debug mode if needed
+    if debug:
+        setup_logging(log_level="DEBUG")
+
+    db = get_db()
+    context = RunContext.for_project(debug=debug)
+
+    logger.info(f"Starting scraper run: worker={worker}, dry_run={dry_run}, debug={debug}")
+
+    runner = ScraperRunner(db, context=context, dry_run=dry_run or debug)
+
+    if worker.lower() == "all":
+        logger.info("Running all scrapers")
+        results = runner.run_all(include_dawum=True)
+
+        # Log results
+        total_success = sum(1 for v in results.values() if isinstance(v, int))
+        total_polls = sum(v for v in results.values() if isinstance(v, int))
+        logger.info(f"Scraper run completed: {total_success} successful, {total_polls} total polls")
+
+        typer.echo("\nResults:")
+        typer.echo("-" * 50)
+        for name, count in results.items():
+            if isinstance(count, int):
+                typer.echo(f"  ✓ {name}: {count} polls")
+                logger.info(f"Scraper {name}: {count} polls inserted")
+            else:
+                typer.echo(f"  ✗ {name}: {count}")
+                logger.error(f"Scraper {name} failed: {count}")
+    else:
+        logger.info(f"Running scraper: {worker}")
+        try:
+            count = runner.run_worker(worker)
+            typer.echo(f"✓ {worker}: {count} polls inserted")
+            logger.info(f"Scraper {worker} completed: {count} polls inserted")
+        except ValueError as e:
+            logger.error(f"Scraper {worker} failed: {e}")
+            typer.echo(f"✗ Error: {e}", err=True)
+            typer.echo("\nAvailable workers:")
+            for name in runner.list_workers():
+                typer.echo(f"  - {name}")
+            raise typer.Exit(1)
+
+
+@app.command(name="scraper:list")
+def scraper_list():
+    """List all available scraper workers."""
+    db = get_db()
+    runner = ScraperRunner(db)
+
+    typer.echo("Available scraper workers:")
+    typer.echo("-" * 50)
+    for name in sorted(runner.list_workers()):
+        typer.echo(f"  • {name}")
+
+
+@app.command(name="scraper:status")
+def scraper_status():
+    """Show scraper run status and data freshness."""
+
+    from pollingapi.core import settings
+
+    typer.echo("Scraper status:")
+    typer.echo("-" * 50)
+
+    data_dir = settings.data_dir
+    if not data_dir.exists():
+        typer.echo("  No data directory found")
+        return
+
+    workers = [d.name for d in data_dir.iterdir() if d.is_dir()]
+    for worker in sorted(workers):
+        marker_file = data_dir / worker / ".historic_urls_processed"
+        if marker_file.exists():
+            typer.echo(f"  ✓ {worker}: Historic data processed")
+        else:
+            typer.echo(f"  ○ {worker}: Awaiting initial run")
+
+
+# ============================================================================
+# Pipeline Commands (pipeline:*)
+# ============================================================================
+
+
+@app.command(name="pipeline:clean")
+def pipeline_clean(
+    limit: int | None = typer.Option(None, "--limit", "-l", help="Limit number of rows to process"),
+):
+    """Run data cleaning pipeline on raw polls."""
+    db = get_db()
+    stats = run_cleaning_pipeline(db, limit=limit)
+
+    typer.echo("✓ Cleaning complete:")
+    typer.echo(f"  Processed: {stats['processed']}")
+    typer.echo(f"  Created: {stats['created']}")
+    typer.echo(f"  Updated: {stats['updated']}")
+    typer.echo(f"  Skipped: {stats['skipped']}")
+    typer.echo(f"  Errors: {stats['errors']}")
+
+
+@app.command(name="pipeline:run")
+def pipeline_run(
+    include_dawum: bool = typer.Option(True, "--dawum/--no-dawum", help="Include DAWUM API"),
+    skip_clean: bool = typer.Option(False, "--skip-clean", help="Skip cleaning step"),
+):
+    """Run full pipeline (scraper + cleaner)."""
+    db = get_db()
+
+    typer.echo("Running scraper...")
+    runner = ScraperRunner(db)
+    results = runner.run_all(include_dawum=include_dawum)
+    total = sum(v for v in results.values() if isinstance(v, int))
+    typer.echo(f"✓ Total scraped: {total} polls\n")
+
+    if not skip_clean:
+        typer.echo("Running cleaner...")
+        stats = run_cleaning_pipeline(db)
+        typer.echo(f"✓ Processed: {stats['processed']}")
+        typer.echo(f"✓ Created: {stats['created']}")
+
+
+@app.command(name="pipeline:inspect")
+def pipeline_inspect(
+    raw_id: int = typer.Argument(..., help="Raw poll ID to inspect"),
+):
+    """Inspect how a single raw row would be cleaned."""
+    db = get_db()
+    from pollingapi.models import RawPoll
+
+    raw_poll = db.query(RawPoll).filter(RawPoll.id == raw_id).first()
+    if not raw_poll:
+        typer.echo(f"✗ Raw poll {raw_id} not found", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"Inspecting raw poll {raw_id}:")
+    typer.echo(f"  publish_date: {raw_poll.publish_date}")
+    typer.echo(f"  institute_id: {raw_poll.institute_id}")
+    typer.echo(f"  provider: {raw_poll.provider}")
+    typer.echo(f"  scope: {raw_poll.scope}")
+    typer.echo(f"  parties: {raw_poll.parties}")
+
+
+# ============================================================================
+# Server Commands (server:*)
+# ============================================================================
+
+
+@app.command(name="server:start")
+def server_start(
+    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Host to bind to"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port to bind to"),
+    reload: bool = typer.Option(False, "--reload", "-r", help="Enable auto-reload"),
+):
+    """Start the API server."""
+    import uvicorn
+
+    logger.info(f"Starting API server on {host}:{port}")
+    typer.echo(f"Starting server on {host}:{port}...")
+    uvicorn.run(
+        "pollingapi.main:app",
+        host=host,
+        port=port,
+        reload=reload,
+    )
+
+
+# ============================================================================
+# Log Commands (logs:*)
+# ============================================================================
+
+
+@app.command(name="logs:view")
+def logs_view(
+    log_file: str = typer.Option(
+        "zweitstimme", "--file", "-f", help="Log file to view (zweitstimme, scraper, errors)"
+    ),
+    lines: int = typer.Option(50, "--lines", "-n", help="Number of lines to show"),
+    follow: bool = typer.Option(False, "--follow", "-F", help="Follow log output (like tail -f)"),
+):
+    """View log files."""
+    log_dir = settings.data_dir / "logs"
+
+    if log_file == "zweitstimme":
+        log_path = log_dir / "zweitstimme.log"
+    elif log_file == "scraper":
+        log_path = log_dir / "scraper.log"
+    elif log_file == "errors":
+        log_path = log_dir / "errors.log"
+    else:
+        log_path = log_dir / log_file
+
+    if not log_path.exists():
+        typer.echo(f"✗ Log file not found: {log_path}", err=True)
+        raise typer.Exit(1)
+
+    if follow:
+        typer.echo(f"Following {log_path} (Ctrl+C to exit)...")
+        import time
+
+        with open(log_path) as f:
+            # Go to end of file
+            f.seek(0, 2)
+            try:
+                while True:
+                    line = f.readline()
+                    if line:
+                        typer.echo(line.rstrip())
+                    else:
+                        time.sleep(0.1)
+            except KeyboardInterrupt:
+                typer.echo("\nStopped following logs.")
+    else:
+        # Read last N lines
+        with open(log_path) as f:
+            all_lines = f.readlines()
+            last_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
+            typer.echo(f"Last {len(last_lines)} lines from {log_path}:")
+            typer.echo("-" * 60)
+            for line in last_lines:
+                typer.echo(line.rstrip())
+
+
+@app.command(name="logs:list")
+def logs_list():
+    """List available log files."""
+    log_dir = settings.data_dir / "logs"
+
+    if not log_dir.exists():
+        typer.echo("No logs directory found.")
+        return
+
+    typer.echo("Available log files:")
+    typer.echo("-" * 50)
+
+    log_files = ["zweitstimme.log", "scraper.log", "errors.log"]
+    for log_file in log_files:
+        log_path = log_dir / log_file
+        if log_path.exists():
+            size = log_path.stat().st_size
+            size_str = f"{size / 1024:.1f} KB" if size > 1024 else f"{size} B"
+            typer.echo(f"  ✓ {log_file}: {size_str}")
+        else:
+            typer.echo(f"  ○ {log_file}: not created yet")
+
+
+# ============================================================================
+# Legacy Aliases (for backward compatibility)
+# ============================================================================
+
+
+def main():
+    """Main entry point."""
+    app()
+
+
+if __name__ == "__main__":
+    main()

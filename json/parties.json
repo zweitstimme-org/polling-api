@@ -1,0 +1,106 @@
+{
+  "7": {
+    "Shortcut": "AfD",
+    "Name": "Alternative für Deutschland"
+  },
+  "11": {
+    "Shortcut": "Bayernpartei",
+    "Name": "Bayernpartei e.V."
+  },
+  "14": {
+    "Shortcut": "BVB/FW",
+    "Name": "Brandenburger Vereinigte Bürgerbewegungen/Freie Wähler"
+  },
+  "4": {
+    "Shortcut": "Grüne",
+    "Name": "Bündnis 90/Die Grünen"
+  },
+  "16": {
+    "Shortcut": "BD",
+    "Name": "Bündnis Deutschland"
+  },
+  "23": {
+    "Shortcut": "BSW",
+    "Name": "Bündnis Sahra Wagenknecht"
+  },
+  "21": {
+    "Shortcut": "bunt.saar",
+    "Name": "bunt.saar – sozial-ökologische liste"
+  },
+  "22": {
+    "Shortcut": "BfTh",
+    "Name": "Bürger für Thüringen"
+  },
+  "1": {
+    "Shortcut": "CDU/CSU",
+    "Name": "Christlich Demokratische Union / Christlich-Soziale Union"
+  },
+  "101": {
+    "Shortcut": "CDU",
+    "Name": "Christlich Demokratische Union"
+  },
+  "102": {
+    "Shortcut": "CSU",
+    "Name": "Christlich-Soziale Union"
+  },
+  "5": {
+    "Shortcut": "Linke",
+    "Name": "Die Linke"
+  },
+  "17": {
+    "Shortcut": "Familie",
+    "Name": "Familienpartei Deutschlands"
+  },
+  "3": {
+    "Shortcut": "FDP",
+    "Name": "Freie Demokratische Partei"
+  },
+  "8": {
+    "Shortcut": "Freie Wähler",
+    "Name": "Freie Wähler"
+  },
+  "9": {
+    "Shortcut": "NPD",
+    "Name": "Nationaldemokratische Partei Deutschlands"
+  },
+  "12": {
+    "Shortcut": "ÖDP",
+    "Name": "Ökologisch-Demokratische Partei"
+  },
+  "13": {
+    "Shortcut": "Die PARTEI",
+    "Name": "Partei für Arbeit, Rechtsstaat, Tierschutz, Elitenförderung und basisdemokratische Initiative"
+  },
+  "15": {
+    "Shortcut": "Tierschutzpartei",
+    "Name": "Partei Mensch Umwelt Tierschutz"
+  },
+  "6": {
+    "Shortcut": "Piraten",
+    "Name": "Piratenpartei"
+  },
+  "24": {
+    "Shortcut": "Plus Brandenburg",
+    "Name": "Plus Brandenburg (Listenvereinigung aus Piratenpartei, ÖDP und Volt)"
+  },
+  "2": {
+    "Shortcut": "SPD",
+    "Name": "Sozialdemokratische Partei Deutschlands"
+  },
+  "10": {
+    "Shortcut": "SSW",
+    "Name": "Südschleswigscher Wählerverband"
+  },
+  "18": {
+    "Shortcut": "Volt",
+    "Name": "Volt Deutschland"
+  },
+  "25": {
+    "Shortcut": "WerteUnion",
+    "Name": "WerteUnion"
+  },
+  "0": {
+    "Shortcut": "Sonstige",
+    "Name": "sonstige Parteien"
+  }
+}

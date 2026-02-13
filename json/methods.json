@@ -1,0 +1,17 @@
+{
+  "1": {
+    "Name": "Telefonisch"
+  },
+  "3": {
+    "Name": "Online"
+  },
+  "4": {
+    "Name": "Telefon & Online"
+  },
+  "2": {
+    "Name": "Persönlich"
+  },
+  "0": {
+    "Name": "Unbekannt"
+  }
+}
