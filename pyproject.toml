@@ -36,6 +36,8 @@ dependencies = [
     # Utilities
     "toml>=0.10.2",
     "pyarrow>=23.0.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.1",
 ]
 
 [project.optional-dependencies]

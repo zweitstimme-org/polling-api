@@ -1,0 +1,15 @@
+site_name: pollingapi Docs
+site_url: https://api.zweitstimme.org/tutorial
+repo_url: https://github.com/zweitstimme/pollingapi
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: blue
+  features:
+    - navigation.tabs
+    - navigation.sections
+nav:
+  - Home: index.md
+  - Setup: setup.md
+  - API Reference: api.md
