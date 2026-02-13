@@ -1,19 +1,94 @@
 # Python-generated files
 __pycache__/
-*.py[oc]
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
 wheels/
-*.egg-info
+*.egg-info/
+.installed.cfg
+*.egg
 
 # Virtual environments
-.venv
-data/
-AGENTS.md
-#keys
 .env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-Notes.txt
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
 
+# Jupyter Notebook
 .ipynb_checkpoints/
-notebooks/
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Documentation builds
+site/
+docs/site/
+
+# Data and logs
+data/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+logs/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# MkDocs
+.cache/
+
+# Deployment
+*.pid
+
+# Misc
+Notes.txt
+AGENTS.md
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
