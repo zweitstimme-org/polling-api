@@ -50,7 +50,7 @@ def normalize_survey_dates(
     end_date_str: str | None,
     zeitraum: str | None = None,
     publish_date: date | None = None,
-) -> tuple[date | None, date | None]:
+) -> tuple[date | None, date | None, bool]:
     """Normalize survey start and end dates.
 
     Args:
@@ -60,10 +60,12 @@ def normalize_survey_dates(
         publish_date: Publish date for fallback year
 
     Returns:
-        Tuple of (start_date, end_date)
+        Tuple of (start_date, end_date, should_ignore)
+        should_ignore is True if the row should be skipped (election markers, etc.)
     """
     start_date = None
     end_date = None
+    should_ignore = False
 
     # Parse explicit dates
     if start_date_str:
@@ -78,10 +80,27 @@ def normalize_survey_dates(
         # Extract year from publish_date for parsing zeitraum without year
         default_year = publish_date.year if publish_date else None
 
-        start_str, end_str = parse_timeframe(zeitraum, default_year=default_year)
-        if start_str and not start_date:
-            start_date = normalize_publish_date(start_str)
-        if end_str and not end_date:
-            end_date = normalize_publish_date(end_str)
+        result = parse_timeframe(zeitraum, default_year=default_year)
 
-    return start_date, end_date
+        # Check if this row should be ignored
+        if result.should_ignore_row:
+            should_ignore = True
+            return start_date, end_date, should_ignore
+
+        # Handle bis prefix - leave both dates empty
+        if result.is_bis_prefix:
+            return None, None, should_ignore
+
+        # Handle single date - only set start_date
+        if result.is_single_date and result.start_date and not start_date:
+            start_date = normalize_publish_date(result.start_date)
+            # end_date remains None for single dates
+            return start_date, end_date, should_ignore
+
+        # Normal date range
+        if result.start_date and not start_date:
+            start_date = normalize_publish_date(result.start_date)
+        if result.end_date and not end_date:
+            end_date = normalize_publish_date(result.end_date)
+
+    return start_date, end_date, should_ignore

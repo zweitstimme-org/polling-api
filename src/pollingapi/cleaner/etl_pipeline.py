@@ -185,9 +185,16 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool
             return None, False
 
         # Parse survey dates
-        survey_start, survey_end = normalize_survey_dates(
+        survey_start, survey_end, should_ignore = normalize_survey_dates(
             raw_poll.survey_date_start, raw_poll.survey_date_end, raw_poll.zeitraum, publish_date
         )
+
+        # Skip rows that should be ignored (election markers, etc.)
+        if should_ignore:
+            logger.debug(
+                f"Skipping raw poll {raw_poll.id}: zeitraum indicates ignorable row ({raw_poll.zeitraum})"
+            )
+            return None, False
 
         # Parse respondents
         respondents_result = parse_respondents(raw_poll.respondents or "")
