@@ -15,56 +15,56 @@ echo ""
 cd "${APP_DIR}"
 
 # Pull latest changes
-echo "📥 Pulling latest changes..."
+echo "[1/5] Pulling latest changes..."
 if ! git pull; then
-    echo "❌ Git pull failed"
+    echo "ERROR: Git pull failed"
     exit 1
 fi
-echo "✓ Code updated"
+echo "      Code updated successfully"
 echo ""
 
 # Sync dependencies with uv (if pyproject.toml changed)
-echo "📦 Checking dependencies..."
+echo "[2/5] Checking dependencies..."
 if ! uv sync; then
-    echo "❌ Dependency sync failed"
+    echo "ERROR: Dependency sync failed"
     exit 1
 fi
-echo "✓ Dependencies synced"
+echo "      Dependencies synced successfully"
 echo ""
 
 # Reload systemd (in case service file was updated)
-echo "🔄 Reloading systemd..."
+echo "[3/5] Reloading systemd..."
 sudo systemctl daemon-reload
-echo "✓ Systemd reloaded"
+echo "      Systemd reloaded successfully"
 echo ""
 
 # Restart the service
-echo "🚀 Restarting service..."
+echo "[4/5] Restarting service..."
 if ! sudo systemctl restart "${APP_NAME}"; then
-    echo "❌ Service restart failed"
+    echo "ERROR: Service restart failed"
     echo ""
-    echo "Checking logs:"
+    echo "Recent logs:"
     sudo journalctl -u "${APP_NAME}" -n 20 --no-pager
     exit 1
 fi
-echo "✓ Service restarted"
+echo "      Service restarted successfully"
 echo ""
 
 # Wait a moment for service to start
 sleep 2
 
 # Check status
-echo "📊 Service status:"
-echo "-------------------"
+echo "[5/5] Verifying deployment..."
+echo "----------------------------------------"
 if sudo systemctl is-active --quiet "${APP_NAME}"; then
     sudo systemctl status "${APP_NAME}" --no-pager | head -10
     echo ""
-    echo "✅ Deployment successful!"
+    echo "Deployment successful!"
     echo ""
-    echo "Quick health check:"
+    echo "Health check:"
     curl -s http://127.0.0.1:8000/health | python3 -m json.tool 2>/dev/null || echo "API responding on port 8000"
 else
-    echo "❌ Service is not running!"
+    echo "ERROR: Service is not running!"
     echo ""
     echo "Recent logs:"
     sudo journalctl -u "${APP_NAME}" -n 20 --no-pager
