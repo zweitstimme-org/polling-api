@@ -16,7 +16,10 @@ from pollingapi.scraper.runner import ScraperRunner
 # Initialize logging with default settings
 setup_logging()
 
-app = typer.Typer(help="Zweitstimme CLI - German Election Polling Data Management")
+app = typer.Typer(
+    help="Zweitstimme CLI - German Election Polling Data Management",
+    no_args_is_help=True,
+)
 logger = get_logger(__name__)
 
 
