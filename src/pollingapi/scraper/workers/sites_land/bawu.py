@@ -22,12 +22,14 @@ class BawuScraper(WahlrechtLandScraper):
                 {
                     "url": "https://www.wahlrecht.de/umfragen/landtage/baden-wuerttemberg.htm",
                     "table_index": 0,
+                    "drop_header": 0,
                     "drop_footer": 3,
                     "table_id": "current",
                 },
                 {
                     "url": "https://www.wahlrecht.de/umfragen/landtage/baden-wuerttemberg.htm",
                     "table_index": 1,
+                    "drop_header": 0,
                     "drop_footer": 3,
                     "table_id": "historical",
                 },
