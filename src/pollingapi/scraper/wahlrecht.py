@@ -203,8 +203,10 @@ class WahlrechtLandScraper(BaseScraper):
         save_table_snapshot(self.config.worker_name, df, safe_label, self.context.today_str)
 
         # Drop header and footer rows
-        drop_header = int(url_config.get("drop_header", 1) or 1)
-        drop_footer = int(url_config.get("drop_footer", 3) or 3)
+        drop_header = url_config.get("drop_header", 1)
+        drop_footer = url_config.get("drop_footer", 3)
+        drop_header = int(drop_header) if drop_header is not None else 1
+        drop_footer = int(drop_footer) if drop_footer is not None else 3
 
         if drop_header > 0:
             df = df.iloc[drop_header:]
