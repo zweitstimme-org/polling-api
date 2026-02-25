@@ -1,8 +1,9 @@
 name: API Feedback
 description: Provide feedback, report issues, or suggest improvements for the Polling API
-title: "[Feedback]: "
+title: "[Feedback]: <title>"
 labels: ["feedback"]
 assignees: []
+type: enhancement
 
 body:
   - type: markdown
@@ -30,7 +31,7 @@ body:
     id: endpoint
     attributes:
       label: Affected endpoint (if applicable)
-      description: Example: GET /v1/polls/latest
+      description: "Example: GET /v1/polls/latest"
       placeholder: "GET /v1/..."
     validations:
       required: false

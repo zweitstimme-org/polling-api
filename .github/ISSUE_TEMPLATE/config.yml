@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: API Documentation
+    url: https://github.com/zweitstimme-org/pollingAPI#readme
+    about: Check the API documentation for usage examples.
+  - name: Discussions
+    url: https://github.com/zweitstimme-org/pollingAPI/discussions
+    about: Ask questions and engage with the community.
