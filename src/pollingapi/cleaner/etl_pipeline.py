@@ -8,12 +8,14 @@ This pipeline:
 
 import json
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Dict, Tuple
 
 from sqlalchemy.orm import Session
 
 from pollingapi.cleaner.json_mappings import (
+    get_canonical_scope,
+    get_canonical_scope_from_raw,
     map_institute,
     map_method,
     map_parliament,
@@ -34,6 +36,64 @@ from pollingapi.models import (
 )
 
 logger = get_logger(__name__)
+
+# Party IDs used for fuzzy dedup: CDU/CSU, SPD, Grüne (same values = same poll across sources)
+DEDUP_PARTY_IDS = (1, 2, 4)  # CDU/CSU, SPD, Grüne
+# CDU and CSU stored separately in some sources (101, 102) -> normalize to Union (1)
+UNION_PARTY_IDS = (1, 101, 102)
+DEDUP_DATE_TOLERANCE_DAYS = 2
+DEDUP_PERCENTAGE_TOLERANCE = 0.1
+
+
+def _current_percentages_for_dedup(parties_data: Dict[str, float]) -> Dict[int, float]:
+    """Build party_id -> percentage for CDU/CSU, SPD, Grüne from raw parties_data (name -> %)."""
+    result: Dict[int, float] = {}
+    union_sum = 0.0
+    for name, pct in parties_data.items():
+        party_id = map_party(name)
+        if party_id is None:
+            continue
+        if party_id in (101, 102):
+            union_sum += float(pct)
+        elif party_id == 1:
+            union_sum += float(pct)
+        elif party_id in (2, 4):
+            result[party_id] = float(pct)
+    if union_sum:
+        result[1] = union_sum
+    return result
+
+
+def _existing_percentages_for_dedup(db: Session, poll_id: int) -> Dict[int, float]:
+    """Load CDU/CSU, SPD, Grüne percentages from existing poll's PollResult rows."""
+    rows = (
+        db.query(PollResult.party_id, PollResult.percentage)
+        .filter(PollResult.poll_id == poll_id)
+        .filter(PollResult.party_id.in_(UNION_PARTY_IDS + (2, 4)))
+        .all()
+    )
+    result: Dict[int, float] = {}
+    union_sum = 0.0
+    for party_id, pct in rows:
+        if party_id in (1, 101, 102):
+            union_sum += float(pct)
+        elif party_id in (2, 4):
+            result[party_id] = float(pct)
+    if union_sum:
+        result[1] = union_sum
+    return result
+
+
+def _percentages_match(
+    current: Dict[int, float], existing: Dict[int, float], tolerance: float = 0.0
+) -> bool:
+    """True if CDU/CSU, SPD, Grüne all present in both and match within tolerance."""
+    for pid in DEDUP_PARTY_IDS:
+        if pid not in current or pid not in existing:
+            return False
+        if abs(current[pid] - existing[pid]) > tolerance:
+            return False
+    return True
 
 
 @dataclass
@@ -121,50 +181,106 @@ def get_or_create_method(db: Session, name: str | None) -> Method | None:
 
 
 def get_or_create_election(db: Session, scope: str) -> Election:
-    """Get or create election by scope using JSON mapping."""
+    """Get or create election by scope using JSON mapping.
+
+    Uses canonical scope so elections and polls share the same scope strings.
+    """
     parliament_id = map_parliament(scope)
+    canonical = get_canonical_scope(parliament_id)
 
     # Try to find existing by ID
     election = db.query(Election).filter(Election.id == parliament_id).first()
     if election:
+        # Keep scope in sync with canonical (fixes old seeded data)
+        if election.scope != canonical:
+            election.scope = canonical
         return election
 
-    # Determine election type from scope
-    scope_lower = (scope or "").lower()
-    if scope_lower == "federal" or parliament_id == 0:
+    # Determine election type from parliament_id
+    if parliament_id == 0:
         election_type = "Bundestagswahl"
     elif parliament_id == 17:
         election_type = "Europawahl"
     else:
         election_type = "Landtagswahl"
 
-    # Create new with ID from JSON
+    # Create new with canonical scope
     election = Election(
         id=parliament_id,
         election_type=election_type,
-        scope=scope_lower if scope else None,
+        scope=canonical,
     )
     db.add(election)
     db.flush()
-    logger.debug(f"Created election: {parliament_id} - {election_type}")
+    logger.debug(f"Created election: {parliament_id} - {election_type} - {canonical}")
     return election
 
 
 def find_existing_poll(
-    db: Session, publish_date: date | None, institute_id: int, scope: str, provider_id: int
+    db: Session,
+    publish_date: date | None,
+    institute_id: int,
+    scope: str,
+    provider_id: int | None = None,
 ) -> Poll | None:
-    """Find existing poll by key fields (including provider for uniqueness)."""
+    """Find existing poll by exact (date, institute, scope)."""
     if not publish_date:
         return None
 
-    return (
+    query = (
         db.query(Poll)
         .filter(Poll.publish_date == publish_date)
         .filter(Poll.institute_id == institute_id)
         .filter(Poll.scope == scope)
-        .filter(Poll.provider_id == provider_id)
-        .first()
     )
+    if provider_id is not None:
+        query = query.filter(Poll.provider_id == provider_id)
+    return query.first()
+
+
+def find_existing_poll_fuzzy(
+    db: Session,
+    publish_date: date | None,
+    institute_id: int,
+    scope: str,
+    parties_data: Dict[str, float],
+    date_tolerance_days: int = DEDUP_DATE_TOLERANCE_DAYS,
+    percentage_tolerance: float = DEDUP_PERCENTAGE_TOLERANCE,
+) -> Poll | None:
+    """Find existing poll when date may be off by 1–2 days and CDU/SPD/Grüne match.
+
+    Same institute (already mapped), same scope, publish_date within ±date_tolerance_days,
+    and CDU/CSU, SPD, Grüne percentages match (within percentage_tolerance).
+    Used to deduplicate the same poll from Wahlrecht vs DAWUM when dates differ slightly.
+    """
+    if not publish_date:
+        return None
+
+    current = _current_percentages_for_dedup(parties_data)
+    if len(current) < 3 or not all(pid in current for pid in DEDUP_PARTY_IDS):
+        return None
+
+    date_lo = publish_date - timedelta(days=date_tolerance_days)
+    date_hi = publish_date + timedelta(days=date_tolerance_days)
+    candidates = (
+        db.query(Poll)
+        .filter(Poll.scope == scope)
+        .filter(Poll.institute_id == institute_id)
+        .filter(Poll.publish_date >= date_lo)
+        .filter(Poll.publish_date <= date_hi)
+        .order_by(Poll.publish_date.desc())
+        .all()
+    )
+
+    for poll in candidates:
+        existing = _existing_percentages_for_dedup(db, poll.id)
+        if _percentages_match(current, existing, tolerance=percentage_tolerance):
+            logger.debug(
+                f"Fuzzy duplicate: poll {poll.id} (date={poll.publish_date}) matches "
+                f"current (date={publish_date})"
+            )
+            return poll
+    return None
 
 
 def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool]:
@@ -208,13 +324,20 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool
         method_hint = respondents_result.method_hint or raw_poll.method_id
         method = get_or_create_method(db, method_hint or "")
 
-        # Classify election using JSON mapping
+        # Classify election using JSON mapping; use canonical scope for consistency
+        canonical_scope = get_canonical_scope_from_raw(raw_poll.scope or "")
         election = get_or_create_election(db, raw_poll.scope or "")
 
-        # Check for duplicate (include provider to distinguish between sources)
-        existing = find_existing_poll(
-            db, publish_date, institute.id, raw_poll.scope or "", provider.id
+        parties_data = parse_parties_json(raw_poll.parties)
+
+        # Cross-source dedup: fuzzy (date ±2 days, same institute/scope, CDU/SPD/Grüne match)
+        existing = find_existing_poll_fuzzy(
+            db, publish_date, institute.id, canonical_scope, parties_data
         )
+        if existing is None:
+            existing = find_existing_poll(
+                db, publish_date, institute.id, canonical_scope, provider_id=None
+            )
 
         if existing:
             poll = existing
@@ -236,7 +359,7 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool
         poll.method_id = method.id if method else None
         poll.election_id = election.id
         poll.source = raw_poll.source
-        poll.scope = raw_poll.scope
+        poll.scope = canonical_scope
 
         # Parse date downloaded
         if raw_poll.date_downloaded:
@@ -250,8 +373,12 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool
         db.add(poll)
         db.flush()
 
-        # Sync poll results using JSON party mappings
-        parties_data = parse_parties_json(raw_poll.parties)
+        # When updating a cross-source duplicate, replace results with current raw poll
+        if not is_new:
+            db.query(PollResult).filter(PollResult.poll_id == poll.id).delete()
+            db.flush()
+
+        # Sync poll results using JSON party mappings (parties_data already parsed above)
         sync_poll_results(db, poll, parties_data)
 
         return poll, is_new
