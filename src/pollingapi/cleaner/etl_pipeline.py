@@ -542,6 +542,13 @@ def run_cleaning_pipeline(
         f"created={stats.created}, updated={stats.updated}, "
         f"skipped={stats.skipped}, errors={stats.errors}"
     )
+    # WARNING level so it shows when Render/default log level hides INFO
+    logger.warning(
+        "Cleaning pipeline finished (processed=%s, created=%s, skipped=%s)",
+        stats.processed,
+        stats.created,
+        stats.skipped,
+    )
 
     return {
         "processed": stats.processed,

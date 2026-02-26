@@ -7,6 +7,7 @@ from datetime import datetime as DateTimeType
 from typing import List
 
 from sqlalchemy import (
+    Boolean,
     Date,
     DateTime,
     Float,
@@ -106,6 +107,7 @@ class Election(Base):
     year: Mapped[int | None] = mapped_column(Integer)
     scope: Mapped[str | None] = mapped_column(String(50))
     date: Mapped[DateType | None] = mapped_column(Date, nullable=True)
+    date_is_estimated: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Relationships
     polls: Mapped[List[Poll]] = relationship("Poll", back_populates="election")

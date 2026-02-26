@@ -108,6 +108,45 @@ def db_tables():
         typer.echo(f"  {name}: {count}")
 
 
+# ============================================================================
+# Election dates (from Wahlrecht.de Landtage overview)
+# ============================================================================
+
+
+@app.command(name="election-dates:update")
+def election_dates_update():
+    """Fetch „Nächster Wahltermin“ from Wahlrecht.de Landtage and update Election dates."""
+    from pollingapi.election_dates import parse_next_election_date
+    from pollingapi.models import Election
+    from pollingapi.scraper.landtage_dates import fetch_landtage_next_election_dates
+
+    db = get_db()
+    try:
+        rows = fetch_landtage_next_election_dates()
+    except Exception as e:
+        logger.exception("Failed to fetch Landtage overview")
+        typer.echo(f"✗ Fetch failed: {e}", err=True)
+        raise typer.Exit(1)
+
+    updated = 0
+    for scope, date_text in rows:
+        election = db.query(Election).filter(Election.scope == scope).first()
+        if not election:
+            logger.debug("No election for scope %s, skipping", scope)
+            continue
+        parsed_date, is_estimated = parse_next_election_date(date_text)
+        if parsed_date is None:
+            logger.debug("Could not parse date for %s: %r", scope, date_text)
+            continue
+        election.date = parsed_date
+        election.date_is_estimated = is_estimated
+        updated += 1
+        logger.info("%s: %s (estimated=%s)", scope, parsed_date.isoformat(), is_estimated)
+
+    db.commit()
+    typer.echo(f"✓ Updated election dates for {updated} state(s)")
+
+
 @app.command(name="export:all")
 def db_export():
     """Export data to JSON, CSV, and Parquet files."""
