@@ -1,7 +1,8 @@
 """DAWUM API scraper.
 
-Fetches federal (Bundestag) polls only from the DAWUM API.
-State polls are not used (Wahlrecht has more info: respondents, field period).
+Fetches federal and state (Land) polls from the DAWUM API.
+Deduplication in the cleaner prefers Wahlrecht when the same poll exists from both
+(Wahlrecht has more info: respondents, field period).
 """
 
 import json
@@ -13,6 +14,7 @@ import requests
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from pollingapi.cleaner.json_mappings import get_canonical_scope
 from pollingapi.core import DATA_DIR
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
@@ -21,10 +23,9 @@ from pollingapi.scraper.schemas import filter_poll_payloads
 
 
 class DawumScraper:
-    """Scraper for DAWUM API data (federal polls only)."""
+    """Scraper for DAWUM API data (federal and state polls)."""
 
     DATA_SOURCE = "DAWUM"
-    SCOPE = "federal"
     REQUEST_TIMEOUT = 30
 
     def __init__(
@@ -146,15 +147,30 @@ class DawumScraper:
         }
         df_mapped = df_mapped.rename(columns=column_mapping)
 
-        # Federal only: Parliament_ID 0 = Bundestag (state polls disabled; Wahlrecht has more info)
-        if "Parliament_ID" in df_mapped.columns:
-            df_mapped = df_mapped[df_mapped["Parliament_ID"] == 0].copy()
+        # Scope per row from DAWUM Parliament_ID (federal + all Länder)
+        def _scope_from_parliament_id(pid) -> str:
+            if pid is None or (isinstance(pid, str) and not pid.strip()):
+                return "federal"
+            try:
+                return get_canonical_scope(int(pid))
+            except (ValueError, TypeError):
+                return "federal"
 
-        # Add metadata (federal only)
+        df_mapped["scope"] = df_mapped["Parliament_ID"].apply(_scope_from_parliament_id)
+
+        # Election label from scope for raw table
+        def _election_id_from_scope(scope: str) -> str:
+            if scope == "federal":
+                return "Bundestagswahl"
+            if scope == "eu":
+                return "Europawahl"
+            return "Landtagswahl"
+
+        df_mapped["election_id"] = df_mapped["scope"].apply(_election_id_from_scope)
+
+        # Add metadata
         df_mapped["provider"] = self.DATA_SOURCE
         df_mapped["source"] = "api"
-        df_mapped["scope"] = self.SCOPE
-        df_mapped["election_id"] = "Bundestagswahl"
         df_mapped["date_downloaded"] = datetime.now().isoformat()
 
         # Select only needed columns
