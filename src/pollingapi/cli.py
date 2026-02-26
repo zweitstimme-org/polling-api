@@ -612,8 +612,13 @@ def deploy_start(
         port = int(os.environ["PORT"])
 
     # Start production server first so the port is bound immediately (avoids Render port scan timeout)
+    # Force 1 worker when PORT is set (e.g. Render 512MB) to avoid out-of-memory
+    on_render = "PORT" in os.environ
     if workers is None:
-        workers = (multiprocessing.cpu_count() * 2) + 1
+        workers = 1 if on_render else (multiprocessing.cpu_count() * 2) + 1
+    if on_render:
+        workers = 1  # always 1 on Render-like envs regardless of -w
+    typer.echo(f"Using {workers} worker(s) (PORT set: {on_render})")
     cmd = [
         sys.executable,
         "-m",
@@ -644,7 +649,11 @@ def deploy_start(
         "-",
     ]
     typer.echo(f"Starting server on {host}:{port}...")
-    server_proc = subprocess.Popen(cmd)
+    # When using 1 worker, set WEB_CONCURRENCY so gunicorn/configs don't override
+    subprocess_env = os.environ.copy()
+    if workers == 1:
+        subprocess_env["WEB_CONCURRENCY"] = "1"
+    server_proc = subprocess.Popen(cmd, env=subprocess_env)
     try:
         # Give server time to bind (Render port check runs soon after start)
         time.sleep(5)
@@ -656,6 +665,7 @@ def deploy_start(
         raise typer.Exit(1)
 
     # Run pipeline and export (API may be empty/partial until these finish)
+    # On 512MB instances the pipeline may OOM; use --no-pipeline and run pipeline elsewhere, or upgrade memory
     if run_pipeline:
         typer.echo("Running pipeline (scrape + clean)...")
         pipeline_cmd = [sys.executable, "-m", "pollingapi", "pipeline:run"]
