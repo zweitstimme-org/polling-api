@@ -611,6 +611,12 @@ def deploy_start(
     import sys
     import time
 
+    typer.echo(
+        f"deploy:start flags: pipeline={run_pipeline}, clean={run_clean}, export={run_export}"
+    )
+    if not run_pipeline and not run_clean:
+        typer.echo("(No pipeline or clean — server only)")
+
     # Render and similar set PORT in the environment; use it so we bind to the port they probe
     if "PORT" in os.environ:
         port = int(os.environ["PORT"])

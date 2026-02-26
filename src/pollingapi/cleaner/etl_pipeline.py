@@ -461,6 +461,9 @@ def sync_poll_results(db: Session, poll: Poll, parties_data: Dict[str, float]) -
             logger.debug(f"Created result for party {party_id}: {percentage}%")
 
 
+CLEAN_BATCH_SIZE = 500  # Process raw polls in batches to limit peak memory
+
+
 def run_cleaning_pipeline(
     db: Session, limit: int | None = None, dry_run: bool = False
 ) -> Dict[str, int]:
@@ -478,44 +481,61 @@ def run_cleaning_pipeline(
 
     logger.info("Starting cleaning pipeline")
 
-    # Get unprocessed raw polls (not yet linked to a cleaned poll)
-    query = (
+    # Base query: unprocessed raw polls (not yet linked to a cleaned poll)
+    base_query = (
         db.query(RawPoll)
         .outerjoin(Poll, Poll.raw_id == RawPoll.id)
         .filter(Poll.id.is_(None))
         .order_by(RawPoll.id)
     )
 
-    if limit:
-        query = query.limit(limit)
+    offset = 0
+    total_processed = 0
 
-    raw_polls = query.all()
-    stats.processed = len(raw_polls)
+    while True:
+        fetch_size = CLEAN_BATCH_SIZE
+        if limit is not None:
+            fetch_size = min(CLEAN_BATCH_SIZE, limit - total_processed)
+            if fetch_size <= 0:
+                break
 
-    logger.info(f"Processing {len(raw_polls)} raw polls")
+        raw_polls = base_query.offset(offset).limit(fetch_size).all()
+        if not raw_polls:
+            break
 
-    for raw_poll in raw_polls:
-        try:
-            poll, is_new = clean_single_poll(db, raw_poll)
+        logger.debug(f"Processing batch of {len(raw_polls)} raw polls (offset={offset})")
 
-            if poll:
-                if is_new:
-                    stats.created += 1
+        for raw_poll in raw_polls:
+            try:
+                poll, is_new = clean_single_poll(db, raw_poll)
+
+                if poll:
+                    if is_new:
+                        stats.created += 1
+                    else:
+                        stats.updated += 1
                 else:
-                    stats.updated += 1
-            else:
-                stats.skipped += 1
+                    stats.skipped += 1
 
-        except Exception as e:
-            logger.error(f"Failed to process raw poll {raw_poll.id}: {e}")
-            stats.errors += 1
+            except Exception as e:
+                logger.error(f"Failed to process raw poll {raw_poll.id}: {e}")
+                stats.errors += 1
+
+        total_processed += len(raw_polls)
+        stats.processed = total_processed
+        offset += len(raw_polls)
+
+        if not dry_run:
+            db.commit()
+
+        if len(raw_polls) < fetch_size:
+            break
+        if limit is not None and total_processed >= limit:
+            break
 
     if dry_run:
         logger.info("Dry run - rolling back changes")
         db.rollback()
-    else:
-        logger.info("Committing changes to database")
-        db.commit()
 
     logger.info(
         f"Pipeline complete: processed={stats.processed}, "
