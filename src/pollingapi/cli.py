@@ -416,6 +416,7 @@ def server_start(
         host=host,
         port=port,
         reload=reload,
+        reload_excludes=[".venv", ".git", "data", "*.pyc"] if reload else None,
     )
 
 

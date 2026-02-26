@@ -96,6 +96,9 @@ def run_server():
         host=settings.api_host,
         port=settings.api_port,
         reload=settings.api_reload,
+        reload_excludes=[".venv", ".git", "data", "*.pyc"]
+        if settings.api_reload
+        else None,
     )
 
 
