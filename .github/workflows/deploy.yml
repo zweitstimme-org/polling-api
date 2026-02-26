@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 "on":
   push:
     branches:
-      - main
+      - beta
 jobs:
   notify:
     runs-on: ubuntu-latest
