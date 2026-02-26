@@ -1,4 +1,8 @@
-"""DAWUM API scraper."""
+"""DAWUM API scraper.
+
+Fetches federal (Bundestag) polls only from the DAWUM API.
+State polls are not used (Wahlrecht has more info: respondents, field period).
+"""
 
 import json
 from datetime import datetime
@@ -17,7 +21,7 @@ from pollingapi.scraper.schemas import filter_poll_payloads
 
 
 class DawumScraper:
-    """Scraper for DAWUM API data."""
+    """Scraper for DAWUM API data (federal polls only)."""
 
     DATA_SOURCE = "DAWUM"
     SCOPE = "federal"
@@ -142,7 +146,11 @@ class DawumScraper:
         }
         df_mapped = df_mapped.rename(columns=column_mapping)
 
-        # Add metadata
+        # Federal only: Parliament_ID 0 = Bundestag (state polls disabled; Wahlrecht has more info)
+        if "Parliament_ID" in df_mapped.columns:
+            df_mapped = df_mapped[df_mapped["Parliament_ID"] == 0].copy()
+
+        # Add metadata (federal only)
         df_mapped["provider"] = self.DATA_SOURCE
         df_mapped["source"] = "api"
         df_mapped["scope"] = self.SCOPE
