@@ -602,9 +602,14 @@ def deploy_start(
         pollingapi deploy:start --no-pipeline --no-export   # same as server:prod
     """
     import multiprocessing
+    import os
     import subprocess
     import sys
     import time
+
+    # Render and similar set PORT in the environment; use it so we bind to the port they probe
+    if "PORT" in os.environ:
+        port = int(os.environ["PORT"])
 
     # Start production server first so the port is bound immediately (avoids Render port scan timeout)
     if workers is None:
@@ -641,8 +646,8 @@ def deploy_start(
     typer.echo(f"Starting server on {host}:{port}...")
     server_proc = subprocess.Popen(cmd)
     try:
-        # Give server a moment to bind
-        time.sleep(2)
+        # Give server time to bind (Render port check runs soon after start)
+        time.sleep(5)
         if server_proc.poll() is not None:
             raise typer.Exit(server_proc.returncode or 1)
     except Exception as e:
