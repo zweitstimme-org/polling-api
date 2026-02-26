@@ -583,49 +583,30 @@ def deploy_start(
     ),
     timeout: int = typer.Option(120, "--timeout", "-t", help="Worker timeout in seconds"),
     run_pipeline: bool = typer.Option(
-        True, "--pipeline/--no-pipeline", help="Run pipeline (scrape + clean) before starting server"
+        True, "--pipeline/--no-pipeline", help="Run pipeline (scrape + clean) after server starts"
     ),
     run_export: bool = typer.Option(
         True, "--export/--no-export", help="Run export:all after pipeline (creates download files)"
     ),
     include_dawum: bool = typer.Option(True, "--dawum/--no-dawum", help="Include DAWUM in pipeline"),
 ):
-    """Run pipeline + export, then start the API server (for Render / one-command deploy).
+    """Start the API server first (so the port is open for Render), then run pipeline + export.
 
-    Use this as the start command on Render so the DB and download files are populated
-    after each deploy. Startup may take a few minutes; increase deploy timeout if needed.
+    Use this as the start command on Render. The server binds to the port immediately so
+    the deploy passes the port check; pipeline and export run afterward. The API may
+    return empty or partial data until the pipeline finishes.
 
     Examples:
         pollingapi deploy:start
-        pollingapi deploy:start -h 0.0.0.0 -p 10000
+        pollingapi deploy:start -h 0.0.0.0 -p $PORT
         pollingapi deploy:start --no-pipeline --no-export   # same as server:prod
     """
     import multiprocessing
     import subprocess
     import sys
+    import time
 
-    if run_pipeline:
-        typer.echo("Running pipeline (scrape + clean)...")
-        pipeline_cmd = [sys.executable, "-m", "pollingapi", "pipeline:run"]
-        if not include_dawum:
-            pipeline_cmd.append("--no-dawum")
-        try:
-            subprocess.run(pipeline_cmd, check=True)
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Pipeline failed: {e}")
-            typer.echo(f"✗ Pipeline failed (exit {e.returncode})", err=True)
-            raise typer.Exit(e.returncode)
-
-    if run_export:
-        typer.echo("Running export...")
-        try:
-            subprocess.run([sys.executable, "-m", "pollingapi", "export:all"], check=True)
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Export failed: {e}")
-            typer.echo(f"✗ Export failed (exit {e.returncode})", err=True)
-            raise typer.Exit(e.returncode)
-
-    # Start production server (same as server:prod)
+    # Start production server first so the port is bound immediately (avoids Render port scan timeout)
     if workers is None:
         workers = (multiprocessing.cpu_count() * 2) + 1
     cmd = [
@@ -658,12 +639,42 @@ def deploy_start(
         "-",
     ]
     typer.echo(f"Starting server on {host}:{port}...")
+    server_proc = subprocess.Popen(cmd)
     try:
-        result = subprocess.run(cmd, check=False)
-        if result.returncode != 0:
-            raise typer.Exit(result.returncode)
-    except KeyboardInterrupt:
-        raise typer.Exit(0)
+        # Give server a moment to bind
+        time.sleep(2)
+        if server_proc.poll() is not None:
+            raise typer.Exit(server_proc.returncode or 1)
+    except Exception as e:
+        server_proc.kill()
+        logger.error(f"Server failed to start: {e}")
+        raise typer.Exit(1)
+
+    # Run pipeline and export (API may be empty/partial until these finish)
+    if run_pipeline:
+        typer.echo("Running pipeline (scrape + clean)...")
+        pipeline_cmd = [sys.executable, "-m", "pollingapi", "pipeline:run"]
+        if not include_dawum:
+            pipeline_cmd.append("--no-dawum")
+        try:
+            subprocess.run(pipeline_cmd, check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Pipeline failed: {e}")
+            typer.echo(f"✗ Pipeline failed (exit {e.returncode})", err=True)
+            # Don't exit: keep server running
+
+    if run_export:
+        typer.echo("Running export...")
+        try:
+            subprocess.run([sys.executable, "-m", "pollingapi", "export:all"], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Export failed: {e}")
+            typer.echo(f"✗ Export failed (exit {e.returncode})", err=True)
+
+    # Wait on server (keeps process alive; exit with server's exit code)
+    result = server_proc.wait()
+    if result != 0:
+        raise typer.Exit(result)
 
 
 # ============================================================================

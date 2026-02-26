@@ -1,8 +1,16 @@
 """Date transformation utilities."""
 
+import re
 from datetime import date, datetime
 
 import dateparser
+
+
+# Pattern for election/section headers from Wahlrecht: "Landtagswahl am 02.02.2003", "Europawahl am 09.06.2024"
+_ELECTION_DATE_PATTERN = re.compile(
+    r"\bam\s+(\d{1,2})\.(\d{1,2})\.(\d{4})\b",
+    re.IGNORECASE,
+)
 
 
 def normalize_publish_date(date_str: str, fallback_year: int | None = None) -> date | None:
@@ -31,6 +39,15 @@ def normalize_publish_date(date_str: str, fallback_year: int | None = None) -> d
         return datetime.fromisoformat(raw.replace("Z", "+00:00")).date()
     except ValueError:
         pass
+
+    # Wahlrecht section headers: "Landtagswahl am 02.02.2003", "Europawahl am 09.06.2024"
+    match = _ELECTION_DATE_PATTERN.search(raw)
+    if match:
+        try:
+            day, month, year = int(match.group(1)), int(match.group(2)), int(match.group(3))
+            return date(year, month, day)
+        except ValueError:
+            pass
 
     settings = {
         "DATE_ORDER": "DMY",
