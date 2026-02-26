@@ -27,6 +27,7 @@ class DawumScraper:
 
     DATA_SOURCE = "DAWUM"
     REQUEST_TIMEOUT = 30
+    INSERT_BATCH_SIZE = 500  # Insert in batches to limit peak memory
 
     def __init__(
         self,
@@ -310,17 +311,22 @@ class DawumScraper:
 
             # Wrangle data
             df = self.wrangle_data(data)
+            del data  # Free full JSON before batching
             df.to_csv(dawum_dir / "dawum_wrangled.csv", index=False)
             self.logger.info(f"Processed {len(df)} surveys from DAWUM")
 
-            # Prepare and insert
-            payloads = self.prepare_db_payload(df)
-            payloads = filter_poll_payloads(payloads)
-            self.logger.info(f"Prepared {len(payloads)} payloads for insertion")
+            # Insert in batches to limit peak memory (avoids holding full payload list)
+            inserted = 0
+            for start in range(0, len(df), self.INSERT_BATCH_SIZE):
+                end = min(start + self.INSERT_BATCH_SIZE, len(df))
+                chunk = df.iloc[start:end]
+                payloads = self.prepare_db_payload(chunk)
+                payloads = filter_poll_payloads(payloads)
+                inserted += self.post_polls(payloads)
+                del chunk
+                del payloads
 
-            inserted = self.post_polls(payloads)
             self.logger.info(f"Successfully inserted {inserted} polls from DAWUM")
-
             return inserted
 
         except Exception as e:
