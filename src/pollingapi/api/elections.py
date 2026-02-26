@@ -16,6 +16,7 @@ class ElectionSummaryItem(BaseModel):
     election_type: str
     scope: str | None
     year: int | None
+    election_date: str | None  # when the election is/was held (from seed or future source)
     poll_count: int
     latest_publish_date: str | None
 
@@ -29,11 +30,12 @@ def list_election_summaries(db: Session = Depends(get_db)):
             Election.election_type,
             Election.scope,
             Election.year,
+            Election.date.label("election_date"),
             func.count(Poll.id).label("poll_count"),
             func.max(Poll.publish_date).label("latest_publish_date"),
         )
         .outerjoin(Poll, Poll.election_id == Election.id)
-        .group_by(Election.id, Election.election_type, Election.scope, Election.year)
+        .group_by(Election.id, Election.election_type, Election.scope, Election.year, Election.date)
         .order_by(Election.id.asc())
         .all()
     )
@@ -44,6 +46,7 @@ def list_election_summaries(db: Session = Depends(get_db)):
             election_type=row.election_type,
             scope=row.scope,
             year=row.year,
+            election_date=row.election_date.isoformat() if row.election_date else None,
             poll_count=row.poll_count,
             latest_publish_date=row.latest_publish_date.isoformat()
             if row.latest_publish_date
@@ -62,12 +65,13 @@ def get_election_summary(election_id: int, db: Session = Depends(get_db)):
             Election.election_type,
             Election.scope,
             Election.year,
+            Election.date.label("election_date"),
             func.count(Poll.id).label("poll_count"),
             func.max(Poll.publish_date).label("latest_publish_date"),
         )
         .outerjoin(Poll, Poll.election_id == Election.id)
         .filter(Election.id == election_id)
-        .group_by(Election.id, Election.election_type, Election.scope, Election.year)
+        .group_by(Election.id, Election.election_type, Election.scope, Election.year, Election.date)
         .first()
     )
 
@@ -79,6 +83,7 @@ def get_election_summary(election_id: int, db: Session = Depends(get_db)):
         election_type=row.election_type,
         scope=row.scope,
         year=row.year,
+        election_date=row.election_date.isoformat() if row.election_date else None,
         poll_count=row.poll_count,
         latest_publish_date=row.latest_publish_date.isoformat()
         if row.latest_publish_date

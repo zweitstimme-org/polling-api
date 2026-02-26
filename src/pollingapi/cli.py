@@ -585,6 +585,9 @@ def deploy_start(
     run_pipeline: bool = typer.Option(
         True, "--pipeline/--no-pipeline", help="Run pipeline (scrape + clean) after server starts"
     ),
+    run_clean: bool = typer.Option(
+        False, "--clean/--no-clean", help="Run pipeline:clean only (raw → polls, no scrape). Use with --no-pipeline on 512MB."
+    ),
     run_export: bool = typer.Option(
         True, "--export/--no-export", help="Run export:all after pipeline (creates download files)"
     ),
@@ -599,6 +602,7 @@ def deploy_start(
     Examples:
         pollingapi deploy:start
         pollingapi deploy:start -h 0.0.0.0 -p $PORT
+        pollingapi deploy:start --no-pipeline --clean   # 512MB: server + clean only (process raw → polls)
         pollingapi deploy:start --no-pipeline --no-export   # same as server:prod
     """
     import multiprocessing
@@ -664,8 +668,8 @@ def deploy_start(
         logger.error(f"Server failed to start: {e}")
         raise typer.Exit(1)
 
-    # Run pipeline and export (API may be empty/partial until these finish)
-    # On 512MB instances the pipeline may OOM; use --no-pipeline and run pipeline elsewhere, or upgrade memory
+    # Run pipeline and/or clean (API may be empty/partial until these finish)
+    # On 512MB instances the full pipeline may OOM; use --no-pipeline --clean to only process raw → polls
     if run_pipeline:
         typer.echo("Running pipeline (scrape + clean)...")
         pipeline_cmd = [sys.executable, "-m", "pollingapi", "pipeline:run"]
@@ -677,6 +681,14 @@ def deploy_start(
             logger.error(f"Pipeline failed: {e}")
             typer.echo(f"✗ Pipeline failed (exit {e.returncode})", err=True)
             # Don't exit: keep server running
+
+    if run_clean:
+        typer.echo("Running pipeline:clean (raw → polls)...")
+        try:
+            subprocess.run([sys.executable, "-m", "pollingapi", "pipeline:clean"], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Pipeline clean failed: {e}")
+            typer.echo(f"✗ Pipeline clean failed (exit {e.returncode})", err=True)
 
     if run_export:
         typer.echo("Running export...")
