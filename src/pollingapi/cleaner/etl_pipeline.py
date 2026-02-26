@@ -295,9 +295,16 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool
     """
     try:
         # Parse dates
-        publish_date = normalize_publish_date(raw_poll.publish_date)
+        raw_publish_date = raw_poll.publish_date
+        publish_date = normalize_publish_date(raw_publish_date)
         if not publish_date:
-            logger.warning(f"Skipping raw poll {raw_poll.id}: no valid publish_date")
+            logger.warning(
+                "Skipping raw poll %s: no valid publish_date (raw value: %r, provider: %s, scope: %s)",
+                raw_poll.id,
+                raw_publish_date,
+                raw_poll.provider or "",
+                raw_poll.scope or "",
+            )
             return None, False
 
         # Parse survey dates
@@ -340,6 +347,19 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool
             )
 
         if existing:
+            # Prefer Wahlrecht over DAWUM (respondents, field period); don't overwrite
+            existing_provider = db.query(Provider).filter(Provider.id == existing.provider_id).first()
+            if (
+                existing_provider
+                and existing_provider.name
+                and "Wahlrecht" in existing_provider.name
+                and provider.name
+                and "DAWUM" in provider.name
+            ):
+                logger.debug(
+                    f"Skipping raw poll {raw_poll.id}: keeping Wahlrecht poll {existing.id} (not overwriting with DAWUM)"
+                )
+                return None, False
             poll = existing
             is_new = False
             logger.debug(f"Updating existing poll: {poll.id}")
