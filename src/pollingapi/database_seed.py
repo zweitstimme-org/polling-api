@@ -11,6 +11,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from pollingapi.cleaner.json_mappings import get_canonical_scope
 from pollingapi.models import Election, Institute, Method, Party, Tasker
 
 
@@ -168,26 +169,18 @@ def seed_parliaments_as_elections(db: Session) -> int:
 
     for parliament_id_str, info in data.items():
         election_id = int(parliament_id_str)
-        shortcut = info.get("Shortcut", "")
         name = info.get("Name", "")
-        info.get("Election", "")
 
-        # Determine scope from shortcut
-        scope = (
-            shortcut.lower().replace(" ", "-").replace("(", "").replace(")", "")
-            if shortcut
-            else None
-        )
+        # Use canonical scope so elections and polls use the same scope strings
+        scope = get_canonical_scope(election_id)
 
         # Determine election type and year
         if "Bundestag" in name or election_id == 0:
             election_type = "Bundestagswahl"
             year = None  # Federal elections span multiple years
-            scope = "federal"
         elif "Europäisches" in name:
             election_type = "Europawahl"
             year = None
-            scope = "eu"
         else:
             # State elections
             election_type = "Landtagswahl"
