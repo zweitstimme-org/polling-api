@@ -166,6 +166,16 @@ class TestCanonicalScope:
         assert get_canonical_scope_from_raw("thueringen") == "thueringen"
         assert get_canonical_scope_from_raw("") == "federal"
 
+    def test_scope_abbreviations(self):
+        """Test scope abbreviations (hh, bw, be, etc.) resolve to canonical."""
+        assert get_canonical_scope_from_raw("hh") == "hamburg"
+        assert get_canonical_scope_from_raw("bw") == "baden-wuerttemberg"
+        assert get_canonical_scope_from_raw("be") == "berlin"
+        assert get_canonical_scope_from_raw("by") == "bayern"
+        assert get_canonical_scope_from_raw("st") == "sachsen-anhalt"
+        assert get_canonical_scope_from_raw("sh") == "schleswig-holstein"
+        assert get_canonical_scope_from_raw("rp") == "rheinland-pfalz"
+
 
 class TestMapTasker:
     """Tests for map_tasker function."""

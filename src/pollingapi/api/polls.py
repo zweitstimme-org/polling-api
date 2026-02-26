@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, joinedload
 
+from pollingapi.cleaner.json_mappings import get_canonical_scope_from_raw
 from pollingapi.database import get_db
 from pollingapi.models import Poll, PollResult, RawPoll
 
@@ -114,7 +115,10 @@ def list_polls(
     db: Session = Depends(get_db),
     limit: int = Query(100, ge=1, le=500, description="Max rows to return"),
     offset: int = Query(0, ge=0, description="Rows to skip"),
-    scope: str | None = Query(None, description="Filter by scope (e.g. federal, bayern)"),
+    scope: str | None = Query(
+        None,
+        description="Filter by scope (e.g. federal, bayern, or abbreviations: hh, bw, be, by, ...)",
+    ),
     institute_id: int | None = Query(None, description="Filter by institute ID"),
     provider_id: int | None = Query(None, description="Filter by provider ID"),
     election_id: int | None = Query(None, description="Filter by election ID"),
@@ -136,7 +140,8 @@ def list_polls(
     )
 
     if scope:
-        query = query.filter(Poll.scope == scope)
+        scope_filter = get_canonical_scope_from_raw(scope)
+        query = query.filter(Poll.scope == scope_filter)
     if institute_id is not None:
         query = query.filter(Poll.institute_id == institute_id)
     if provider_id is not None:
@@ -204,7 +209,10 @@ def list_raw_polls(
     limit: int = Query(100, ge=1, le=1000, description="Max rows to return"),
     offset: int = Query(0, ge=0, description="Rows to skip"),
     source: str | None = Query(None, description="Filter by source"),
-    scope: str | None = Query(None, description="Filter by scope"),
+    scope: str | None = Query(
+        None,
+        description="Filter by scope (e.g. federal, bayern, or abbreviations: hh, bw, be, ...)",
+    ),
     provider: str | None = Query(None, description="Filter by provider name"),
 ):
     """List raw (unmodified) polls with pagination and filters."""
@@ -213,7 +221,8 @@ def list_raw_polls(
     if source:
         query = query.filter(RawPoll.source == source)
     if scope:
-        query = query.filter(RawPoll.scope == scope)
+        scope_filter = get_canonical_scope_from_raw(scope)
+        query = query.filter(RawPoll.scope == scope_filter)
     if provider:
         query = query.filter(RawPoll.provider == provider)
 
@@ -263,7 +272,10 @@ def list_results(
     db: Session = Depends(get_db),
     limit: int = Query(100, ge=1, le=500, description="Max rows to return"),
     offset: int = Query(0, ge=0, description="Rows to skip"),
-    scope: str | None = Query(None, description="Filter by scope (e.g. federal, bayern)"),
+    scope: str | None = Query(
+        None,
+        description="Filter by scope (e.g. federal, bayern, or abbreviations: hh, bw, be, ...)",
+    ),
     institute_id: int | None = Query(None, description="Filter by institute ID"),
     provider_id: int | None = Query(None, description="Filter by provider ID"),
     election_id: int | None = Query(None, description="Filter by election ID"),
@@ -283,9 +295,10 @@ def list_results(
         joinedload(Poll.results).joinedload(PollResult.party),
     )
 
-    # Apply filters
+    # Apply filters (scope accepts abbreviations: hh, bw, be, etc.)
     if scope is not None:
-        query = query.filter(Poll.scope == scope)
+        scope_filter = get_canonical_scope_from_raw(scope)
+        query = query.filter(Poll.scope == scope_filter)
     if institute_id is not None:
         query = query.filter(Poll.institute_id == institute_id)
     if provider_id is not None:
