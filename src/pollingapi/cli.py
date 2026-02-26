@@ -227,7 +227,10 @@ def db_reset(
 
 @app.command(name="scraper:run")
 def scraper_run(
-    worker: str = typer.Argument(..., help="Worker name (e.g., 'forsa', 'bayern', 'all')"),
+    worker: str = typer.Argument(
+        ...,
+        help="Worker name: 'all', 'land' (state scrapers only), or e.g. 'wahlrecht_brand', 'bayern'",
+    ),
     debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug mode"),
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Dry run (don't insert to DB)"),
     force: bool = typer.Option(
@@ -264,6 +267,21 @@ def scraper_run(
             else:
                 typer.echo(f"  ✗ {name}: {count}")
                 logger.error(f"Scraper {name} failed: {count}")
+    elif worker.lower() == "land":
+        logger.info("Running land (state) scrapers only")
+        results = runner.run_land(include_dawum=False)
+
+        total_success = sum(1 for v in results.values() if isinstance(v, int))
+        total_polls = sum(v for v in results.values() if isinstance(v, int))
+        logger.info(f"Land scrapers completed: {total_success} successful, {total_polls} total polls")
+
+        typer.echo("\nResults:")
+        typer.echo("-" * 50)
+        for name, count in results.items():
+            if isinstance(count, int):
+                typer.echo(f"  ✓ {name}: {count} polls")
+            else:
+                typer.echo(f"  ✗ {name}: {count}")
     else:
         logger.info(f"Running scraper: {worker}")
         try:
