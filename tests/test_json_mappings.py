@@ -5,6 +5,8 @@ import pytest
 from pollingapi.cleaner.json_mappings import (
     get_party_short_name,
     map_institute,
+    get_canonical_scope,
+    get_canonical_scope_from_raw,
     map_parliament,
     map_party,
     map_tasker,
@@ -133,6 +135,8 @@ class TestMapParliament:
         assert map_parliament("bremen") == 5
         assert map_parliament("hamburg") == 6
         assert map_parliament("hessen") == 7
+        assert map_parliament("sachsen-anhalt") == 14
+        assert map_parliament("sachsenanhalt") == 14
 
     def test_unknown_returns_bundestag(self):
         """Test that unknown scope returns 0 (Bundestag)."""
@@ -142,6 +146,25 @@ class TestMapParliament:
     def test_none_returns_bundestag(self):
         """Test that None returns 0 (Bundestag)."""
         assert map_parliament(None) == 0
+
+
+class TestCanonicalScope:
+    """Tests for get_canonical_scope and get_canonical_scope_from_raw."""
+
+    def test_canonical_scope_by_id(self):
+        """Test canonical scope strings match elections and polls."""
+        assert get_canonical_scope(0) == "federal"
+        assert get_canonical_scope(2) == "bayern"
+        assert get_canonical_scope(14) == "sachsen-anhalt"
+        assert get_canonical_scope(17) == "eu"
+
+    def test_canonical_scope_from_raw(self):
+        """Test raw scraper scope normalizes to canonical."""
+        assert get_canonical_scope_from_raw("sachsenanhalt") == "sachsen-anhalt"
+        assert get_canonical_scope_from_raw("nrw") == "nrw"
+        assert get_canonical_scope_from_raw("baden-wuerttemberg") == "baden-wuerttemberg"  # scraper scope
+        assert get_canonical_scope_from_raw("thueringen") == "thueringen"
+        assert get_canonical_scope_from_raw("") == "federal"
 
 
 class TestMapTasker:
