@@ -28,72 +28,82 @@ class ScraperRunner:
         self.logger = get_logger("runner")
         self.workers_dir = Path(__file__).parent / "workers"
 
-    def _discover_html_workers(self) -> list[tuple[str, ScraperConfig, type]]:
-        """Discover HTML-based workers from sites_bund, sites_land and sites_eu."""
+    def _discover_html_workers(
+        self, scope: str | None = None
+    ) -> list[tuple[str, ScraperConfig, type]]:
+        """Discover HTML-based workers from sites_bund, sites_land and sites_eu.
+
+        Args:
+            scope: If set, only discover from that scope: "bund", "land", or "eu".
+                   If None, discover all.
+        """
         discovered = []
 
         # Discover federal workers
-        bund_dir = self.workers_dir / "sites_bund"
-        if bund_dir.exists():
-            for file in bund_dir.glob("*.py"):
-                if file.name.startswith("_"):
-                    continue
-                try:
-                    module_name = f"pollingapi.scraper.workers.sites_bund.{file.stem}"
-                    module = importlib.import_module(module_name)
-                    if hasattr(module, "get_config"):
-                        config = module.get_config()
-                        scraper_class = ScraperRegistry.get(config.type)
-                        if scraper_class:
-                            discovered.append((file.stem, config, scraper_class))
-                        else:
-                            self.logger.warning(
-                                f"No scraper class registered for type: {config.type}"
-                            )
-                except Exception as e:
-                    self.logger.warning(f"Failed to load worker {file.stem}: {e}")
+        if scope is None or scope == "bund":
+            bund_dir = self.workers_dir / "sites_bund"
+            if bund_dir.exists():
+                for file in bund_dir.glob("*.py"):
+                    if file.name.startswith("_"):
+                        continue
+                    try:
+                        module_name = f"pollingapi.scraper.workers.sites_bund.{file.stem}"
+                        module = importlib.import_module(module_name)
+                        if hasattr(module, "get_config"):
+                            config = module.get_config()
+                            scraper_class = ScraperRegistry.get(config.type)
+                            if scraper_class:
+                                discovered.append((file.stem, config, scraper_class))
+                            else:
+                                self.logger.warning(
+                                    f"No scraper class registered for type: {config.type}"
+                                )
+                    except Exception as e:
+                        self.logger.warning(f"Failed to load worker {file.stem}: {e}")
 
         # Discover state workers
-        land_dir = self.workers_dir / "sites_land"
-        if land_dir.exists():
-            for file in land_dir.glob("*.py"):
-                if file.name.startswith("_"):
-                    continue
-                try:
-                    module_name = f"pollingapi.scraper.workers.sites_land.{file.stem}"
-                    module = importlib.import_module(module_name)
-                    if hasattr(module, "get_config"):
-                        config = module.get_config()
-                        scraper_class = ScraperRegistry.get(config.type)
-                        if scraper_class:
-                            discovered.append((file.stem, config, scraper_class))
-                        else:
-                            self.logger.warning(
-                                f"No scraper class registered for type: {config.type}"
-                            )
-                except Exception as e:
-                    self.logger.warning(f"Failed to load worker {file.stem}: {e}")
+        if scope is None or scope == "land":
+            land_dir = self.workers_dir / "sites_land"
+            if land_dir.exists():
+                for file in land_dir.glob("*.py"):
+                    if file.name.startswith("_"):
+                        continue
+                    try:
+                        module_name = f"pollingapi.scraper.workers.sites_land.{file.stem}"
+                        module = importlib.import_module(module_name)
+                        if hasattr(module, "get_config"):
+                            config = module.get_config()
+                            scraper_class = ScraperRegistry.get(config.type)
+                            if scraper_class:
+                                discovered.append((file.stem, config, scraper_class))
+                            else:
+                                self.logger.warning(
+                                    f"No scraper class registered for type: {config.type}"
+                                )
+                    except Exception as e:
+                        self.logger.warning(f"Failed to load worker {file.stem}: {e}")
 
         # Discover EU workers
-        eu_dir = self.workers_dir / "sites_eu"
-        if eu_dir.exists():
-            for file in eu_dir.glob("*.py"):
-                if file.name.startswith("_"):
-                    continue
-                try:
-                    module_name = f"pollingapi.scraper.workers.sites_eu.{file.stem}"
-                    module = importlib.import_module(module_name)
-                    if hasattr(module, "get_config"):
-                        config = module.get_config()
-                        scraper_class = ScraperRegistry.get(config.type)
-                        if scraper_class:
-                            discovered.append((file.stem, config, scraper_class))
-                        else:
-                            self.logger.warning(
-                                f"No scraper class registered for type: {config.type}"
-                            )
-                except Exception as e:
-                    self.logger.warning(f"Failed to load worker {file.stem}: {e}")
+        if scope is None or scope == "eu":
+            eu_dir = self.workers_dir / "sites_eu"
+            if eu_dir.exists():
+                for file in eu_dir.glob("*.py"):
+                    if file.name.startswith("_"):
+                        continue
+                    try:
+                        module_name = f"pollingapi.scraper.workers.sites_eu.{file.stem}"
+                        module = importlib.import_module(module_name)
+                        if hasattr(module, "get_config"):
+                            config = module.get_config()
+                            scraper_class = ScraperRegistry.get(config.type)
+                            if scraper_class:
+                                discovered.append((file.stem, config, scraper_class))
+                            else:
+                                self.logger.warning(
+                                    f"No scraper class registered for type: {config.type}"
+                                )
+                    except Exception as e:
+                        self.logger.warning(f"Failed to load worker {file.stem}: {e}")
 
         return discovered
 
@@ -145,6 +155,42 @@ class ScraperRunner:
 
         return results
 
+    def run_land(self, include_dawum: bool = False) -> dict[str, int | str]:
+        """Run only state (Land) scrapers.
+
+        Args:
+            include_dawum: Whether to include DAWUM (DAWUM has state data too).
+
+        Returns:
+            Dictionary mapping worker names to inserted counts.
+        """
+        results = {}
+        html_workers = self._discover_html_workers(scope="land")
+        self.logger.info(f"Discovered {len(html_workers)} land workers")
+        for _name, config, scraper_class in html_workers:
+            try:
+                typer.echo(f"Running {config.worker_name}...")
+                scraper = scraper_class(config, self.db, context=self.context, dry_run=self.dry_run)
+                count = scraper.run()
+                results[config.worker_name] = count
+                typer.echo(f"  ✓ {config.worker_name}: {count} polls")
+            except Exception as e:
+                self.logger.error(f"Error running {config.worker_name}: {e}")
+                results[config.worker_name] = f"error: {e}"
+                typer.echo(f"  ✗ {config.worker_name}: error - {e}")
+        if include_dawum:
+            try:
+                typer.echo("Running DAWUM API scraper...")
+                dawum = DawumScraper(self.db, context=self.context, dry_run=self.dry_run)
+                count = dawum.run()
+                results["dawum"] = count
+                typer.echo(f"  ✓ dawum: {count} polls")
+            except Exception as e:
+                self.logger.error(f"Error running DAWUM: {e}")
+                results["dawum"] = f"error: {e}"
+                typer.echo(f"  ✗ dawum: error - {e}")
+        return results
+
     def run_worker(self, worker_name: str) -> int:
         """Run a specific worker by name.
 
@@ -162,8 +208,8 @@ class ScraperRunner:
             dawum = DawumScraper(self.db, context=self.context, dry_run=self.dry_run)
             return dawum.run()
 
-        # Otherwise search HTML workers
-        html_workers = self._discover_html_workers()
+        # Otherwise search HTML workers (all scopes)
+        html_workers = self._discover_html_workers(scope=None)
         for _name, config, scraper_class in html_workers:
             if config.worker_name == worker_name:
                 scraper = scraper_class(config, self.db, context=self.context, dry_run=self.dry_run)
