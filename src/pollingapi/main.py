@@ -58,9 +58,9 @@ app.include_router(elections.router, prefix="/v1")
 app.include_router(dictionaries.router, prefix="/v1")
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
-    """Root endpoint with API information."""
+    """Root endpoint with API information. HEAD allowed for Render/load balancer health checks."""
     return {
         "message": "Zweitstimme Polling API",
         "version": settings.api_version,
@@ -77,9 +77,9 @@ async def root():
     }
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
-    """Health check endpoint."""
+    """Health check endpoint. HEAD allowed for Render/load balancer health checks."""
     return {
         "status": "healthy",
         "version": settings.api_version,
