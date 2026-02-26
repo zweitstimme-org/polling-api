@@ -574,6 +574,98 @@ def server_prod(
         raise typer.Exit(1)
 
 
+@app.command(name="deploy:start")
+def deploy_start(
+    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Host to bind to"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port to bind to"),
+    workers: int | None = typer.Option(
+        None, "--workers", "-w", help="Number of Gunicorn workers (default: 2 * CPU cores + 1)"
+    ),
+    timeout: int = typer.Option(120, "--timeout", "-t", help="Worker timeout in seconds"),
+    run_pipeline: bool = typer.Option(
+        True, "--pipeline/--no-pipeline", help="Run pipeline (scrape + clean) before starting server"
+    ),
+    run_export: bool = typer.Option(
+        True, "--export/--no-export", help="Run export:all after pipeline (creates download files)"
+    ),
+    include_dawum: bool = typer.Option(True, "--dawum/--no-dawum", help="Include DAWUM in pipeline"),
+):
+    """Run pipeline + export, then start the API server (for Render / one-command deploy).
+
+    Use this as the start command on Render so the DB and download files are populated
+    after each deploy. Startup may take a few minutes; increase deploy timeout if needed.
+
+    Examples:
+        pollingapi deploy:start
+        pollingapi deploy:start -h 0.0.0.0 -p 10000
+        pollingapi deploy:start --no-pipeline --no-export   # same as server:prod
+    """
+    import multiprocessing
+    import subprocess
+    import sys
+
+    if run_pipeline:
+        typer.echo("Running pipeline (scrape + clean)...")
+        pipeline_cmd = [sys.executable, "-m", "pollingapi", "pipeline:run"]
+        if not include_dawum:
+            pipeline_cmd.append("--no-dawum")
+        try:
+            subprocess.run(pipeline_cmd, check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Pipeline failed: {e}")
+            typer.echo(f"✗ Pipeline failed (exit {e.returncode})", err=True)
+            raise typer.Exit(e.returncode)
+
+    if run_export:
+        typer.echo("Running export...")
+        try:
+            subprocess.run([sys.executable, "-m", "pollingapi", "export:all"], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Export failed: {e}")
+            typer.echo(f"✗ Export failed (exit {e.returncode})", err=True)
+            raise typer.Exit(e.returncode)
+
+    # Start production server (same as server:prod)
+    if workers is None:
+        workers = (multiprocessing.cpu_count() * 2) + 1
+    cmd = [
+        sys.executable,
+        "-m",
+        "gunicorn",
+        "-k",
+        "uvicorn.workers.UvicornWorker",
+        "pollingapi.main:app",
+        "--bind",
+        f"{host}:{port}",
+        "--workers",
+        str(workers),
+        "--timeout",
+        str(timeout),
+        "--keep-alive",
+        "5",
+        "--max-requests",
+        "10000",
+        "--max-requests-jitter",
+        "500",
+        "--worker-class",
+        "uvicorn.workers.UvicornWorker",
+        "--worker-tmp-dir",
+        "/dev/shm",
+        "--preload",
+        "--access-logfile",
+        "-",
+        "--error-logfile",
+        "-",
+    ]
+    typer.echo(f"Starting server on {host}:{port}...")
+    try:
+        result = subprocess.run(cmd, check=False)
+        if result.returncode != 0:
+            raise typer.Exit(result.returncode)
+    except KeyboardInterrupt:
+        raise typer.Exit(0)
+
+
 # ============================================================================
 # Log Commands (logs:*)
 # ============================================================================
