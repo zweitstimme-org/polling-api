@@ -327,11 +327,13 @@ def map_parliament(scope: str) -> int:
     if scope_lower in lookup:
         return lookup[scope_lower]
 
-    # Scope aliases
+    # Scope aliases (scraper names and variants -> parliament ID)
     scope_aliases = {
         "federal": 0,
         "bundestag": 0,
         "bundestagswahl": 0,
+        "baden-wuerttemberg": 1,
+        "baden-württemberg": 1,
         "bayern": 2,
         "bavaria": 2,
         "landtagswahl in bayern": 2,
@@ -355,6 +357,7 @@ def map_parliament(scope: str) -> int:
         "sachsen": 13,
         "saxony": 13,
         "sachsen-anhalt": 14,
+        "sachsenanhalt": 14,
         "saxony-anhalt": 14,
         "schleswig-holstein": 15,
         "sh": 15,
@@ -370,3 +373,43 @@ def map_parliament(scope: str) -> int:
         return scope_aliases[scope_lower]
 
     return 0  # Default to Bundestag
+
+
+# Canonical scope strings used by scrapers and API. One string per parliament_id
+# so elections and polls always use the same scope (no seed vs scraper mismatch).
+PARLIAMENT_ID_TO_SCOPE: Dict[int, str] = {
+    0: "federal",
+    1: "baden-wuerttemberg",
+    2: "bayern",
+    3: "berlin",
+    4: "brandenburg",
+    5: "bremen",
+    6: "hamburg",
+    7: "hessen",
+    8: "mecklenburg-vorpommern",
+    9: "niedersachsen",
+    10: "nrw",
+    11: "rheinland-pfalz",
+    12: "saarland",
+    13: "sachsen",
+    14: "sachsen-anhalt",
+    15: "schleswig-holstein",
+    16: "thueringen",
+    17: "eu",
+}
+
+
+def get_canonical_scope(parliament_id: int) -> str:
+    """Return the canonical scope string for a parliament ID.
+
+    Use this for Election.scope and Poll.scope so elections and polls
+    always show the same scope (e.g. filtering polls by scope from
+    an election works).
+    """
+    return PARLIAMENT_ID_TO_SCOPE.get(parliament_id, "federal")
+
+
+def get_canonical_scope_from_raw(raw_scope: str) -> str:
+    """Resolve raw scraper scope to canonical scope string."""
+    parliament_id = map_parliament(raw_scope or "")
+    return get_canonical_scope(parliament_id)
