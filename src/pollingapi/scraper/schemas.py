@@ -18,6 +18,7 @@ class PollPayload(BaseModel):
     survey_date_end: str | None = None
     parties: Dict[str, float] | None = None
     institute_id: str | None = None
+    institute_raw: str | None = None
     provider: str | None = None
     tasker: str | None = None
     source: str | None = None

@@ -126,6 +126,21 @@ class BaseScraper(ABC):
         response.encoding = "utf-8"
         return response.text
 
+    @staticmethod
+    def _normalize_institute(raw: str) -> str:
+        """Normalize institute name from state tables so cleaner can match institutes.json.
+
+        Handles common Wahlrecht variants, e.g. 'Forschungs- gruppe Wahlen' -> 'Forschungsgruppe Wahlen'.
+        """
+        if not raw or not isinstance(raw, str):
+            return ""
+        s = raw.strip()
+        # Collapse hyphen+space in compound names so they match JSON (e.g. Forschungsgruppe Wahlen)
+        s = re.sub(r"Forschungs[\s\-]+gruppe", "Forschungsgruppe", s, flags=re.IGNORECASE)
+        # Collapse multiple spaces
+        s = re.sub(r"\s+", " ", s)
+        return s.strip()
+
     def _apply_metadata(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply metadata columns to DataFrame."""
         df["scope"] = self.config.scope
@@ -133,7 +148,21 @@ class BaseScraper(ABC):
         df["method_id"] = self.config.method_id
         df["provider"] = self.config.provider
         df["source"] = self.config.source
-        df["institute_id"] = self.config.institute_id
+        # Use per-row institute from state tables when present (so cleaner can dedupe vs DAWUM by same institute)
+        if "institute" in df.columns:
+            # Keep raw value from source for auditing
+            df["institute_raw"] = df["institute"].apply(
+                lambda x: (str(x).strip() if pd.notna(x) and str(x).strip() else None)
+            )
+            # Resolved id: normalized name or "unknown" when empty/missing (no config fallback)
+            def _resolve_institute(x: Any) -> str:
+                raw = str(x).strip() if pd.notna(x) and str(x).strip() else ""
+                normalized = self._normalize_institute(raw) if raw else ""
+                return normalized if normalized else "unknown"
+
+            df["institute_id"] = df["institute"].apply(_resolve_institute)
+        else:
+            df["institute_id"] = self.config.institute_id
         df["date_downloaded"] = datetime.now().isoformat()
         return df
 
@@ -210,6 +239,7 @@ class BaseScraper(ABC):
                 election_id = payload.get("election_id")
                 method_id = payload.get("method_id")
                 date_downloaded = payload.get("date_downloaded")
+                institute_raw = payload.get("institute_raw")
 
                 # Check for duplicates
                 if self._check_duplicate(payload):
@@ -225,6 +255,7 @@ class BaseScraper(ABC):
                     zeitraum=zeitraum,
                     parties=json.dumps(parties, sort_keys=True) if parties else None,
                     institute_id=institute_id,
+                    institute_raw=institute_raw,
                     provider=provider,
                     tasker=tasker,
                     source=source,

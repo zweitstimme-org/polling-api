@@ -20,6 +20,7 @@ class RawPollBase(BaseModel):
     zeitraum: str | None = None
     parties: str | None = None
     institute_id: str | None = None
+    institute_raw: str | None = None
     provider: str | None = None
     tasker: str | None = None
     source: str | None = None

@@ -35,6 +35,7 @@ class RawPoll(Base):
     zeitraum: Mapped[str | None] = mapped_column("Zeitraum", String(100))
     parties: Mapped[str | None] = mapped_column(Text)
     institute_id: Mapped[str | None] = mapped_column(String(100))
+    institute_raw: Mapped[str | None] = mapped_column(String(200), nullable=True)
     provider: Mapped[str | None] = mapped_column(String(100))
     tasker: Mapped[str | None] = mapped_column(String(100))
     source: Mapped[str | None] = mapped_column(String(100))

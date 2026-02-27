@@ -327,8 +327,8 @@ class WahlrechtLandScraper(BaseScraper):
             axis=1,
         )
 
-        # Keep only relevant columns
-        keep_cols = ["publish_date", "respondents", "Zeitraum", "parties", "tasker"]
+        # Keep only relevant columns (institute per row so cleaner can dedupe vs DAWUM by same institute)
+        keep_cols = ["publish_date", "respondents", "Zeitraum", "parties", "tasker", "institute"]
         df = df[[col for col in keep_cols if col in df.columns]]
 
         return df

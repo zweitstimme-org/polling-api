@@ -263,6 +263,7 @@ class DawumScraper:
                     if payload.get("parties")
                     else None,
                     institute_id=payload.get("institute_id"),
+                    institute_raw=payload.get("institute_raw"),
                     provider=payload.get("provider"),
                     tasker=payload.get("tasker"),
                     source=payload.get("source"),
