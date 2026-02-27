@@ -395,6 +395,9 @@ def pipeline_clean(
 @app.command(name="pipeline:run")
 def pipeline_run(
     include_dawum: bool = typer.Option(True, "--dawum/--no-dawum", help="Include DAWUM API"),
+    include_wahlrecht: bool = typer.Option(
+        True, "--wahlrecht/--no-wahlrecht", help="Run Wahlrecht.de scrapers (skip when site is down)"
+    ),
     skip_clean: bool = typer.Option(False, "--skip-clean", help="Skip cleaning step"),
 ):
     """Run full pipeline (scraper + cleaner)."""
@@ -402,7 +405,7 @@ def pipeline_run(
 
     typer.echo("Running scraper...")
     runner = ScraperRunner(db)
-    results = runner.run_all(include_dawum=include_dawum)
+    results = runner.run_all(include_dawum=include_dawum, include_wahlrecht=include_wahlrecht)
     total = sum(v for v in results.values() if isinstance(v, int))
     typer.echo(f"✓ Total scraped: {total} polls\n")
 
@@ -631,6 +634,9 @@ def deploy_start(
         True, "--export/--no-export", help="Run export:all after pipeline (creates download files)"
     ),
     include_dawum: bool = typer.Option(True, "--dawum/--no-dawum", help="Include DAWUM in pipeline"),
+    include_wahlrecht: bool = typer.Option(
+        True, "--wahlrecht/--no-wahlrecht", help="Run Wahlrecht.de scrapers (skip when site is down)"
+    ),
 ):
     """Start the API server first (so the port is open for Render), then run pipeline + export.
 
@@ -651,7 +657,8 @@ def deploy_start(
     import time
 
     typer.echo(
-        f"deploy:start flags: pipeline={run_pipeline}, clean={run_clean}, export={run_export}"
+        f"deploy:start flags: pipeline={run_pipeline}, clean={run_clean}, export={run_export}, "
+        f"wahlrecht={include_wahlrecht}, dawum={include_dawum}"
     )
     if not run_pipeline and not run_clean:
         typer.echo("(No pipeline or clean — server only)")
@@ -720,6 +727,8 @@ def deploy_start(
         pipeline_cmd = [sys.executable, "-m", "pollingapi", "pipeline:run"]
         if not include_dawum:
             pipeline_cmd.append("--no-dawum")
+        if not include_wahlrecht:
+            pipeline_cmd.append("--no-wahlrecht")
         try:
             subprocess.run(pipeline_cmd, check=True)
         except subprocess.CalledProcessError as e:

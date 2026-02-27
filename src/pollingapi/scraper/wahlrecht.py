@@ -11,6 +11,46 @@ from pollingapi.scraper.config import ScraperRegistry
 from pollingapi.scraper.schemas import filter_poll_payloads
 from pollingapi.scraper.snapshots import save_table_snapshot
 
+# Pattern for "PARTY_LABEL N %" segments in Sonstige-style cells (e.g. "BSW 4 % Sonst. 2 %")
+_MULTI_PARTY_PATTERN = re.compile(r"(\S+)\s+(\d+(?:[.,]\d+)?)\s*%")
+
+
+def _normalize_sonstige_label(label: str) -> str:
+    """Map common 'Sonstige' variants to canonical 'Sonstige'."""
+    s = label.strip()
+    if s in ("Sonst.", "Sonst", "Sonstige"):
+        return "Sonstige"
+    return s
+
+
+def parse_multi_party_cell(value: Any) -> Dict[str, float] | None:
+    """
+    Parse a cell that may contain multiple 'PARTY N %' segments (e.g. Sonstige column).
+    Examples: "BSW 4 % Sonst. 2 %" -> {"BSW": 4.0, "Sonstige": 2.0}; "7 %" -> None
+    (caller should use single percentage parse). Returns None if value is empty/not parseable.
+    """
+    if pd.isna(value):
+        return None
+    text = str(value).strip()
+    if not text or text in ("–", "—", "-"):
+        return None
+    matches = _MULTI_PARTY_PATTERN.findall(text)
+    if not matches:
+        return None
+    # Single match with numeric-only label -> treat as one value; caller uses column name
+    if len(matches) == 1:
+        label, num_str = matches[0]
+        num_val = float(num_str.replace(",", "."))
+        if label.isdigit() or (label.replace(",", "").replace(".", "").isdigit()):
+            return {"Sonstige": num_val}
+        return {_normalize_sonstige_label(label): num_val}
+    result = {}
+    for label, num_str in matches:
+        key = _normalize_sonstige_label(label)
+        num_val = float(num_str.replace(",", "."))
+        result[key] = num_val
+    return result
+
 
 @ScraperRegistry.register("wahlrecht_bund")
 class WahlrechtBundScraper(BaseScraper):
@@ -147,9 +187,14 @@ class WahlrechtBundScraper(BaseScraper):
         for col in party_cols:
             val = row.get(col)
             if pd.notna(val):
-                parsed = self._parse_percentage(val)
-                if parsed is not None:
-                    party_dict[str(col)] = parsed
+                multi = parse_multi_party_cell(val)
+                if multi is not None:
+                    for k, v in multi.items():
+                        party_dict[k] = v
+                else:
+                    parsed = self._parse_percentage(val)
+                    if parsed is not None:
+                        party_dict[str(col)] = parsed
         return party_dict
 
     def _parse_percentage(self, value: Any) -> float | None:
@@ -261,13 +306,9 @@ class WahlrechtLandScraper(BaseScraper):
         )
         df["Zeitraum"] = df["respondents_parsed"].apply(lambda x: x[1])
 
-        # Create parties dict
+        # Create parties dict (parse Sonstige-style cells that may contain multiple "PARTY N %")
         df["parties"] = df.apply(
-            lambda row: {
-                col: self._parse_percentage(row[col])
-                for col in party_cols
-                if pd.notna(row[col]) and self._parse_percentage(row[col]) is not None
-            },
+            lambda row: self._create_party_dict_state(row, party_cols),
             axis=1,
         )
 
@@ -276,6 +317,24 @@ class WahlrechtLandScraper(BaseScraper):
         df = df[[col for col in keep_cols if col in df.columns]]
 
         return df
+
+    def _create_party_dict_state(
+        self, row: pd.Series, party_cols: List[str]
+    ) -> Dict[str, Any]:
+        """Build party dict for one row; splits Sonstige-style cells into separate parties."""
+        party_dict: Dict[str, Any] = {}
+        for col in party_cols:
+            val = row.get(col)
+            if pd.notna(val):
+                multi = parse_multi_party_cell(val)
+                if multi is not None:
+                    for k, v in multi.items():
+                        party_dict[k] = v
+                else:
+                    parsed = self._parse_percentage(val)
+                    if parsed is not None:
+                        party_dict[str(col)] = parsed
+        return party_dict
 
     def _parse_respondents_field(self, value: Any) -> tuple[int | None, str | None]:
         """Parse respondents field to extract count and timeframe."""

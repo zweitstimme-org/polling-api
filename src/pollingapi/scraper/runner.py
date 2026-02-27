@@ -112,23 +112,33 @@ class ScraperRunner:
         workers = self._discover_html_workers()
         return workers
 
-    def run_all(self, include_dawum: bool = True) -> dict[str, int | str]:
+    def run_all(
+        self,
+        include_dawum: bool = True,
+        include_wahlrecht: bool = True,
+    ) -> dict[str, int | str]:
         """Run all scrapers and return summary.
 
         Args:
             include_dawum: Whether to include DAWUM API scraper
+            include_wahlrecht: Whether to run Wahlrecht.de HTML scrapers.
+                Set False when wahlrecht.de is down to still get DAWUM data.
 
         Returns:
             Dictionary mapping worker names to inserted counts
         """
         results = {}
 
-        # Get HTML workers
+        # Get HTML workers (all hit wahlrecht.de)
         html_workers = self._discover_html_workers()
         self.logger.info(f"Discovered {len(html_workers)} HTML workers")
 
-        # Run HTML-based workers
+        # Run HTML-based workers (skip when wahlrecht.de is down)
+        if not include_wahlrecht:
+            self.logger.info("Skipping Wahlrecht.de scrapers (--no-wahlrecht)")
         for _name, config, scraper_class in html_workers:
+            if not include_wahlrecht:
+                continue
             try:
                 typer.echo(f"Running {config.worker_name}...")
                 scraper = scraper_class(config, self.db, context=self.context, dry_run=self.dry_run)
