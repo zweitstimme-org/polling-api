@@ -146,16 +146,17 @@ class WahlrechtBundScraper(BaseScraper):
         if url_config.get("party_columns"):
             return [str(c) for c in url_config["party_columns"]]
 
-        # Strategy 2: Boundary columns
+        # Strategy 2: Boundary columns (fall through to Strategy 4 if columns missing, e.g. Forsa 1999/2000/2001)
         if url_config.get("party_start_after") or url_config.get("party_end_before"):
             start_after = url_config.get("party_start_after")
             end_before = url_config.get("party_end_before")
             try:
                 start = cols.index(start_after) + 1 if start_after else 0
                 end = cols.index(end_before) if end_before else len(cols)
-                return cols[start:end]
+                if start < end:
+                    return cols[start:end]
             except ValueError:
-                return []
+                pass  # Boundary columns not found; try auto-detect below
 
         # Strategy 3: Numeric indices
         if (
@@ -221,6 +222,15 @@ class WahlrechtLandScraper(BaseScraper):
         """Always process all URLs for state scrapers (they use table_index to get different data)."""
         return self.config.urls
 
+    def _get_valid_table_count(self, url: str) -> int:
+        """Fetch page (cache it), count valid poll tables (≥4 columns). Used to scrape all tables when site adds new ones."""
+        if url not in self._html_cache:
+            self._html_cache[url] = self._fetch_html(url)
+        html = self._html_cache[url]
+        tables = pd.read_html(StringIO(html), encoding="utf-8")
+        valid_tables = [t for t in tables if len(t.columns) >= 4]
+        return len(valid_tables)
+
     def parse_url(self, url: str, url_config: Dict[str, Any]) -> pd.DataFrame:
         """Parse poll data from state Wahlrecht.de URL."""
         table_index = url_config.get("table_index", 0)
@@ -232,15 +242,20 @@ class WahlrechtLandScraper(BaseScraper):
         html = self._html_cache[url]
         tables = pd.read_html(StringIO(html), encoding="utf-8")
 
-        # Filter for tables with enough columns (metadata + at least one party)
+        # Filter for tables with enough columns (metadata + at least one party).
+        # Table indices are position-based: if the site adds a table at the top, all indices shift.
         valid_tables = [t for t in tables if len(t.columns) >= 4]
+        num_valid = len(valid_tables)
 
-        if table_index >= len(valid_tables):
+        if table_index >= num_valid:
             self.logger.warning(
-                f"[{self.config.worker_name}] Table index {table_index} out of range (found {len(valid_tables)} valid tables)"
+                f"[{self.config.worker_name}] Table index {table_index} out of range (found {num_valid} valid tables)"
             )
             return pd.DataFrame()
 
+        self.logger.info(
+            f"[{self.config.worker_name}] Page has {num_valid} valid table(s), using index {table_index}"
+        )
         df = valid_tables[table_index].copy()
 
         # Save raw snapshot
@@ -371,49 +386,61 @@ class WahlrechtLandScraper(BaseScraper):
             return None
 
     def run(self) -> int:
-        """Run the scraper with HTML caching."""
-        urls = self.select_urls()
-        if not urls:
+        """Run the scraper with HTML caching. Scrapes all valid tables on each page so new tables added by the site are included."""
+        url_configs = self.select_urls()
+        if not url_configs:
             self.logger.info(f"No URLs to process for {self.config.worker_name}")
             return 0
 
+        # State workers use one URL; discover all valid tables on the page and scrape them (so new tables added by the site are included)
+        first_config = url_configs[0] if isinstance(url_configs[0], dict) else {}
+        url = first_config.get("url") if isinstance(first_config, dict) else None
+        if not url:
+            return 0
+
+        num_tables = self._get_valid_table_count(url)
+        if num_tables == 0:
+            self.logger.warning(
+                f"[{self.config.worker_name}] No valid tables found at {url}"
+            )
+            return 0
+        self.logger.info(
+            f"Processing {num_tables} table(s) for {self.config.worker_name} ({url})"
+        )
+
         total_inserted = 0
-        self.logger.info(f"Processing {len(urls)} URLs for {self.config.worker_name}")
-
-        for url_config in urls:
-            url = url_config.get("url") if isinstance(url_config, dict) else url_config
-            if not url:
-                continue
-
+        for table_index in range(num_tables):
             try:
-                self.logger.info(f"Processing: {url}")
+                self.logger.info(
+                    f"Processing: {url} (table {table_index + 1} of {num_tables})"
+                )
+                # Use first config for drop_header/drop_footer; override table_index so we scrape every table
+                config = dict(first_config)
+                config["table_index"] = table_index
 
-                # Parse data (HTML is cached internally)
-                df = self.parse_url(url, url_config if isinstance(url_config, dict) else {})
+                df = self.parse_url(url, config)
                 if df.empty:
-                    self.logger.warning(f"No data found at {url}")
+                    self.logger.warning(
+                        f"No data from {url} (table {table_index + 1})"
+                    )
                     continue
 
-                # Apply metadata
                 df = self._apply_metadata(df)
-
-                # Filter and validate
                 records = df.to_dict("records")
                 payloads = filter_poll_payloads(records)
-
-                # Insert into database
                 inserted = self.post_polls(payloads)
                 total_inserted += inserted
-                self.logger.info(f"Inserted {inserted} polls from {url}")
-
+                self.logger.info(
+                    f"Inserted {inserted} polls from {url} (table {table_index + 1} of {num_tables})"
+                )
             except Exception as e:
-                self.logger.error(f"Error processing {url}: {e}")
+                self.logger.error(
+                    f"Error processing {url} (table {table_index + 1}): {e}"
+                )
                 if self.context.debug:
                     raise
                 continue
 
-        # Mark initial run complete
         self._mark_initial_run_complete()
-
         self.logger.info(f"Total inserted: {total_inserted}")
         return total_inserted
