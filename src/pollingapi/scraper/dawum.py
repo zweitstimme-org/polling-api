@@ -138,7 +138,7 @@ class DawumScraper:
         """Prepare dataframe for database insertion."""
         df_mapped = df.copy()
 
-        # Map columns to database schema
+        # Map columns to database schema (institute_raw = API value for auditing, same as institute_id)
         column_mapping = {
             "Date": "publish_date",
             "Surveyed_Persons": "respondents",
@@ -147,6 +147,7 @@ class DawumScraper:
             "Method": "method_id",
         }
         df_mapped = df_mapped.rename(columns=column_mapping)
+        df_mapped["institute_raw"] = df_mapped["institute_id"]
 
         # Scope per row from DAWUM Parliament_ID (federal + all Länder)
         def _scope_from_parliament_id(pid) -> str:
@@ -180,6 +181,7 @@ class DawumScraper:
             "respondents",
             "parties",
             "institute_id",
+            "institute_raw",
             "tasker",
             "method_id",
             "provider",

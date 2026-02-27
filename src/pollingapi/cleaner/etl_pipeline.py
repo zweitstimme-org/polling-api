@@ -319,9 +319,16 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool
             )
             return None, False
 
-        # Parse respondents
+        # Parse respondents (always prefer numeric count for cleaned poll when raw has it)
         respondents_result = parse_respondents(raw_poll.respondents or "")
         respondents_count = respondents_result.count
+        if respondents_count is None and raw_poll.respondents:
+            try:
+                raw_stripped = str(raw_poll.respondents).strip().replace(".", "").replace(",", "")
+                if raw_stripped.isdigit():
+                    respondents_count = int(raw_stripped)
+            except (ValueError, AttributeError):
+                pass
 
         # Map foreign keys using JSON mappings
         institute = get_or_create_institute(db, raw_poll.institute_id or "")

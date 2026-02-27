@@ -4,7 +4,7 @@ from pathlib import Path
 
 import typer
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from pollingapi.cleaner import run_cleaning_pipeline
 from pollingapi.core import settings
@@ -158,8 +158,11 @@ def db_export():
 
     db = get_db()
 
-    # Export polls
-    polls = db.query(Poll).all()
+    # Export polls (include provider and institute names so consumers don't need to join)
+    polls = db.query(Poll).options(
+        joinedload(Poll.provider),
+        joinedload(Poll.institute),
+    ).all()
     polls_data = []
     for poll in polls:
         poll_dict = {
@@ -172,7 +175,9 @@ def db_export():
             "survey_date_end": poll.survey_date_end.isoformat() if poll.survey_date_end else None,
             "respondents": poll.respondents,
             "institute_id": poll.institute_id,
+            "institute_name": poll.institute.name if poll.institute else None,
             "provider_id": poll.provider_id,
+            "provider_name": poll.provider.name if poll.provider else None,
             "method_id": poll.method_id,
             "election_id": poll.election_id,
             "scope": poll.scope,
