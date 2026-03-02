@@ -35,7 +35,6 @@ venv.bak/
 *.swp
 *.swo
 *~
-.DS_Store
 
 # Jupyter Notebook
 .ipynb_checkpoints/
@@ -84,7 +83,6 @@ Notes.txt
 AGENTS.md
 
 # macOS
-.DS_Store
 .AppleDouble
 .LSOverride
 
@@ -92,3 +90,15 @@ AGENTS.md
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# System/personal junk
+.DS_Store
+._*
+.Rhistory
+.RHistory
+.Ruserdata
+.Rapp.history
+.Rproj.user/
+/.RData
+Rplots.pdf
+*.Rproj
