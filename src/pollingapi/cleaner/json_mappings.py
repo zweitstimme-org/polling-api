@@ -304,6 +304,12 @@ def _build_parliament_lookup() -> Dict[str, int]:
         if election:
             lookup[election.lower().strip()] = id_int
 
+        # Map by Aliases
+        aliases = info.get("Aliases", [])
+        for alias in aliases:
+            if alias:
+                lookup[alias.lower().strip()] = id_int
+
     return lookup
 
 
@@ -323,50 +329,8 @@ def map_parliament(scope: str) -> int:
 
     scope_lower = scope.lower().strip()
 
-    # Direct match
+    # Direct match against all entries in JSON (Shortcut, Name, Election, Aliases)
     if scope_lower in lookup:
         return lookup[scope_lower]
-
-    # Scope aliases
-    scope_aliases = {
-        "federal": 0,
-        "bundestag": 0,
-        "bundestagswahl": 0,
-        "bayern": 2,
-        "bavaria": 2,
-        "landtagswahl in bayern": 2,
-        "berlin": 3,
-        "brandenburg": 4,
-        "bremen": 5,
-        "hamburg": 6,
-        "hessen": 7,
-        "hessian": 7,
-        "mecklenburg-vorpommern": 8,
-        "meckpom": 8,
-        "niedersachsen": 9,
-        "lower saxony": 9,
-        "nrw": 10,
-        "nordrhein-westfalen": 10,
-        "north rhine-westphalia": 10,
-        "rheinland-pfalz": 11,
-        "rhineland-palatinate": 11,
-        "rp": 11,
-        "saarland": 12,
-        "sachsen": 13,
-        "saxony": 13,
-        "sachsen-anhalt": 14,
-        "saxony-anhalt": 14,
-        "schleswig-holstein": 15,
-        "sh": 15,
-        "thüringen": 16,
-        "thueringen": 16,
-        "thuringia": 16,
-        "eu": 17,
-        "europawahl": 17,
-        "european parliament": 17,
-    }
-
-    if scope_lower in scope_aliases:
-        return scope_aliases[scope_lower]
 
     return 0  # Default to Bundestag

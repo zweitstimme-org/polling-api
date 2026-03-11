@@ -20,26 +20,26 @@ class ForschwahlScraper(WahlrechtBundScraper):
             method_id="99",
             urls=[
                 {
-                    "url": "https://www.wahlrecht.de/umfragen/forschungsgruppe/2002.htm",
+                    "url": "https://www.wahlrecht.de/umfragen/politbarometer/2002.htm",
                     "drop_footer": 4,
                 },
                 {
-                    "url": "https://www.wahlrecht.de/umfragen/forschungsgruppe/2005.htm",
+                    "url": "https://www.wahlrecht.de/umfragen/politbarometer/2005.htm",
                     "drop_footer": 4,
                 },
                 {
-                    "url": "https://www.wahlrecht.de/umfragen/forschungsgruppe/2009.htm",
+                    "url": "https://www.wahlrecht.de/umfragen/politbarometer/2009.htm",
                     "drop_footer": 4,
                 },
                 {
-                    "url": "https://www.wahlrecht.de/umfragen/forschungsgruppe/2013.htm",
+                    "url": "https://www.wahlrecht.de/umfragen/politbarometer/2013.htm",
                     "drop_footer": 4,
                 },
                 {
-                    "url": "https://www.wahlrecht.de/umfragen/forschungsgruppe/2017.htm",
+                    "url": "https://www.wahlrecht.de/umfragen/politbarometer/2017.htm",
                     "drop_footer": 4,
                 },
-                {"url": "https://www.wahlrecht.de/umfragen/forschungsgruppe.htm", "drop_footer": 4},
+                {"url": "https://www.wahlrecht.de/umfragen/politbarometer.htm", "drop_footer": 4},
             ],
             type="wahlrecht_bund",
         )
