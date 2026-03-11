@@ -345,22 +345,86 @@ def pipeline_clean(
 @app.command(name="pipeline:run")
 def pipeline_run(
     include_dawum: bool = typer.Option(True, "--dawum/--no-dawum", help="Include DAWUM API"),
-    skip_clean: bool = typer.Option(False, "--skip-clean", help="Skip cleaning step"),
 ):
-    """Run full pipeline (scraper + cleaner)."""
-    db = get_db()
+    """Run full pipeline (scraper + cleaner + export + archive)."""
+    import shutil
+    from datetime import date
 
-    typer.echo("Running scraper...")
+    db = get_db()
+    s3_service = S3Service()
+
+    typer.echo("=== Running Scraper ===")
+    typer.echo("")
     runner = ScraperRunner(db)
     results = runner.run_all(include_dawum=include_dawum)
     total = sum(v for v in results.values() if isinstance(v, int))
-    typer.echo(f"✓ Total scraped: {total} polls\n")
+    typer.echo(f"✓ Total scraped: {total} polls")
+    typer.echo("")
 
-    if not skip_clean:
-        typer.echo("Running cleaner...")
-        stats = run_cleaning_pipeline(db)
-        typer.echo(f"✓ Processed: {stats['processed']}")
-        typer.echo(f"✓ Created: {stats['created']}")
+    typer.echo("=== Running Cleaner ===")
+    typer.echo("")
+    stats = run_cleaning_pipeline(db)
+    typer.echo(f"✓ Processed: {stats['processed']}")
+    typer.echo(f"✓ Created: {stats['created']}")
+    typer.echo("")
+
+    typer.echo("=== Running Export ===")
+    typer.echo("")
+    export_stats = _run_export()
+    typer.echo(
+        f"✓ Exported {export_stats['polls']} polls, {export_stats['poll_results']} poll results, "
+        f"and {export_stats['raw_polls']} raw polls"
+    )
+    typer.echo("")
+
+    if s3_service.is_configured():
+        typer.echo("=== Creating Archive ===")
+        typer.echo("")
+
+        data_dir = settings.data_dir
+        json_dir = PROJECT_ROOT / "json"
+        archive_name = f"pollingapi-archive-{date.today().isoformat()}.zip"
+        archive_path = settings.data_dir.parent / archive_name
+
+        import tempfile
+        import shutil as sh
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            sh.copytree(data_dir, tmp_path / "data")
+            sh.copytree(json_dir, tmp_path / "json")
+
+            shutil.make_archive(
+                base_name=str(archive_path.with_suffix("")),
+                format="zip",
+                root_dir=str(tmp_path),
+            )
+
+        archive_size = archive_path.stat().st_size
+        typer.echo(f"✓ Created archive: {archive_name} ({archive_size / 1024 / 1024:.1f} MB)")
+
+        typer.echo(f"Uploading to S3 bucket: {s3_service.bucket_name}...")
+
+        key = f"archives/{archive_name}"
+        if s3_service.upload_archive(archive_path, key):
+            typer.echo(f"✓ Uploaded to s3://{s3_service.bucket_name}/{key}")
+
+            archives = s3_service.list_archives()
+            s3_service.upload_index(archives)
+            typer.echo("✓ Updated archive index")
+
+            archive_path.unlink()
+            typer.echo(f"✓ Removed local archive: {archive_name}")
+        else:
+            typer.echo("✗ Failed to upload to S3", err=True)
+
+        typer.echo("")
+        typer.echo("=== Archive Complete ===")
+    else:
+        typer.echo("=== Skipping Archive (S3 not configured) ===")
+        typer.echo("")
+
+    typer.echo("=== Pipeline Complete ===")
 
 
 @app.command(name="pipeline:inspect")
