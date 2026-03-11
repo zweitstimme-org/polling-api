@@ -1,7 +1,6 @@
 """Core configuration module."""
 
 from pathlib import Path
-from typing import Optional
 
 from pydantic_settings import BaseSettings
 
@@ -36,6 +35,13 @@ class Settings(BaseSettings):
     # Scraping Configuration
     scraper_delay: float = 1.0  # Seconds between requests
     scraper_timeout: int = 30  # Request timeout
+
+    # S3 Archive Configuration
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    aws_s3_bucket_name: str | None = None
+    aws_s3_region: str = "eu-central-1"
+    aws_s3_endpoint_url: str | None = None  # For S3-compatible services (Hetzner, MinIO, etc.)
 
     # Data Paths
     data_dir: Path = DATA_DIR

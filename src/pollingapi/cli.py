@@ -7,11 +7,12 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from pollingapi.cleaner import run_cleaning_pipeline
-from pollingapi.core import settings
+from pollingapi.core import PROJECT_ROOT, settings
 from pollingapi.database import SessionLocal, init_db, seed_all_from_json
 from pollingapi.logging_config import get_logger, setup_logging
 from pollingapi.scraper.context import RunContext
 from pollingapi.scraper.runner import ScraperRunner
+from pollingapi.services.s3 import S3Service
 
 # Initialize logging with default settings
 setup_logging()
@@ -108,9 +109,11 @@ def db_tables():
         typer.echo(f"  {name}: {count}")
 
 
-@app.command(name="export:all")
-def db_export():
-    """Export data to JSON, CSV, and Parquet files."""
+def _run_export() -> dict:
+    """Run data export to JSON, CSV, and Parquet files.
+
+    Returns a dict with export statistics.
+    """
     import json
 
     import pandas as pd
@@ -119,7 +122,6 @@ def db_export():
 
     db = get_db()
 
-    # Export polls
     polls = db.query(Poll).all()
     polls_data = []
     for poll in polls:
@@ -144,7 +146,6 @@ def db_export():
     with open(settings.export_dir / "polls.json", "w", encoding="utf-8") as f:
         json.dump(polls_data, f, indent=2, ensure_ascii=False)
 
-    # Export flattened poll results
     poll_results_data = []
     for poll in polls_data:
         for result in poll.get("results", []):
@@ -162,19 +163,16 @@ def db_export():
     with open(settings.export_dir / "poll_results.json", "w", encoding="utf-8") as f:
         json.dump(poll_results_data, f, indent=2, ensure_ascii=False)
 
-    # Export CSV (without nested results)
     polls_df = pd.DataFrame(polls_data)
     if "results" in polls_df.columns:
         polls_df = polls_df.drop(columns=["results"])
     polls_df.to_csv(settings.export_dir / "polls.csv", index=False)
 
-    # Export Parquet if available
     try:
         polls_df.to_parquet(settings.export_dir / "polls.parquet", index=False)
     except Exception as exc:
         logger.warning(f"Could not export Parquet: {exc}")
 
-    # Export raw polls
     raw_polls = db.query(RawPoll).all()
     raw_data = []
     for raw in raw_polls:
@@ -200,9 +198,20 @@ def db_export():
     with open(settings.export_dir / "polls_raw.json", "w", encoding="utf-8") as f:
         json.dump(raw_data, f, indent=2, ensure_ascii=False, default=str)
 
+    return {
+        "polls": len(polls_data),
+        "poll_results": len(poll_results_data),
+        "raw_polls": len(raw_data),
+    }
+
+
+@app.command(name="export:all")
+def db_export():
+    """Export data to JSON, CSV, and Parquet files."""
+    stats = _run_export()
     typer.echo(
-        f"✓ Exported {len(polls_data)} polls, {len(poll_results_data)} poll results, "
-        f"and {len(raw_data)} raw polls to {settings.export_dir}"
+        f"✓ Exported {stats['polls']} polls, {stats['poll_results']} poll results, "
+        f"and {stats['raw_polls']} raw polls to {settings.export_dir}"
     )
 
 
@@ -294,8 +303,6 @@ def scraper_list():
 @app.command(name="scraper:status")
 def scraper_status():
     """Show scraper run status and data freshness."""
-
-    from pollingapi.core import settings
 
     typer.echo("Scraper status:")
     typer.echo("-" * 50)
@@ -632,6 +639,131 @@ def logs_list():
             typer.echo(f"  ✓ {log_file}: {size_str}")
         else:
             typer.echo(f"  ○ {log_file}: not created yet")
+
+
+# ============================================================================
+# Data Archive Commands (data:*)
+# ============================================================================
+
+
+@app.command(name="data:archive")
+def data_archive(
+    keep: bool = typer.Option(False, "--keep", help="Keep local archive after upload"),
+):
+    """Create and upload data archive to S3."""
+    import shutil
+    from datetime import date
+
+    s3_service = S3Service()
+
+    if not s3_service.is_configured():
+        typer.echo("✗ S3 not configured. Check AWS environment variables.", err=True)
+        typer.echo("\nRequired environment variables:")
+        typer.echo("  AWS_ACCESS_KEY_ID")
+        typer.echo("  AWS_SECRET_ACCESS_KEY")
+        typer.echo("  AWS_S3_BUCKET_NAME")
+        typer.echo("  AWS_S3_REGION")
+        typer.echo("  AWS_S3_ENDPOINT_URL (for S3-compatible services)")
+        raise typer.Exit(1)
+
+    typer.echo("Running data export...")
+
+    export_stats = _run_export()
+    typer.echo(
+        f"✓ Exported {export_stats['polls']} polls, {export_stats['poll_results']} poll results, "
+        f"and {export_stats['raw_polls']} raw polls"
+    )
+
+    typer.echo("\nCreating data archive...")
+
+    data_dir = settings.data_dir
+    json_dir = PROJECT_ROOT / "json"
+
+    if not data_dir.exists():
+        typer.echo(f"✗ Data directory not found: {data_dir}", err=True)
+        raise typer.Exit(1)
+
+    if not json_dir.exists():
+        typer.echo(f"✗ JSON directory not found: {json_dir}", err=True)
+        raise typer.Exit(1)
+
+    archive_name = f"pollingapi-archive-{date.today().isoformat()}.zip"
+    archive_path = settings.data_dir.parent / archive_name
+
+    try:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+
+            import shutil as sh
+
+            sh.copytree(data_dir, tmp_path / "data")
+            sh.copytree(json_dir, tmp_path / "json")
+
+            shutil.make_archive(
+                base_name=str(archive_path.with_suffix("")),
+                format="zip",
+                root_dir=str(tmp_path),
+            )
+
+        archive_size = archive_path.stat().st_size
+        typer.echo(f"✓ Created archive: {archive_name} ({archive_size / 1024 / 1024:.1f} MB)")
+
+        typer.echo(f"Uploading to S3 bucket: {s3_service.bucket_name}...")
+
+        key = f"archives/{archive_name}"
+        if s3_service.upload_archive(archive_path, key):
+            typer.echo(f"✓ Uploaded to s3://{s3_service.bucket_name}/{key}")
+
+            archives = s3_service.list_archives()
+            s3_service.upload_index(archives)
+            typer.echo("✓ Updated archive index")
+
+            if not keep:
+                archive_path.unlink()
+                typer.echo(f"✓ Removed local archive: {archive_name}")
+            else:
+                typer.echo(f"✓ Kept local archive: {archive_path}")
+
+            typer.echo("\nArchive available at:")
+            typer.echo("  /v1/archive")
+            typer.echo("  /v1/archive.json")
+        else:
+            typer.echo("✗ Failed to upload to S3", err=True)
+            raise typer.Exit(1)
+
+    except Exception as e:
+        logger.error(f"Failed to create archive: {e}")
+        typer.echo(f"✗ Error: {e}", err=True)
+        if archive_path.exists():
+            archive_path.unlink()
+        raise typer.Exit(1)
+
+
+@app.command(name="data:list")
+def data_list():
+    """List available data archives in S3."""
+    s3_service = S3Service()
+
+    if not s3_service.is_configured():
+        typer.echo("✗ S3 not configured.", err=True)
+        raise typer.Exit(1)
+
+    archives = s3_service.list_archives()
+
+    if not archives:
+        typer.echo("No archives found in S3 bucket.")
+        return
+
+    typer.echo(f"Available archives in {s3_service.bucket_name}:")
+    typer.echo("-" * 60)
+    for archive in archives:
+        size_mb = archive.size / 1024 / 1024
+        date_str = archive.created_at.strftime("%Y-%m-%d %H:%M")
+        typer.echo(f"  {archive.filename}")
+        typer.echo(f"    Size: {size_mb:.1f} MB | Date: {date_str}")
+        typer.echo(f"    URL: {archive.public_url}")
 
 
 # ============================================================================

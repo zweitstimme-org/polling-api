@@ -34,6 +34,8 @@ dependencies = [
     "pydantic-settings>=2.6.0",
     # HTTP Client
     "httpx>=0.28.0",
+    # S3 Storage
+    "boto3>=1.35.0",
     # Utilities
     "toml>=0.10.2",
     "pyarrow>=23.0.0",
