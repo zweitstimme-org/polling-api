@@ -1,0 +1,23 @@
+# /etc/systemd/system/pollingapi.service
+[Unit]
+Description=Zweitstimme Polling API
+After=network.target
+[Service]
+Type=exec
+User=paul
+Group=paul
+WorkingDirectory=/home/paul/pollingAPI
+# Use venv gunicorn directly (not uv run)
+ExecStart=/home/paul/pollingAPI/.venv/bin/gunicorn \
+    -k uvicorn.workers.UvicornWorker \
+    pollingapi.main:app \
+    --bind 127.0.0.1:8000 \
+    --workers 4 \
+    --timeout 120 \
+    --max-requests 10000 \
+    --access-logfile /home/paul/pollingAPI/data/logs/access.log \
+    --error-logfile /home/paul/pollingAPI/data/logs/error.log
+Restart=on-failure
+RestartSec=5
+[Install]
+WantedBy=multi-user.target
