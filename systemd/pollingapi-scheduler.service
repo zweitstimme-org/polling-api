@@ -1,0 +1,14 @@
+[Unit]
+Description=Zweitstimme Polling Pipeline Runner
+After=network.target
+
+[Service]
+Type=oneshot
+User=paul
+WorkingDirectory=/home/paul/pollingAPI
+ExecStart=/home/paul/.local/bin/uv --directory /home/paul/pollingAPI run pollingapi pipeline:run
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
