@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from pollingapi.api import (
+    data,
     dictionaries,
     download,
     elections,
@@ -37,6 +38,7 @@ app = FastAPI(
         {"name": "reference", "description": "Reference/dictionary tables"},
         {"name": "elections", "description": "Election summaries and metadata"},
         {"name": "downloads", "description": "File exports (JSON/CSV/SQLite)"},
+        {"name": "archive", "description": "Data archive downloads (S3)"},
     ],
 )
 
@@ -56,6 +58,7 @@ app.include_router(polls.results_router, prefix="/v1")
 app.include_router(download.router, prefix="/v1", tags=["downloads"])
 app.include_router(elections.router, prefix="/v1")
 app.include_router(dictionaries.router, prefix="/v1")
+app.include_router(data.router, prefix="/v1")
 
 
 @app.get("/")
