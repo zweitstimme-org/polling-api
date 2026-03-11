@@ -348,7 +348,7 @@ def pipeline_run(
 ):
     """Run full pipeline (scraper + cleaner + export + archive)."""
     import shutil
-    from datetime import date
+    from datetime import datetime
 
     db = get_db()
     s3_service = S3Service()
@@ -383,7 +383,7 @@ def pipeline_run(
 
         data_dir = settings.data_dir
         json_dir = PROJECT_ROOT / "json"
-        archive_name = f"pollingapi-archive-{date.today().isoformat()}.zip"
+        archive_name = f"pollingapi-archive-{datetime.now().strftime('%Y-%m-%d-%H-%M')}.zip"
         archive_path = settings.data_dir.parent / archive_name
 
         import tempfile
@@ -716,7 +716,7 @@ def data_archive(
 ):
     """Create and upload data archive to S3."""
     import shutil
-    from datetime import date
+    from datetime import datetime
 
     s3_service = S3Service()
 
@@ -751,7 +751,7 @@ def data_archive(
         typer.echo(f"✗ JSON directory not found: {json_dir}", err=True)
         raise typer.Exit(1)
 
-    archive_name = f"pollingapi-archive-{date.today().isoformat()}.zip"
+    archive_name = f"pollingapi-archive-{datetime.now().strftime('%Y-%m-%d-%H-%M')}.zip"
     archive_path = settings.data_dir.parent / archive_name
 
     try:
