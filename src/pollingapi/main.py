@@ -1,12 +1,13 @@
 """Main FastAPI application."""
 
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from sqlalchemy.orm import Session
 
 from pollingapi.api import (
     data,
@@ -16,9 +17,12 @@ from pollingapi.api import (
     polls,
 )
 from pollingapi.core import settings
-from pollingapi.database import init_db_async
+from pollingapi.database import get_db, init_db_async
+from pollingapi.models import PipelineRun, Poll
+from pollingapi.schemas import HealthCheck
 
 ICON_PATH = Path(__file__).resolve().parent / "api" / "favicon.ico"
+DB_SESSION_DEP = Depends(get_db)
 
 
 @asynccontextmanager
@@ -43,6 +47,7 @@ app = FastAPI(
         {"name": "elections", "description": "Election summaries and metadata"},
         {"name": "downloads", "description": "File exports (JSON/CSV/SQLite)"},
         {"name": "archive", "description": "Data archive downloads (S3)"},
+        {"name": "health", "description": "Service heartbeat and dependency checks"},
     ],
 )
 
@@ -84,13 +89,62 @@ async def root():
     }
 
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint."""
+def _isoformat_utc(dt: datetime) -> str:
+    """Convert datetime to RFC3339 UTC format."""
+    return dt.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+
+@app.get("/health", response_model=HealthCheck, tags=["health"])
+@app.get("/heartbeat", response_model=HealthCheck, tags=["health"])
+async def health_check(db: Session = DB_SESSION_DEP):
+    """Heartbeat endpoint with API and data freshness status."""
+    now = datetime.now(UTC)
+    poll_count = db.query(Poll).count()
+    latest_run = db.query(PipelineRun).order_by(PipelineRun.finished_at.desc()).first()
+
+    pipeline_check_status = "pass"
+    last_run_time = None
+    last_run_ago_seconds = None
+    if latest_run and latest_run.finished_at:
+        finished_at_utc = latest_run.finished_at.astimezone(UTC)
+        last_run_time = _isoformat_utc(finished_at_utc)
+        last_run_ago_seconds = int((now - finished_at_utc).total_seconds())
+    else:
+        pipeline_check_status = "warn"
+
+    overall_status = "pass" if pipeline_check_status == "pass" else "warn"
+
     return {
-        "status": "healthy",
+        "status": overall_status,
+        "service": "pollingapi",
         "version": settings.api_version,
-        "timestamp": datetime.utcnow(),
+        "release_id": settings.api_version,
+        "time": _isoformat_utc(now),
+        "total_polls": poll_count,
+        "last_run_at": last_run_time,
+        "time_since_last_run_seconds": last_run_ago_seconds,
+        "checks": {
+            "database:polls": [
+                {
+                    "status": "pass",
+                    "component_type": "datastore",
+                    "component_id": "primary",
+                    "observed_value": poll_count,
+                    "observed_unit": "polls",
+                    "time": _isoformat_utc(now),
+                }
+            ],
+            "pipeline:last_run": [
+                {
+                    "status": pipeline_check_status,
+                    "component_type": "system",
+                    "component_id": "pipeline",
+                    "observed_value": last_run_ago_seconds,
+                    "observed_unit": "s",
+                    "time": last_run_time,
+                }
+            ],
+        },
     }
 
 

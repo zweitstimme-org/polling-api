@@ -7,6 +7,17 @@ from pydantic_settings import BaseSettings
 # Project root directory (src-layout: src/pollingapi/core -> project root)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = PROJECT_ROOT / "data"
+API_VERSION_FILE = PROJECT_ROOT / ".apiversion"
+
+
+def _load_api_version() -> str:
+    """Load API version from .apiversion file."""
+    if API_VERSION_FILE.exists():
+        version = API_VERSION_FILE.read_text(encoding="utf-8").strip()
+        if version:
+            return version
+    return "1.0.0"
+
 
 # Ensure data directory exists
 DATA_DIR.mkdir(exist_ok=True)
@@ -62,6 +73,7 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+settings.api_version = _load_api_version()
 
 # Ensure export directory exists
 settings.export_dir.mkdir(exist_ok=True)

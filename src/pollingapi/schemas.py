@@ -248,5 +248,11 @@ class HealthCheck(BaseModel):
     """Health check response schema."""
 
     status: str
+    service: str
     version: str
-    timestamp: DateTimeType
+    release_id: str
+    time: DateTimeType
+    total_polls: int
+    last_run_at: DateTimeType | None = None
+    time_since_last_run_seconds: int | None = None
+    checks: Dict[str, List[Dict[str, Any]]]
