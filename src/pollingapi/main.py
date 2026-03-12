@@ -2,9 +2,11 @@
 
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from pollingapi.api import (
     data,
@@ -15,6 +17,8 @@ from pollingapi.api import (
 )
 from pollingapi.core import settings
 from pollingapi.database import init_db_async
+
+ICON_PATH = Path(__file__).resolve().parent / "api" / "favicon.ico"
 
 
 @asynccontextmanager
@@ -88,6 +92,12 @@ async def health_check():
         "version": settings.api_version,
         "timestamp": datetime.utcnow(),
     }
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon() -> FileResponse:
+    """Serve favicon for browser tabs."""
+    return FileResponse(ICON_PATH)
 
 
 def run_server():
