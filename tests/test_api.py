@@ -1,18 +1,22 @@
 """Tests for API endpoints."""
 
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
+
+from pollingapi.main import app
 
 
 @pytest.fixture
 def client():
     """Create test client without lifespan events."""
-    from unittest.mock import patch
-    from pollingapi.main import app
-
-    with patch("pollingapi.main.init_db_async", return_value=None):
-        with TestClient(app, raise_server_exceptions=False) as test_client:
-            yield test_client
+    with (
+        patch("pollingapi.main.init_db_async", return_value=None),
+        TestClient(app, raise_server_exceptions=False) as test_client,
+    ):
+        yield test_client
 
 
 class TestRootEndpoint:
@@ -39,13 +43,33 @@ class TestHealthEndpoint:
     """Tests for health check endpoint."""
 
     def test_health_check(self, client):
-        """Test health endpoint returns healthy status."""
+        """Test health endpoint returns heartbeat payload."""
+        expected_version = (
+            (Path(__file__).resolve().parents[1] / ".apiversion")
+            .read_text(encoding="utf-8")
+            .strip()
+        )
+
         response = client.get("/health")
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "healthy"
-        assert "version" in data
-        assert "timestamp" in data
+        assert data["status"] in {"pass", "warn"}
+        assert data["service"] == "pollingapi"
+        assert data["version"] == expected_version
+        assert data["release_id"] == expected_version
+        assert "time" in data
+        assert "total_polls" in data
+        assert "time_since_last_run_seconds" in data
+        assert "checks" in data
+        assert "database:polls" in data["checks"]
+        assert "pipeline:last_run" in data["checks"]
+
+    def test_heartbeat_alias(self, client):
+        """Test heartbeat alias endpoint returns status."""
+        response = client.get("/heartbeat")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] in {"pass", "warn"}
 
 
 class TestPollsEndpoints:
