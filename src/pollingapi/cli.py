@@ -10,6 +10,7 @@ from pollingapi.cleaner import run_cleaning_pipeline
 from pollingapi.core import PROJECT_ROOT, settings
 from pollingapi.database import SessionLocal, init_db, seed_all_from_json
 from pollingapi.logging_config import get_logger, setup_logging
+from pollingapi.notifications import PipelineRunResult, create_notification_manager
 from pollingapi.scraper.context import RunContext
 from pollingapi.scraper.runner import ScraperRunner
 from pollingapi.services.s3 import S3Service
@@ -82,6 +83,7 @@ def db_tables():
         Institute,
         Method,
         Party,
+        PipelineRun,
         Poll,
         PollResult,
         Provider,
@@ -100,6 +102,7 @@ def db_tables():
         ("elections", Election),
         ("methods", Method),
         ("taskers", Tasker),
+        ("pipeline_runs", PipelineRun),
     ]
 
     typer.echo("Table row counts:")
@@ -350,81 +353,187 @@ def pipeline_run(
     import shutil
     from datetime import datetime
 
+    from pollingapi.models import PipelineRun
+
     db = get_db()
     s3_service = S3Service()
 
-    typer.echo("=== Running Scraper ===")
-    typer.echo("")
-    runner = ScraperRunner(db)
-    results = runner.run_all(include_dawum=include_dawum)
-    total = sum(v for v in results.values() if isinstance(v, int))
-    typer.echo(f"✓ Total scraped: {total} polls")
-    typer.echo("")
+    # ------------------------------------------------------------------ setup
+    run_result = PipelineRunResult()
+    run_result.started_at = datetime.now()
+    notifier = create_notification_manager()
 
-    typer.echo("=== Running Cleaner ===")
-    typer.echo("")
-    stats = run_cleaning_pipeline(db)
-    typer.echo(f"✓ Processed: {stats['processed']}")
-    typer.echo(f"✓ Created: {stats['created']}")
-    typer.echo("")
+    try:
+        # -------------------------------------------------------------- scraper
+        typer.echo("=== Running Scraper ===")
+        typer.echo("")
+        context = RunContext.for_project(run_id=run_result.run_id)
+        runner = ScraperRunner(db, context=context)
+        scraper_results = runner.run_all(include_dawum=include_dawum)
 
-    typer.echo("=== Running Export ===")
-    typer.echo("")
-    export_stats = _run_export()
-    typer.echo(
-        f"✓ Exported {export_stats['polls']} polls, {export_stats['poll_results']} poll results, "
-        f"and {export_stats['raw_polls']} raw polls"
-    )
-    typer.echo("")
+        for name, value in scraper_results.items():
+            run_result.scrapers_run += 1
+            if isinstance(value, int):
+                run_result.scrapers_succeeded += 1
+                run_result.total_scraped_polls += value
+            else:
+                run_result.scrapers_failed += 1
+                run_result.scraper_errors[name] = str(value)
 
-    if s3_service.is_configured():
-        typer.echo("=== Creating Archive ===")
+        typer.echo(f"✓ Total scraped: {run_result.total_scraped_polls} polls")
+        typer.echo(
+            f"  Workers: {run_result.scrapers_succeeded} OK / {run_result.scrapers_failed} failed"
+        )
+        if run_result.scraper_errors:
+            for name, err in run_result.scraper_errors.items():
+                typer.echo(f"  ✗ {name}: {err}")
         typer.echo("")
 
-        data_dir = settings.data_dir
-        json_dir = PROJECT_ROOT / "json"
-        archive_name = f"pollingapi-archive-{datetime.now().strftime('%Y-%m-%d-%H-%M')}.zip"
-        archive_path = settings.data_dir.parent / archive_name
+        # -------------------------------------------------------------- cleaner
+        typer.echo("=== Running Cleaner ===")
+        typer.echo("")
+        etl_stats = run_cleaning_pipeline(db)
+        run_result.etl_processed = etl_stats["processed"]
+        run_result.etl_created = etl_stats["created"]
+        run_result.etl_updated = etl_stats["updated"]
+        run_result.etl_skipped = etl_stats["skipped"]
+        run_result.etl_errors = etl_stats["errors"]
 
-        import tempfile
-        import shutil as sh
+        typer.echo(f"✓ Processed : {run_result.etl_processed}")
+        typer.echo(f"✓ Created   : {run_result.etl_created}")
+        typer.echo(f"✓ Updated   : {run_result.etl_updated}")
+        typer.echo(f"✓ Skipped   : {run_result.etl_skipped}")
+        typer.echo(f"✓ Errors    : {run_result.etl_errors}")
+        typer.echo("")
 
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_path = Path(tmp_dir)
-            sh.copytree(data_dir, tmp_path / "data")
-            sh.copytree(json_dir, tmp_path / "json")
+        # -------------------------------------------------------------- export
+        typer.echo("=== Running Export ===")
+        typer.echo("")
+        export_stats = _run_export()
+        run_result.export_polls = export_stats["polls"]
+        run_result.export_poll_results = export_stats["poll_results"]
+        run_result.export_raw_polls = export_stats["raw_polls"]
 
-            shutil.make_archive(
-                base_name=str(archive_path.with_suffix("")),
-                format="zip",
-                root_dir=str(tmp_path),
-            )
+        typer.echo(
+            f"✓ Exported {run_result.export_polls} polls,"
+            f" {run_result.export_poll_results} poll results,"
+            f" and {run_result.export_raw_polls} raw polls"
+        )
+        typer.echo("")
 
-        archive_size = archive_path.stat().st_size
-        typer.echo(f"✓ Created archive: {archive_name} ({archive_size / 1024 / 1024:.1f} MB)")
+        # -------------------------------------------------------------- archive
+        if s3_service.is_configured():
+            typer.echo("=== Creating Archive ===")
+            typer.echo("")
 
-        typer.echo(f"Uploading to S3 bucket: {s3_service.bucket_name}...")
+            data_dir = settings.data_dir
+            json_dir = PROJECT_ROOT / "json"
+            archive_name = f"pollingapi-archive-{datetime.now().strftime('%Y-%m-%d-%H-%M')}.zip"
+            archive_path = settings.data_dir.parent / archive_name
 
-        key = f"archives/{archive_name}"
-        if s3_service.upload_archive(archive_path, key):
-            typer.echo(f"✓ Uploaded to s3://{s3_service.bucket_name}/{key}")
+            import shutil as sh
+            import tempfile
 
-            archives = s3_service.list_archives()
-            s3_service.upload_index(archives)
-            typer.echo("✓ Updated archive index")
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                tmp_path = Path(tmp_dir)
+                sh.copytree(data_dir, tmp_path / "data")
+                sh.copytree(json_dir, tmp_path / "json")
 
-            archive_path.unlink()
-            typer.echo(f"✓ Removed local archive: {archive_name}")
+                shutil.make_archive(
+                    base_name=str(archive_path.with_suffix("")),
+                    format="zip",
+                    root_dir=str(tmp_path),
+                )
+
+            archive_size = archive_path.stat().st_size
+            archive_size_mb = archive_size / 1024 / 1024
+            typer.echo(f"✓ Created archive: {archive_name} ({archive_size_mb:.1f} MB)")
+
+            typer.echo(f"Uploading to S3 bucket: {s3_service.bucket_name}...")
+
+            key = f"archives/{archive_name}"
+            if s3_service.upload_archive(archive_path, key):
+                typer.echo(f"✓ Uploaded to s3://{s3_service.bucket_name}/{key}")
+
+                archives = s3_service.list_archives()
+                s3_service.upload_index(archives)
+                typer.echo("✓ Updated archive index")
+
+                archive_path.unlink()
+                typer.echo(f"✓ Removed local archive: {archive_name}")
+
+                run_result.archive_created = True
+                run_result.archive_size_mb = archive_size_mb
+            else:
+                typer.echo("✗ Failed to upload to S3", err=True)
+
+            typer.echo("")
+            typer.echo("=== Archive Complete ===")
         else:
-            typer.echo("✗ Failed to upload to S3", err=True)
+            typer.echo("=== Skipping Archive (S3 not configured) ===")
+            typer.echo("")
 
+        run_result.success = True
+
+    except Exception as exc:
+        run_result.success = False
+        run_result.error = str(exc)
+        logger.error(f"Pipeline run failed: {exc}", exc_info=True)
+        typer.echo(f"\n✗ Pipeline failed: {exc}", err=True)
+
+    finally:
+        run_result.finished_at = datetime.now()
+
+        # ---------------------------------------------------------- persist run record
+        try:
+            pipeline_run_record = PipelineRun(
+                run_id=run_result.run_id,
+                started_at=run_result.started_at,
+                finished_at=run_result.finished_at,
+                duration_seconds=run_result.duration_seconds,
+                success=run_result.success,
+                error=run_result.error,
+                scrapers_run=run_result.scrapers_run,
+                scrapers_succeeded=run_result.scrapers_succeeded,
+                scrapers_failed=run_result.scrapers_failed,
+                total_scraped_polls=run_result.total_scraped_polls,
+                etl_processed=run_result.etl_processed,
+                etl_created=run_result.etl_created,
+                etl_updated=run_result.etl_updated,
+                etl_skipped=run_result.etl_skipped,
+                etl_errors=run_result.etl_errors,
+                export_polls=run_result.export_polls,
+                export_poll_results=run_result.export_poll_results,
+                export_raw_polls=run_result.export_raw_polls,
+                archive_created=run_result.archive_created,
+                archive_size_mb=run_result.archive_size_mb,
+            )
+            db.add(pipeline_run_record)
+            db.commit()
+            logger.info(f"Pipeline run record saved: run_id={run_result.run_id}")
+        except Exception as db_exc:
+            logger.warning(f"Failed to persist pipeline run record: {db_exc}")
+
+        # ---------------------------------------------------------- notify
+        notifier.notify(run_result)
+
+        # ---------------------------------------------------------- summary
+        status_icon = "✓" if run_result.success else "✗"
+        typer.echo(f"=== Pipeline {'Complete' if run_result.success else 'FAILED'} ===")
         typer.echo("")
-        typer.echo("=== Archive Complete ===")
-    else:
-        typer.echo("=== Skipping Archive (S3 not configured) ===")
+        typer.echo(f"  {status_icon} Run ID  : {run_result.run_id}")
+        typer.echo(f"    Duration: {run_result.duration_human}")
+        typer.echo(f"    Scraped : {run_result.total_scraped_polls} new polls")
+        typer.echo(
+            f"    Created : {run_result.etl_created} | Updated: {run_result.etl_updated}"
+            f" | Errors: {run_result.etl_errors}"
+        )
+        if notifier.notifier_count > 0:
+            typer.echo(f"    Notified: {notifier.notifier_count} backend(s)")
         typer.echo("")
 
-    typer.echo("=== Pipeline Complete ===")
+        if not run_result.success:
+            raise typer.Exit(1)
 
 
 @app.command(name="pipeline:inspect")

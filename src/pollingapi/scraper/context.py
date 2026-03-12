@@ -14,12 +14,20 @@ class RunContext:
     project_root: Path
     today_str: str
     debug: bool = False
+    # UUID string from PipelineRunResult.run_id; None when running outside pipeline:run.
+    run_id: str | None = None
 
     @classmethod
-    def for_project(cls, project_root: Path = PROJECT_ROOT, debug: bool = False) -> "RunContext":
+    def for_project(
+        cls,
+        project_root: Path = PROJECT_ROOT,
+        debug: bool = False,
+        run_id: str | None = None,
+    ) -> "RunContext":
         """Create a context for the project."""
         return cls(
             project_root=project_root,
             today_str=datetime.now().strftime("%Y-%m-%d"),
             debug=debug,
+            run_id=run_id,
         )

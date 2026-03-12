@@ -232,6 +232,7 @@ class BaseScraper(ABC):
                     election_id=election_id,
                     method_id=method_id,
                     date_downloaded=date_downloaded,
+                    pipeline_run_id=self.context.run_id,
                 )
 
                 self.db.add(raw_poll)
