@@ -1,167 +1,204 @@
 # pollingapi
 
-All-in-one solution for German election polling data by zweitstimme.org.
+All-in-one pipeline and API for German election polling data by zweitstimme.org
 
-## Overview
+## Project status
 
-pollingapi provides scraping, cleaning, and API endpoints for German election polling data. It aggregates polling data from multiple sources (Wahlrecht.de, DAWUM API) and exposes a normalized dataset via REST API.
+This repository currently documents and ships the **development/testing setup**.
 
-## Status
+- The API should be treated as a local development/test service for now.
+- This guide is focused on running the stack locally on your machine.
+- Production deployment details may evolve as the project stabilizes.
 
-**Pre-deployment.** This API is being prepared for production deployment.
+## What this project does
 
-## Quick Start
+`polling-api` collects polling data from multiple sources, normalizes it into a consistent relational
+model, exports machine-readable datasets, and serves the data through a FastAPI application.
+
+The **main operational entrypoint** is:
 
 ```bash
-# Install dependencies
-uv sync
-
-# Initialize database
-pollingapi db:init
-pollingapi db:seed
-
-# Run full pipeline (scrape + clean)
-pollingapi pipeline:run
-
-# Start API server
-pollingapi server:start
+uv run pollingapi pipeline:run
 ```
 
-The API will be available at `http://localhost:8000`
+That command runs the full end-to-end process (all workers + cleaning + export + optional archive).
 
-## CLI Commands
+## Dataflow at a glance
 
-### Database
+```text
+HTML workers + DAWUM API
+          |
+          v
+      polls_raw (immutable source rows)
+          |
+          v
+  ETL cleaning + JSON mappings
+          |
+          v
+   polls + poll_results + reference tables
+          |
+          +--> export files in data/export/
+          |
+          +--> optional S3 archive zip + index
+          |
+          +--> FastAPI endpoints (/v1/*)
+```
+
+## Quick start (local dev)
 
 ```bash
-pollingapi db:init           # Initialize database tables
-pollingapi db:seed            # Seed reference tables from JSON
-pollingapi db:tables          # List tables with row counts
-pollingapi db:ping            # Verify database connectivity
-pollingapi db:reset --confirm # Reset database (destructive)
-pollingapi export:all         # Export to JSON, CSV, Parquet
+# 1) install dependencies
+uv sync
+
+# 2) initialize schema + seed dictionaries
+uv run pollingapi db:init
+uv run pollingapi db:seed
+
+# 3) run full pipeline (recommended main flow)
+uv run pollingapi pipeline:run
+
+# 4) start API locally
+uv run pollingapi server:start --reload
+```
+
+Open:
+- API docs: `http://localhost:8000/docs`
+- OpenAPI: `http://localhost:8000/openapi.json`
+- Heartbeat: `http://localhost:8000/health` (alias: `/heartbeat`)
+
+This is the recommended way to explore and validate the current development version locally.
+
+## Core commands
+
+### Pipeline (main)
+
+```bash
+uv run pollingapi pipeline:run                 # Full run: scrape + clean + export + optional archive
+uv run pollingapi pipeline:clean               # Clean only (from polls_raw into normalized tables)
+uv run pollingapi pipeline:inspect <raw_id>    # Inspect one raw row
 ```
 
 ### Scrapers
 
 ```bash
-pollingapi scraper:run <worker>   # Run specific scraper (e.g., forsa, bayern, all)
-pollingapi scraper:list           # List available scrapers
-pollingapi scraper:status         # Show scraper run status
+uv run pollingapi scraper:list
+uv run pollingapi scraper:run all
+uv run pollingapi scraper:run forsa
+uv run pollingapi scraper:status
 ```
 
-Options:
-- `--debug, -d` - Enable debug logging
-- `--dry-run, -n` - Run without inserting to database
-- `--force, -f` - Force run (ignore initial run markers)
-
-### Pipeline
+### Database and exports
 
 ```bash
-pollingapi pipeline:run           # Run full pipeline (scrape + clean)
-pollingapi pipeline:clean          # Run cleaning only
-pollingapi pipeline:inspect <id>   # Inspect raw poll cleaning
+uv run pollingapi db:ping
+uv run pollingapi db:tables
+uv run pollingapi export:all
+uv run pollingapi db:reset --confirm
 ```
 
-Options:
-- `--dawum/--no-dawum` - Include/exclude DAWUM API (default: included)
-- `--skip-clean` - Skip cleaning step
-
-### Server
+### API server
 
 ```bash
-pollingapi server:start            # Start API server
+uv run pollingapi server:start --host 0.0.0.0 --port 8000 --reload
+uv run pollingapi server:prod --host 127.0.0.1 --port 8000
 ```
 
-Options:
-- `--host, -h` - Host to bind (default: 0.0.0.0)
-- `--port, -p` - Port to bind (default: 8000)
-- `--reload, -r` - Enable auto-reload
+## API surface
 
-### Logs
+The app mounts versioned routes under `/v1`.
 
-```bash
-pollingapi logs:view                # View log files
-pollingapi logs:list                # List available logs
-```
+- `GET /` basic API metadata
+- `GET /health` and `GET /heartbeat` service heartbeat and run freshness
+- `GET /v1/polls` cleaned, normalized polls (filters + pagination)
+- `GET /v1/raw-polls` immutable raw scraped rows
+- `GET /v1/results` flattened grouped results view
+- `GET /v1/reference/*` lookup tables (institutes, parties, providers, methods, elections, taskers)
+- `GET /v1/elections` election summaries and metadata
+- `GET /v1/download/*` dataset downloads (json/csv/parquet/sqlite/raw/results)
+- `GET /v1/archive` archive listing (HTML/JSON) when S3 is configured
 
-Options:
-- `--file, -f` - Log file (zweitstimme, scraper, errors)
-- `--lines, -n` - Number of lines (default: 50)
-- `--follow, -F` - Follow log output
+## Health and observability
+
+`/health` and `/heartbeat` return structured status including:
+- overall service status
+- current version/release id
+- total poll count in the database
+- last successful pipeline run timestamp
+- time since last run in seconds
+- component checks (`database:polls`, `pipeline:last_run`)
+
+Pipeline runs are persisted in `pipeline_runs` for auditability and exposed through heartbeat freshness.
 
 ## Configuration
 
-Copy `.env.example` to `.env`:
+Copy `.env.example` and adjust as needed:
 
 ```bash
 cp .env.example .env
 ```
 
-Required variables:
-- `API_SECRET` - Secret key for API authentication (change in production)
+Common variables:
+- `DATABASE_URL`, `ASYNC_DATABASE_URL`
+- `API_HOST`, `API_PORT`, `API_RELOAD`
+- `SCRAPER_DELAY`, `SCRAPER_TIMEOUT`
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_NAME`, `AWS_S3_REGION`,
+  `AWS_S3_ENDPOINT_URL` (for archive upload)
+- `NTFY_URL`, `SLACK_WEBHOOK_URL` (optional notifications after pipeline runs)
 
-## API Endpoints
+### Versioning
 
-See `GET /docs` for complete API documentation. Main endpoints:
-- `GET /` - API info
-- `GET /health` - Health check
-- `GET /polls/` - Polls data
-- `GET /raw/` - Raw poll data
-- `GET /download/*` - File downloads
-- `GET /dict/*` - Reference dictionaries
+API version is read from the root file `.apiversion` and surfaced in OpenAPI and heartbeat responses.
 
-## Project Structure
+## Project structure
 
-```
-pollingapi/
+```text
+pollingAPI/
 ├── src/pollingapi/
-│   ├── main.py              # FastAPI application
-│   ├── cli.py               # CLI entry point
-│   ├── database.py          # Database configuration
-│   ├── database_seed.py     # JSON-based database seeding
-│   ├── models.py            # SQLAlchemy ORM models
-│   ├── schemas.py           # Pydantic schemas
-│   ├── logging_config.py    # Logging configuration
-│   ├── core/                # Core settings
-│   ├── api/                 # API routers
+│   ├── cli.py                    # Typer CLI entrypoint
+│   ├── main.py                   # FastAPI app + /health + /heartbeat
+│   ├── database.py               # Engine/session/init helpers
+│   ├── models.py                 # SQLAlchemy models incl. PipelineRun
+│   ├── api/                      # Routers mounted at /v1
 │   │   ├── polls.py
 │   │   ├── dictionaries.py
+│   │   ├── elections.py
 │   │   ├── download.py
-│   │   └── elections.py
-│   ├── scraper/             # Web scrapers
-│   │   ├── base.py
+│   │   └── data.py               # Archive endpoints
+│   ├── scraper/                  # Worker discovery + source scrapers
 │   │   ├── runner.py
-│   │   ├── wahlrecht.py
 │   │   ├── dawum.py
-│   │   ├── config.py
-│   │   ├── context.py
-│   │   ├── snapshots.py
-│   │   └── workers/         # Scraper worker configs
-│   │       ├── sites_bund/ # Federal election scrapers
-│   │       └── sites_land/ # State election scrapers
-│   └── cleaner/             # ETL pipeline
-│       ├── etl_pipeline.py
-│       ├── json_mappings.py
-│       ├── pipeline.py
-│       ├── steps/           # Cleaning steps
-│       └── transforms/       # Data transformations
-├── json/                    # Reference data (institutes, parties, etc.)
-├── data/                    # Database and exports
+│   │   └── workers/
+│   ├── cleaner/                  # ETL normalization pipeline
+│   │   ├── etl_pipeline.py
+│   │   ├── transforms/
+│   │   └── json_mappings.py
+│   └── services/s3.py            # Archive upload/listing
+├── json/                         # Mapping dictionaries / reference ids
+├── data/                         # SQLite DB, logs, exports
 ├── tests/
-├── justfile
+├── .apiversion
 └── pyproject.toml
 ```
 
-## Development
+## Development workflow
 
 ```bash
-# Lint
-ruff check .
+# lint
+uv run ruff check src/
 
-# Type check
-mypy .
+# format
+uv run ruff format src/
 
-# Test
-pytest
+# type check
+uv run mypy src/
+
+# tests
+uv run pytest tests/
 ```
+
+## Notes
+
+- `pollingapi` and `zweitstimme` are both installed CLI entrypoints.
+- `pipeline:run` is designed for repeatable scheduled execution (cron/systemd/CI).
+- Raw rows remain in `polls_raw`; normalization writes to `polls` and `poll_results`.
+- Treat this README as a **local development guide** first; production hardening docs will follow.
