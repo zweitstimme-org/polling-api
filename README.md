@@ -1,4 +1,4 @@
-# pollingapi
+# polling-api
 
 All-in-one pipeline and API for German election polling data by zweitstimme.org
 
