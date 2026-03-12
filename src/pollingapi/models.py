@@ -7,6 +7,7 @@ from datetime import datetime as DateTimeType
 from typing import List
 
 from sqlalchemy import (
+    Boolean,
     Date,
     DateTime,
     Float,
@@ -41,6 +42,10 @@ class RawPoll(Base):
     election_id: Mapped[str | None] = mapped_column(String(100))
     method_id: Mapped[str | None] = mapped_column(String(100))
     date_downloaded: Mapped[str | None] = mapped_column(String(50))
+
+    # Run traceability — links this row to the pipeline_runs record that ingested it.
+    # No FK constraint yet; constraint migration is deferred.
+    pipeline_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
 
     # Relationship to cleaned poll
     cleaned_poll: Mapped[Poll | None] = relationship("Poll", back_populates="raw_poll")
@@ -173,3 +178,49 @@ class PollResult(Base):
     party: Mapped[Party] = relationship("Party", back_populates="poll_results")
 
     __table_args__ = (UniqueConstraint("poll_id", "party_id", name="uix_poll_party"),)
+
+
+class PipelineRun(Base):
+    """Audit log for each pipeline:run execution.
+
+    Stores timing, success/failure, and high-level statistics so you can
+    review run history without parsing log files.
+    """
+
+    __tablename__ = "pipeline_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+
+    # Unique identifier (UUID string) for cross-referencing with log lines
+    run_id: Mapped[str] = mapped_column(String(36), unique=True, index=True)
+
+    # Timing
+    started_at: Mapped[DateTimeType] = mapped_column(DateTime, nullable=False)
+    finished_at: Mapped[DateTimeType] = mapped_column(DateTime, nullable=False)
+    duration_seconds: Mapped[float] = mapped_column(Float, nullable=False)
+
+    # Outcome
+    success: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Scraper stats
+    scrapers_run: Mapped[int] = mapped_column(Integer, default=0)
+    scrapers_succeeded: Mapped[int] = mapped_column(Integer, default=0)
+    scrapers_failed: Mapped[int] = mapped_column(Integer, default=0)
+    total_scraped_polls: Mapped[int] = mapped_column(Integer, default=0)
+
+    # ETL / cleaner stats
+    etl_processed: Mapped[int] = mapped_column(Integer, default=0)
+    etl_created: Mapped[int] = mapped_column(Integer, default=0)
+    etl_updated: Mapped[int] = mapped_column(Integer, default=0)
+    etl_skipped: Mapped[int] = mapped_column(Integer, default=0)
+    etl_errors: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Export stats
+    export_polls: Mapped[int] = mapped_column(Integer, default=0)
+    export_poll_results: Mapped[int] = mapped_column(Integer, default=0)
+    export_raw_polls: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Archive (optional)
+    archive_created: Mapped[bool] = mapped_column(Boolean, default=False)
+    archive_size_mb: Mapped[float | None] = mapped_column(Float, nullable=True)

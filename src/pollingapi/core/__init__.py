@@ -43,6 +43,13 @@ class Settings(BaseSettings):
     aws_s3_region: str = "eu-central-1"
     aws_s3_endpoint_url: str | None = None  # For S3-compatible services (Hetzner, MinIO, etc.)
 
+    # Notifications
+    # Set NTFY_URL to enable push notifications, e.g. https://ntfy.sh/your-private-topic
+    ntfy_url: str | None = None
+    ntfy_topic_title: str = "pollingAPI"
+    # Set SLACK_WEBHOOK_URL to enable Slack notifications
+    slack_webhook_url: str | None = None
+
     # Data Paths
     data_dir: Path = DATA_DIR
     export_dir: Path = DATA_DIR / "export"
