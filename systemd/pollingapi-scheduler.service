@@ -5,10 +5,11 @@ After=network.target
 [Service]
 Type=oneshot
 User=paul
+Group=paul
 WorkingDirectory=/home/paul/pollingAPI
-ExecStart=/home/paul/.local/bin/uv --directory /home/paul/pollingAPI run pollingapi pipeline:run
-StandardOutput=journal
-StandardError=journal
+ExecStart=/home/paul/pollingAPI/.venv/bin/python -m pollingapi pipeline:run
+StandardOutput=/home/paul/pollingAPI/data/logs/pipeline.log
+StandardError=/home/paul/pollingAPI/data/logs/pipeline_error.log
 
 [Install]
 WantedBy=multi-user.target

@@ -1,32 +1,44 @@
-# Systemd Timer Setup
+# Systemd Setup
 
-This runs the polling pipeline daily at 6am UTC.
+This runs the polling pipeline daily at 6am UTC via systemd timers.
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| `pollingapi.service` | API server (runs continuously) |
+| `pollingapi-scheduler.service` | Pipeline runner (triggered by timer) |
+| `pollingapi-scheduler.timer` | Timer (runs daily at 6am) |
 
 ## Installation
 
 ```bash
-# Copy service and timer files
+# Copy all service files
+sudo cp pollingapi.service /etc/systemd/system/
 sudo cp pollingapi-scheduler.service /etc/systemd/system/
 sudo cp pollingapi-scheduler.timer /etc/systemd/system/
 
-# Enable and start
-sudo systemctl enable --now pollingapi-scheduler.timer
+# Enable and start API server
+sudo systemctl enable --now pollingapi
 
-# Check status
+# Enable and start scheduler
+sudo systemctl enable --now pollingapi-scheduler.timer
+```
+
+## Commands
+
+```bash
+# Check timer status
 sudo systemctl status pollingapi-scheduler.timer
 
 # View next run time
 sudo systemctl list-timers
-```
 
-## Manual Run
-
-```bash
 # Run pipeline manually
 sudo systemctl start pollingapi-scheduler.service
 
-# View logs
-sudo journalctl -u pollingapi-scheduler.service -f
+# View pipeline logs
+tail -f /home/paul/pollingAPI/data/logs/pipeline.log
 ```
 
 ## Configuration
@@ -41,5 +53,3 @@ Then reload:
 sudo systemctl daemon-reload
 sudo systemctl restart pollingapi-scheduler.timer
 ```
-
-
