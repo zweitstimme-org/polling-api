@@ -749,6 +749,17 @@ def deploy_start(
             logger.error(f"Pipeline clean failed: {e}")
             typer.echo(f"✗ Pipeline clean failed (exit {e.returncode})", err=True)
 
+    # Update election dates from Wahlrecht.de Landtage overview so /v1/elections has dates
+    typer.echo("Updating election dates from Wahlrecht.de Landtage overview...")
+    try:
+        subprocess.run(
+            [sys.executable, "-m", "pollingapi", "election-dates:update"],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Election dates update failed: {e}")
+        typer.echo(f"✗ Election dates update failed (exit {e.returncode})", err=True)
+
     if run_export:
         typer.echo("Running export...")
         try:
