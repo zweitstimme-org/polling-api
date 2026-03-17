@@ -7,7 +7,7 @@ Type=oneshot
 User=paul
 Group=paul
 WorkingDirectory=/home/paul/pollingAPI
-ExecStart=/home/paul/pollingAPI/.venv/bin/python -m pollingapi pipeline:run
+ExecStart=/home/paul/pollingAPI/.venv/bin/pollingapi pipeline:run
 StandardOutput=/home/paul/pollingAPI/data/logs/pipeline.log
 StandardError=/home/paul/pollingAPI/data/logs/pipeline_error.log
 
