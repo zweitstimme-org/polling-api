@@ -119,6 +119,7 @@ def election_dates_update():
     from pollingapi.election_dates import parse_next_election_date
     from pollingapi.models import Election
     from pollingapi.scraper.landtage_dates import fetch_landtage_next_election_dates
+    from pollingapi.scraper.termine_dates import fetch_bundestag_next_election_date_text
 
     db = get_db()
     try:
@@ -129,6 +130,28 @@ def election_dates_update():
         raise typer.Exit(1)
 
     updated = 0
+    federal_updated = False
+
+    # Update Bundestag (federal) date from Wahlrecht Termine page, if available
+    try:
+        bundes_term = fetch_bundestag_next_election_date_text()
+        if bundes_term:
+            parsed_date, is_estimated = parse_next_election_date(bundes_term)
+            if parsed_date is not None:
+                federal = db.query(Election).filter(Election.scope == "federal").first()
+                if federal:
+                    federal.date = parsed_date
+                    federal.date_is_estimated = is_estimated
+                    federal_updated = True
+                    logger.info(
+                        "federal (Bundestag): %s (estimated=%s)",
+                        parsed_date.isoformat(),
+                        is_estimated,
+                    )
+    except Exception:
+        # Don't fail deploys if Wahlrecht blocks or HTML changes
+        logger.exception("Failed to fetch Bundestag date from Wahlrecht Termine page")
+
     for scope, date_text in rows:
         election = db.query(Election).filter(Election.scope == scope).first()
         if not election:
@@ -144,7 +167,10 @@ def election_dates_update():
         logger.info("%s: %s (estimated=%s)", scope, parsed_date.isoformat(), is_estimated)
 
     db.commit()
-    typer.echo(f"✓ Updated election dates for {updated} state(s)")
+    typer.echo(
+        f"✓ Updated election dates for {updated} state(s)"
+        + (" and federal" if federal_updated else "")
+    )
 
 
 @app.command(name="export:all")
