@@ -22,7 +22,7 @@ class SachsenScraper(WahlrechtLandScraper):
                 {
                     "url": "https://www.wahlrecht.de/umfragen/landtage/sachsen.htm",
                     "table_index": 0,
-                    "drop_header": 1,
+                    "drop_header": 0,
                     "drop_footer": 3,
                 },
             ],

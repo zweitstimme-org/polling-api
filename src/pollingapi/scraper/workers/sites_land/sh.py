@@ -22,7 +22,7 @@ class ShScraper(WahlrechtLandScraper):
                 {
                     "url": "https://www.wahlrecht.de/umfragen/landtage/schleswig-holstein.htm",
                     "table_index": 0,
-                    "drop_header": 1,
+                    "drop_header": 0,
                     "drop_footer": 3,
                 },
             ],

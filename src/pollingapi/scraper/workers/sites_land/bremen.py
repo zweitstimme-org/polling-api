@@ -22,14 +22,14 @@ class BremenScraper(WahlrechtLandScraper):
                 {
                     "url": "https://www.wahlrecht.de/umfragen/landtage/bremen.htm",
                     "table_index": 0,
-                    "drop_header": 1,
+                    "drop_header": 0,
                     "drop_footer": 3,
                     "table_id": "current",
                 },
                 {
                     "url": "https://www.wahlrecht.de/umfragen/landtage/bremen.htm",
                     "table_index": 1,
-                    "drop_header": 1,
+                    "drop_header": 0,
                     "drop_footer": 3,
                     "table_id": "historical",
                 },
