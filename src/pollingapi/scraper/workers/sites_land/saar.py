@@ -15,7 +15,7 @@ class SaarlandScraper(WahlrechtLandScraper):
             institute_id="various",
             provider="Wahlrecht.de",
             source="html_scraper",
-            scope="saarland",
+            scope="SL",
             election_id="Landtagswahl",
             method_id="99",
             urls=[

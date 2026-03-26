@@ -15,7 +15,7 @@ class RpScraper(WahlrechtLandScraper):
             institute_id="various",
             provider="Wahlrecht.de",
             source="html_scraper",
-            scope="rheinland-pfalz",
+            scope="RP",
             election_id="Landtagswahl",
             method_id="99",
             urls=[

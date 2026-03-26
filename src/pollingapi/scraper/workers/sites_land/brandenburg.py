@@ -15,7 +15,7 @@ class BrandenburgScraper(WahlrechtLandScraper):
             institute_id="various",
             provider="Wahlrecht.de",
             source="html_scraper",
-            scope="brandenburg",
+            scope="BB",
             election_id="Landtagswahl Brandenburg",
             method_id="99",
             urls=[

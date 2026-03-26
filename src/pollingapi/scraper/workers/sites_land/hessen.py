@@ -15,7 +15,7 @@ class HessenScraper(WahlrechtLandScraper):
             institute_id="various",
             provider="Wahlrecht.de",
             source="html_scraper",
-            scope="hessen",
+            scope="HE",
             election_id="Landtagswahl Hessen",
             method_id="99",
             urls=[

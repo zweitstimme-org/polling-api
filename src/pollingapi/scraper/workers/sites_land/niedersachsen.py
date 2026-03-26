@@ -15,7 +15,7 @@ class NiedersachsenScraper(WahlrechtLandScraper):
             institute_id="various",
             provider="Wahlrecht.de",
             source="html_scraper",
-            scope="niedersachsen",
+            scope="NI",
             election_id="Landtagswahl Niedersachsen",
             method_id="99",
             urls=[

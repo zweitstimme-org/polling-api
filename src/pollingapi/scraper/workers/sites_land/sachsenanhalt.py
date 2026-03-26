@@ -15,7 +15,7 @@ class SachsenAnhaltScraper(WahlrechtLandScraper):
             institute_id="various",
             provider="Wahlrecht.de",
             source="html_scraper",
-            scope="sachsenanhalt",
+            scope="ST",
             election_id="Landtagswahl",
             method_id="99",
             urls=[

@@ -15,7 +15,7 @@ class HamburgScraper(WahlrechtLandScraper):
             institute_id="various",
             provider="Wahlrecht.de",
             source="html_scraper",
-            scope="hamburg",
+            scope="HH",
             election_id="Landtagswahl Hamburg",
             method_id="99",
             urls=[

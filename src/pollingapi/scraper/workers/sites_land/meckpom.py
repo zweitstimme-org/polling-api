@@ -15,7 +15,7 @@ class MeckpomScraper(WahlrechtLandScraper):
             institute_id="various",
             provider="Wahlrecht.de",
             source="html_scraper",
-            scope="mecklenburg-vorpommern",
+            scope="MV",
             election_id="Landtagswahl Mecklenburg-Vorpommern",
             method_id="99",
             urls=[

@@ -15,7 +15,7 @@ class BremenScraper(WahlrechtLandScraper):
             institute_id="various",
             provider="Wahlrecht.de",
             source="html_scraper",
-            scope="bremen",
+            scope="HB",
             election_id="Landtagswahl Bremen",
             method_id="99",
             urls=[

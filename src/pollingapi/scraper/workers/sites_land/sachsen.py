@@ -15,7 +15,7 @@ class SachsenScraper(WahlrechtLandScraper):
             institute_id="various",
             provider="Wahlrecht.de",
             source="html_scraper",
-            scope="sachsen",
+            scope="SN",
             election_id="Landtagswahl",
             method_id="99",
             urls=[
