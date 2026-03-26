@@ -112,7 +112,7 @@ def _serialize_poll(poll: Poll, include_results: bool) -> PollItem:
 @router.get("", response_model=PollListResponse)
 def list_polls(
     db: Session = Depends(get_db),
-    limit: int = Query(None, ge=1, description="Max rows to return"),
+    limit: int = Query(1000, ge=1, description="Max rows to return"),
     offset: int = Query(0, ge=0, description="Rows to skip"),
     scope: str | None = Query(None, description="Filter by scope (e.g. federal, bayern)"),
     institute_id: int | None = Query(None, description="Filter by institute ID"),
