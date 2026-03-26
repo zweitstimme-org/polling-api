@@ -16,7 +16,7 @@ results_router = APIRouter(prefix="/results", tags=["results"])
 
 class PaginationMeta(BaseModel):
     total: int
-    limit: int
+    limit: int | None = None
     offset: int
 
 
@@ -112,7 +112,7 @@ def _serialize_poll(poll: Poll, include_results: bool) -> PollItem:
 @router.get("", response_model=PollListResponse)
 def list_polls(
     db: Session = Depends(get_db),
-    limit: int = Query(100, ge=1, le=500, description="Max rows to return"),
+    limit: int = Query(None, ge=1, description="Max rows to return"),
     offset: int = Query(0, ge=0, description="Rows to skip"),
     scope: str | None = Query(None, description="Filter by scope (e.g. federal, bayern)"),
     institute_id: int | None = Query(None, description="Filter by institute ID"),
@@ -158,6 +158,42 @@ def list_polls(
     return PollListResponse(
         items=[_serialize_poll(row, include_results=include_results) for row in rows],
         meta=PaginationMeta(total=total, limit=limit, offset=offset),
+    )
+
+
+@router.get("/latest/", response_model=PollListResponse)
+def list_latest_polls(
+    db: Session = Depends(get_db),
+    scope: str | None = Query(None, description="Filter by scope (e.g. federal, bayern)"),
+    provider_id: int | None = Query(None, description="Filter by provider ID"),
+    election_id: int | None = Query(None, description="Filter by election ID"),
+    institute_id: int | None = Query(None, description="Filter by institute ID"),
+    include_results: bool = Query(True, description="Include party result rows"),
+):
+    """List latest 100 cleaned polls with optional filters."""
+    query = db.query(Poll).options(
+        joinedload(Poll.institute),
+        joinedload(Poll.provider),
+        joinedload(Poll.election),
+        joinedload(Poll.method),
+        joinedload(Poll.results).joinedload(PollResult.party),
+    )
+
+    if scope:
+        query = query.filter(Poll.scope == scope)
+    if provider_id is not None:
+        query = query.filter(Poll.provider_id == provider_id)
+    if election_id is not None:
+        query = query.filter(Poll.election_id == election_id)
+    if institute_id is not None:
+        query = query.filter(Poll.institute_id == institute_id)
+
+    total = query.count()
+    rows = query.order_by(Poll.publish_date.desc(), Poll.id.desc()).limit(100).all()
+
+    return PollListResponse(
+        items=[_serialize_poll(row, include_results=include_results) for row in rows],
+        meta=PaginationMeta(total=total, limit=100, offset=0),
     )
 
 
