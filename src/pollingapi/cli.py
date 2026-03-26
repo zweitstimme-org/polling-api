@@ -13,7 +13,7 @@ from pollingapi.logging_config import get_logger, setup_logging
 from pollingapi.notifications import PipelineRunResult, create_notification_manager
 from pollingapi.scraper.context import RunContext
 from pollingapi.scraper.runner import ScraperRunner
-from pollingapi.services.s3 import S3Service
+from pollingapi.services import ExportService, S3Service
 
 # Initialize logging with default settings
 setup_logging()
@@ -28,11 +28,6 @@ logger = get_logger(__name__)
 def get_db() -> Session:
     """Get database session."""
     return SessionLocal()
-
-
-# ============================================================================
-# Database Commands (db:*)
-# ============================================================================
 
 
 @app.command(name="db:ping")
@@ -112,109 +107,15 @@ def db_tables():
         typer.echo(f"  {name}: {count}")
 
 
-def _run_export() -> dict:
-    """Run data export to JSON, CSV, and Parquet files.
-
-    Returns a dict with export statistics.
-    """
-    import json
-
-    import pandas as pd
-
-    from pollingapi.models import Poll, RawPoll
-
-    db = get_db()
-
-    polls = db.query(Poll).all()
-    polls_data = []
-    for poll in polls:
-        poll_dict = {
-            "id": poll.id,
-            "raw_id": poll.raw_id,
-            "publish_date": poll.publish_date.isoformat() if poll.publish_date else None,
-            "survey_date_start": poll.survey_date_start.isoformat()
-            if poll.survey_date_start
-            else None,
-            "survey_date_end": poll.survey_date_end.isoformat() if poll.survey_date_end else None,
-            "respondents": poll.respondents,
-            "institute_id": poll.institute_id,
-            "provider_id": poll.provider_id,
-            "method_id": poll.method_id,
-            "election_id": poll.election_id,
-            "scope": poll.scope,
-            "results": [{"party_id": r.party_id, "percentage": r.percentage} for r in poll.results],
-        }
-        polls_data.append(poll_dict)
-
-    with open(settings.export_dir / "polls.json", "w", encoding="utf-8") as f:
-        json.dump(polls_data, f, indent=2, ensure_ascii=False)
-
-    poll_results_data = []
-    for poll in polls_data:
-        for result in poll.get("results", []):
-            poll_results_data.append(
-                {
-                    "poll_id": poll["id"],
-                    "raw_id": poll.get("raw_id"),
-                    "publish_date": poll.get("publish_date"),
-                    "scope": poll.get("scope"),
-                    "party_id": result.get("party_id"),
-                    "percentage": result.get("percentage"),
-                }
-            )
-
-    with open(settings.export_dir / "poll_results.json", "w", encoding="utf-8") as f:
-        json.dump(poll_results_data, f, indent=2, ensure_ascii=False)
-
-    polls_df = pd.DataFrame(polls_data)
-    if "results" in polls_df.columns:
-        polls_df = polls_df.drop(columns=["results"])
-    polls_df.to_csv(settings.export_dir / "polls.csv", index=False)
-
-    try:
-        polls_df.to_parquet(settings.export_dir / "polls.parquet", index=False)
-    except Exception as exc:
-        logger.warning(f"Could not export Parquet: {exc}")
-
-    raw_polls = db.query(RawPoll).all()
-    raw_data = []
-    for raw in raw_polls:
-        raw_dict = {
-            "id": raw.id,
-            "publish_date": raw.publish_date,
-            "survey_date_start": raw.survey_date_start,
-            "survey_date_end": raw.survey_date_end,
-            "respondents": raw.respondents,
-            "zeitraum": raw.zeitraum,
-            "parties": raw.parties,
-            "institute_id": raw.institute_id,
-            "provider": raw.provider,
-            "tasker": raw.tasker,
-            "source": raw.source,
-            "scope": raw.scope,
-            "election_id": raw.election_id,
-            "method_id": raw.method_id,
-            "date_downloaded": raw.date_downloaded,
-        }
-        raw_data.append(raw_dict)
-
-    with open(settings.export_dir / "polls_raw.json", "w", encoding="utf-8") as f:
-        json.dump(raw_data, f, indent=2, ensure_ascii=False, default=str)
-
-    return {
-        "polls": len(polls_data),
-        "poll_results": len(poll_results_data),
-        "raw_polls": len(raw_data),
-    }
-
-
 @app.command(name="export:all")
 def db_export():
     """Export data to JSON, CSV, and Parquet files."""
-    stats = _run_export()
+    db = get_db()
+    export_service = ExportService(db)
+    stats = export_service.export_all()
     typer.echo(
-        f"✓ Exported {stats['polls']} polls, {stats['poll_results']} poll results, "
-        f"and {stats['raw_polls']} raw polls to {settings.export_dir}"
+        f"✓ Exported {stats.polls} polls, {stats.poll_results} poll results, "
+        f"and {stats.raw_polls} raw polls to {settings.export_dir}"
     )
 
 
@@ -230,11 +131,6 @@ def db_reset(
     typer.echo("Resetting database...")
     init_db(drop_all=True)
     typer.echo("✓ Database reset successfully")
-
-
-# ============================================================================
-# Scraper Commands (scraper:*)
-# ============================================================================
 
 
 @app.command(name="scraper:run")
@@ -324,11 +220,6 @@ def scraper_status():
             typer.echo(f"  ○ {worker}: Awaiting initial run")
 
 
-# ============================================================================
-# Pipeline Commands (pipeline:*)
-# ============================================================================
-
-
 @app.command(name="pipeline:clean")
 def pipeline_clean(
     limit: int | None = typer.Option(None, "--limit", "-l", help="Limit number of rows to process"),
@@ -409,10 +300,11 @@ def pipeline_run(
         # -------------------------------------------------------------- export
         typer.echo("=== Running Export ===")
         typer.echo("")
-        export_stats = _run_export()
-        run_result.export_polls = export_stats["polls"]
-        run_result.export_poll_results = export_stats["poll_results"]
-        run_result.export_raw_polls = export_stats["raw_polls"]
+        export_service = ExportService(db)
+        export_stats = export_service.export_all()
+        run_result.export_polls = export_stats.polls
+        run_result.export_poll_results = export_stats.poll_results
+        run_result.export_raw_polls = export_stats.raw_polls
 
         typer.echo(
             f"✓ Exported {run_result.export_polls} polls,"
@@ -841,10 +733,12 @@ def data_archive(
 
     typer.echo("Running data export...")
 
-    export_stats = _run_export()
+    db = get_db()
+    export_service = ExportService(db)
+    export_stats = export_service.export_all()
     typer.echo(
-        f"✓ Exported {export_stats['polls']} polls, {export_stats['poll_results']} poll results, "
-        f"and {export_stats['raw_polls']} raw polls"
+        f"✓ Exported {export_stats.polls} polls, {export_stats.poll_results} poll results, "
+        f"and {export_stats.raw_polls} raw polls"
     )
 
     typer.echo("\nCreating data archive...")
@@ -937,11 +831,6 @@ def data_list():
         typer.echo(f"  {archive.filename}")
         typer.echo(f"    Size: {size_mb:.1f} MB | Date: {date_str}")
         typer.echo(f"    URL: {archive.public_url}")
-
-
-# ============================================================================
-# Legacy Aliases (for backward compatibility)
-# ============================================================================
 
 
 def main():
