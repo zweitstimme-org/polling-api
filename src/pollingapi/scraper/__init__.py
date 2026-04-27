@@ -12,6 +12,13 @@ from pollingapi.scraper.snapshots import (
     save_table_snapshot,
 )
 
+from pollingapi.scraper.datamodel import (
+    BundElectionPoll,
+    ElectionScope,
+    GermanState,
+    PartyResult,
+)
+
 __all__ = [
     "BaseScraper",
     "ScraperConfig",
@@ -25,4 +32,8 @@ __all__ = [
     "save_table_snapshot",
     "save_normalized_snapshot",
     "save_debug_snapshot",
+    "BundElectionPoll",
+    "PartyResult",
+    "ElectionScope",
+    "GermanState",
 ]
