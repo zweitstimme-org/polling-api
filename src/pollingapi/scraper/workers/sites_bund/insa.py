@@ -156,7 +156,7 @@ class InsaBaseScraper:
 
 # This worker targets the main site and therefore is the one to keep in check first
 class InsaCurrentScraper(InsaBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/Insa.htm"
+    URL = "https://www.wahlrecht.de/umfragen/insa.htm"
     STATE: str = GermanState.BUND
     WORKER = "insa_current"
     SCOPE: str = "Bundestagswahl"

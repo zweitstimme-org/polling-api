@@ -189,7 +189,7 @@ class Verian2008Scraper(VerianBaseScraper):
 class Verian2007Scraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2007.htm"
     STATE: str = GermanState.BUND
-    WORKER = "verian_2008"
+    WORKER = "verian_2007"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
     DATA_SOURCE: str = "wahlrecht.de"

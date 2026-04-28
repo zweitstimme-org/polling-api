@@ -154,7 +154,7 @@ class HHBaseScraper:
 
 class HHCurrentScraper(HHBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/landtage/hamburg.htm"
-    WORKER = "berlin_current"
+    WORKER = "hamburg_current"
     SCOPE = "Landtagswahl"
     INSTITUTE = ""
     DATA_SOURCE = "wahlrecht.de"
