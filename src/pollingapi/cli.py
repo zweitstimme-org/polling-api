@@ -135,7 +135,10 @@ def db_reset(
 
 @app.command(name="scraper:run")
 def scraper_run(
-    worker: str = typer.Argument(..., help="Worker name (e.g., 'forsa', 'bayern', 'all')"),
+    worker: str = typer.Argument(
+        ...,
+        help="Worker name (e.g., 'forsa', 'bayern', 'all', 'current')",
+    ),
     debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug mode"),
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Dry run (don't insert to DB)"),
     force: bool = typer.Option(
@@ -154,9 +157,10 @@ def scraper_run(
 
     runner = ScraperRunner(db, context=context, dry_run=dry_run or debug)
 
-    if worker.lower() == "all":
-        logger.info("Running all scrapers")
-        results = runner.run_all(include_dawum=True)
+    if worker.lower() in {"all", "current"}:
+        current_only = worker.lower() == "current"
+        logger.info("Running current scrapers" if current_only else "Running all scrapers")
+        results = runner.run_all(include_dawum=not current_only, current_only=current_only)
 
         # Log results
         total_success = sum(1 for v in results.values() if isinstance(v, int))

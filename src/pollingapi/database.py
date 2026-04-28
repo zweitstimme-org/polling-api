@@ -34,7 +34,7 @@ def _apply_schema_migrations():
     that actually exist — new databases are fully covered by create_all.
     """
     with engine.connect() as conn:
-        # --- polls_raw.pipeline_run_id (added for run traceability) ----------
+        # --- polls_raw incremental columns -----------------------------------
         if "sqlite" in settings.database_url:
             # Check whether the table exists at all before inspecting columns
             tables = {
@@ -47,6 +47,7 @@ def _apply_schema_migrations():
                 return
             rows = conn.execute(text("PRAGMA table_info(polls_raw)")).fetchall()
             existing_columns = {row[1] for row in rows}
+
             if "pipeline_run_id" not in existing_columns:
                 conn.execute(text("ALTER TABLE polls_raw ADD COLUMN pipeline_run_id TEXT"))
                 conn.execute(
@@ -55,7 +56,14 @@ def _apply_schema_migrations():
                         " ON polls_raw (pipeline_run_id)"
                     )
                 )
-                conn.commit()
+
+            if "worker" not in existing_columns:
+                conn.execute(text("ALTER TABLE polls_raw ADD COLUMN worker TEXT"))
+
+            if "survey_type" not in existing_columns:
+                conn.execute(text("ALTER TABLE polls_raw ADD COLUMN survey_type TEXT"))
+
+            conn.commit()
         else:
             # PostgreSQL / other dialects
             table_exists = conn.execute(
@@ -79,7 +87,26 @@ def _apply_schema_migrations():
                         " ON polls_raw (pipeline_run_id)"
                     )
                 )
-                conn.commit()
+
+            worker_result = conn.execute(
+                text(
+                    "SELECT column_name FROM information_schema.columns"
+                    " WHERE table_name = 'polls_raw' AND column_name = 'worker'"
+                )
+            )
+            if worker_result.fetchone() is None:
+                conn.execute(text("ALTER TABLE polls_raw ADD COLUMN worker VARCHAR(100)"))
+
+            survey_type_result = conn.execute(
+                text(
+                    "SELECT column_name FROM information_schema.columns"
+                    " WHERE table_name = 'polls_raw' AND column_name = 'survey_type'"
+                )
+            )
+            if survey_type_result.fetchone() is None:
+                conn.execute(text("ALTER TABLE polls_raw ADD COLUMN survey_type VARCHAR(100)"))
+
+            conn.commit()
 
 
 # Run schema migrations eagerly so any process that imports this module
