@@ -1,15 +1,21 @@
-"""Scraper runner to orchestrate all scraper workers."""
-
 import importlib
+import inspect
+from dataclasses import dataclass
 from pathlib import Path
 
 import typer
 from sqlalchemy.orm import Session
 
 from pollingapi.logging_config import get_logger
-from pollingapi.scraper.config import ScraperConfig, ScraperRegistry
 from pollingapi.scraper.context import RunContext
 from pollingapi.scraper.dawum import DawumScraper
+
+
+@dataclass(frozen=True)
+class WorkerEntry:
+    worker_name: str
+    scraper_class: type
+    module_name: str
 
 
 class ScraperRunner:
@@ -21,116 +27,89 @@ class ScraperRunner:
         context: RunContext | None = None,
         dry_run: bool = False,
     ):
-        """Initialize runner with database session."""
         self.db = db
         self.context = context or RunContext.for_project()
         self.dry_run = dry_run
         self.logger = get_logger("runner")
         self.workers_dir = Path(__file__).parent / "workers"
 
-    def _discover_html_workers(self) -> list[tuple[str, ScraperConfig, type]]:
-        """Discover HTML-based workers from sites_bund, sites_land and sites_eu."""
-        discovered = []
-
-        # Discover federal workers
-        bund_dir = self.workers_dir / "sites_bund"
-        if bund_dir.exists():
-            for file in bund_dir.glob("*.py"):
+    def _discover_worker_modules(self) -> list[str]:
+        """Discover worker modules in bund + land only."""
+        module_names: list[str] = []
+        for scope in ("sites_bund", "sites_land"):
+            scope_dir = self.workers_dir / scope
+            if not scope_dir.exists():
+                continue
+            for file in sorted(scope_dir.glob("*.py")):
                 if file.name.startswith("_"):
                     continue
-                try:
-                    module_name = f"pollingapi.scraper.workers.sites_bund.{file.stem}"
-                    module = importlib.import_module(module_name)
-                    if hasattr(module, "get_config"):
-                        config = module.get_config()
-                        scraper_class = ScraperRegistry.get(config.type)
-                        if scraper_class:
-                            discovered.append((file.stem, config, scraper_class))
-                        else:
-                            self.logger.warning(
-                                f"No scraper class registered for type: {config.type}"
-                            )
-                except Exception as e:
-                    self.logger.warning(f"Failed to load worker {file.stem}: {e}")
+                module_names.append(f"pollingapi.scraper.workers.{scope}.{file.stem}")
+        return module_names
 
-        # Discover state workers
-        land_dir = self.workers_dir / "sites_land"
-        if land_dir.exists():
-            for file in land_dir.glob("*.py"):
-                if file.name.startswith("_"):
+    def _is_concrete_worker_class(self, cls: type, module_name: str) -> bool:
+        """Filter concrete worker classes (exclude bases/imported classes)."""
+        return (
+            cls.__module__ == module_name
+            and cls.__name__.endswith("Scraper")
+            and not cls.__name__.endswith("BaseScraper")
+            and bool(getattr(cls, "WORKER", ""))
+            and bool(getattr(cls, "URL", ""))
+            and hasattr(cls, "run")
+        )
+
+    def _discover_html_workers(self) -> list[WorkerEntry]:
+        """Discover all class-based HTML workers from bund + land."""
+        discovered: list[WorkerEntry] = []
+        seen_workers: set[str] = set()
+        for module_name in self._discover_worker_modules():
+            try:
+                module = importlib.import_module(module_name)
+            except Exception as exc:
+                self.logger.warning(f"Failed to import module {module_name}: {exc}")
+                continue
+            for _, cls in inspect.getmembers(module, inspect.isclass):
+                if not self._is_concrete_worker_class(cls, module_name):
                     continue
-                try:
-                    module_name = f"pollingapi.scraper.workers.sites_land.{file.stem}"
-                    module = importlib.import_module(module_name)
-                    if hasattr(module, "get_config"):
-                        config = module.get_config()
-                        scraper_class = ScraperRegistry.get(config.type)
-                        if scraper_class:
-                            discovered.append((file.stem, config, scraper_class))
-                        else:
-                            self.logger.warning(
-                                f"No scraper class registered for type: {config.type}"
-                            )
-                except Exception as e:
-                    self.logger.warning(f"Failed to load worker {file.stem}: {e}")
-
-        # Discover EU workers
-        eu_dir = self.workers_dir / "sites_eu"
-        if eu_dir.exists():
-            for file in eu_dir.glob("*.py"):
-                if file.name.startswith("_"):
+                worker_name = getattr(cls, "WORKER", "").strip()
+                if worker_name in seen_workers:
+                    self.logger.warning(
+                        f"Duplicate worker '{worker_name}' in {module_name}; skipping duplicate."
+                    )
                     continue
-                try:
-                    module_name = f"pollingapi.scraper.workers.sites_eu.{file.stem}"
-                    module = importlib.import_module(module_name)
-                    if hasattr(module, "get_config"):
-                        config = module.get_config()
-                        scraper_class = ScraperRegistry.get(config.type)
-                        if scraper_class:
-                            discovered.append((file.stem, config, scraper_class))
-                        else:
-                            self.logger.warning(
-                                f"No scraper class registered for type: {config.type}"
-                            )
-                except Exception as e:
-                    self.logger.warning(f"Failed to load worker {file.stem}: {e}")
-
+                discovered.append(
+                    WorkerEntry(
+                        worker_name=worker_name,
+                        scraper_class=cls,
+                        module_name=module_name,
+                    )
+                )
+                seen_workers.add(worker_name)
+        discovered.sort(key=lambda x: x.worker_name)
         return discovered
 
-    def _discover_all_workers(self) -> list[tuple[str, ScraperConfig, type]]:
-        """Discover all workers."""
-        workers = self._discover_html_workers()
-        return workers
+    def _instantiate_worker(self, scraper_class: type):
+        """Instantiate worker with supported constructor signature."""
+        init_sig = inspect.signature(scraper_class.__init__)
+        if "dry_run" in init_sig.parameters:
+            return scraper_class(db=self.db, context=self.context, dry_run=self.dry_run)
+        return scraper_class(db=self.db, context=self.context)
 
     def run_all(self, include_dawum: bool = True) -> dict[str, int | str]:
-        """Run all scrapers and return summary.
-
-        Args:
-            include_dawum: Whether to include DAWUM API scraper
-
-        Returns:
-            Dictionary mapping worker names to inserted counts
-        """
-        results = {}
-
-        # Get HTML workers
-        html_workers = self._discover_html_workers()
-        self.logger.info(f"Discovered {len(html_workers)} HTML workers")
-
-        # Run HTML-based workers
-        for _name, config, scraper_class in html_workers:
+        """Run all discovered workers and optional DAWUM."""
+        results: dict[str, int | str] = {}
+        workers = self._discover_html_workers()
+        self.logger.info(f"Discovered {len(workers)} HTML workers")
+        for entry in workers:
             try:
-                typer.echo(f"Running {config.worker_name}...")
-                scraper = scraper_class(config, self.db, context=self.context, dry_run=self.dry_run)
+                typer.echo(f"Running {entry.worker_name}...")
+                scraper = self._instantiate_worker(entry.scraper_class)
                 count = scraper.run()
-                results[config.worker_name] = count
-                typer.echo(f"  ✓ {config.worker_name}: {count} polls")
-            except Exception as e:
-                self.logger.error(f"Error running {config.worker_name}: {e}")
-                results[config.worker_name] = f"error: {e}"
-                typer.echo(f"  ✗ {config.worker_name}: error - {e}")
-
-        # Run DAWUM scraper if requested
+                results[entry.worker_name] = count
+                typer.echo(f"  ✓ {entry.worker_name}: {count} polls")
+            except Exception as exc:
+                self.logger.error(f"Error running {entry.worker_name}: {exc}")
+                results[entry.worker_name] = f"error: {exc}"
+                typer.echo(f"  ✗ {entry.worker_name}: error - {exc}")
         if include_dawum:
             try:
                 typer.echo("Running DAWUM API scraper...")
@@ -138,43 +117,27 @@ class ScraperRunner:
                 count = dawum.run()
                 results["dawum"] = count
                 typer.echo(f"  ✓ dawum: {count} polls")
-            except Exception as e:
-                self.logger.error(f"Error running DAWUM: {e}")
-                results["dawum"] = f"error: {e}"
-                typer.echo(f"  ✗ dawum: error - {e}")
-
+            except Exception as exc:
+                self.logger.error(f"Error running DAWUM: {exc}")
+                results["dawum"] = f"error: {exc}"
+                typer.echo(f"  ✗ dawum: error - {exc}")
         return results
 
     def run_worker(self, worker_name: str) -> int:
-        """Run a specific worker by name.
-
-        Args:
-            worker_name: Name of the worker to run (e.g., 'forsa', 'bayern', 'dawum')
-
-        Returns:
-            Number of polls inserted
-
-        Raises:
-            ValueError: If worker not found
-        """
-        # Check for DAWUM first
+        """Run a specific worker by WORKER name."""
         if worker_name.lower() == "dawum":
             dawum = DawumScraper(self.db, context=self.context, dry_run=self.dry_run)
             return dawum.run()
-
-        # Otherwise search HTML workers
-        html_workers = self._discover_html_workers()
-        for _name, config, scraper_class in html_workers:
-            if config.worker_name == worker_name:
-                scraper = scraper_class(config, self.db, context=self.context, dry_run=self.dry_run)
+        workers = self._discover_html_workers()
+        for entry in workers:
+            if entry.worker_name == worker_name:
+                scraper = self._instantiate_worker(entry.scraper_class)
                 return scraper.run()
-
         raise ValueError(f"Worker '{worker_name}' not found")
 
     def list_workers(self, include_dawum: bool = True) -> list[str]:
-        """List all available workers including DAWUM."""
-        workers = self._discover_all_workers()
-        worker_names = [config.worker_name for _, config, _ in workers]
+        """List all available worker names."""
+        names = [entry.worker_name for entry in self._discover_html_workers()]
         if include_dawum:
-            worker_names.append("dawum")
-        return sorted(worker_names)
+            names.append("dawum")
+        return sorted(names)
