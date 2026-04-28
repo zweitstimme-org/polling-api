@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import date as DateType
 from datetime import datetime as DateTimeType
-from typing import List
 
 from sqlalchemy import (
     Boolean,
@@ -61,7 +60,7 @@ class Institute(Base):
     description: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
-    polls: Mapped[List[Poll]] = relationship("Poll", back_populates="institute")
+    polls: Mapped[list[Poll]] = relationship("Poll", back_populates="institute")
 
 
 class Party(Base):
@@ -75,7 +74,7 @@ class Party(Base):
     color: Mapped[str | None] = mapped_column(String(7))  # Hex color
 
     # Relationships
-    poll_results: Mapped[List[PollResult]] = relationship("PollResult", back_populates="party")
+    poll_results: Mapped[list[PollResult]] = relationship("PollResult", back_populates="party")
 
 
 class Provider(Base):
@@ -88,7 +87,7 @@ class Provider(Base):
     description: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
-    polls: Mapped[List[Poll]] = relationship("Poll", back_populates="provider")
+    polls: Mapped[list[Poll]] = relationship("Poll", back_populates="provider")
 
 
 class Tasker(Base):
@@ -113,7 +112,7 @@ class Election(Base):
     date: Mapped[DateType | None] = mapped_column(Date, nullable=True)
 
     # Relationships
-    polls: Mapped[List[Poll]] = relationship("Poll", back_populates="election")
+    polls: Mapped[list[Poll]] = relationship("Poll", back_populates="election")
 
     __table_args__ = (UniqueConstraint("election_type", "year", "scope", name="uix_election"),)
 
@@ -128,7 +127,7 @@ class Method(Base):
     description: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
-    polls: Mapped[List[Poll]] = relationship("Poll", back_populates="method")
+    polls: Mapped[list[Poll]] = relationship("Poll", back_populates="method")
 
 
 class Poll(Base):
@@ -158,7 +157,7 @@ class Poll(Base):
     provider: Mapped[Provider | None] = relationship("Provider", back_populates="polls")
     election: Mapped[Election | None] = relationship("Election", back_populates="polls")
     method: Mapped[Method | None] = relationship("Method", back_populates="polls")
-    results: Mapped[List[PollResult]] = relationship(
+    results: Mapped[list[PollResult]] = relationship(
         "PollResult", back_populates="poll", cascade="all, delete-orphan"
     )
 
