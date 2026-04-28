@@ -230,10 +230,16 @@ def scraper_status():
 @app.command(name="pipeline:clean")
 def pipeline_clean(
     limit: int | None = typer.Option(None, "--limit", "-l", help="Limit number of rows to process"),
+    reprocess: bool = typer.Option(False, "--reprocess", help="Reprocess already-cleaned rows"),
+    rebuild: bool = typer.Option(
+        False,
+        "--rebuild",
+        help="Delete cleaned poll/reference rows and rebuild from immutable raw rows",
+    ),
 ):
     """Run data cleaning pipeline on raw polls."""
     db = get_db()
-    stats = run_cleaning_pipeline(db, limit=limit)
+    stats = run_cleaning_pipeline(db, limit=limit, reprocess=reprocess, rebuild=rebuild)
 
     typer.echo("✓ Cleaning complete:")
     typer.echo(f"  Processed: {stats['processed']}")

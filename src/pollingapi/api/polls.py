@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, joinedload
 
+from pollingapi.cleaner.json_mappings import normalize_scope
 from pollingapi.database import get_db
 from pollingapi.models import Poll, PollResult, RawPoll
 
@@ -136,7 +137,7 @@ def list_polls(
     )
 
     if scope:
-        query = query.filter(Poll.scope == scope)
+        query = query.filter(Poll.scope == normalize_scope(scope))
     if institute_id is not None:
         query = query.filter(Poll.institute_id == institute_id)
     if provider_id is not None:
@@ -180,7 +181,7 @@ def list_latest_polls(
     )
 
     if scope:
-        query = query.filter(Poll.scope == scope)
+        query = query.filter(Poll.scope == normalize_scope(scope))
     if provider_id is not None:
         query = query.filter(Poll.provider_id == provider_id)
     if election_id is not None:
@@ -321,7 +322,7 @@ def list_results(
 
     # Apply filters
     if scope is not None:
-        query = query.filter(Poll.scope == scope)
+        query = query.filter(Poll.scope == normalize_scope(scope))
     if institute_id is not None:
         query = query.filter(Poll.institute_id == institute_id)
     if provider_id is not None:

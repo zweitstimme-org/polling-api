@@ -6,7 +6,7 @@ These mappings convert scraper output names to the canonical IDs defined in JSON
 
 import json
 import re
-from functools import lru_cache
+from functools import cache, lru_cache
 from pathlib import Path
 
 
@@ -15,6 +15,12 @@ def _load_json(filename: str) -> dict:
     json_dir = Path(__file__).parent.parent.parent.parent / "json"
     with open(json_dir / filename, encoding="utf-8") as f:
         return json.load(f)
+
+
+@cache
+def _load_json_cached(filename: str) -> dict:
+    """Load JSON mapping file with process-local caching."""
+    return _load_json(filename)
 
 
 # ============================================================================
@@ -39,7 +45,32 @@ def _build_institute_lookup() -> dict[str, int]:
             simplified = re.sub(r"[^\w\s]", "", name.lower())
             lookup[simplified] = id_int
 
+    variations = {
+        "forschungsgruppewahlen": 6,
+        "forschungsgruppe wahlen": 6,
+        "forschungsgruppe-wahlen": 6,
+        "forschungs-gruppewahlen": 6,
+        "tnsinfratest": 1,
+        "tns infratest": 1,
+        "infratestpolitikforschung": 1,
+        "infratestpolitik-forschung": 1,
+        "infratest burke": 1,
+        "ipos": 17,
+    }
+    lookup.update(variations)
+
     return lookup
+
+
+def get_institute_name(institute_id: int, fallback: str | None = None) -> str:
+    """Return canonical institute name for an ID."""
+    if institute_id == 99:
+        return "Unknown"
+    data = _load_json_cached("institutes.json")
+    item = data.get(str(institute_id))
+    if item and item.get("Name"):
+        return item["Name"]
+    return fallback or "Unknown"
 
 
 def map_institute(name: str) -> int:
@@ -163,11 +194,25 @@ def map_party(name: str) -> int | None:
 
 def get_party_short_name(party_id: int) -> str | None:
     """Get party short name (Shortcut) by ID."""
-    data = _load_json("parties.json")
+    data = _load_json_cached("parties.json")
     party_data = data.get(str(party_id))
     if party_data:
         return party_data.get("Shortcut")
     return None
+
+
+def get_party_name(party_id: int, fallback: str | None = None) -> str:
+    """Return canonical party display name for an ID."""
+    data = _load_json_cached("parties.json")
+    item = data.get(str(party_id))
+    if item:
+        return item.get("Name") or item.get("Shortcut") or fallback or "Unknown"
+    return fallback or "Unknown"
+
+
+def get_party_shortcut(party_id: int) -> str | None:
+    """Return canonical party shortcut for an ID."""
+    return get_party_short_name(party_id)
 
 
 # ============================================================================
@@ -207,6 +252,9 @@ def map_method(name: str) -> int | None:
 
     name_lower = name.lower().strip()
 
+    if name_lower in {"0", "99", "unbekannt", "unknown"}:
+        return 0
+
     # Direct match
     if name_lower in lookup:
         return lookup[name_lower]
@@ -229,6 +277,15 @@ def map_method(name: str) -> int | None:
         return 2  # Persönlich
 
     return None  # Unknown
+
+
+def get_method_name(method_id: int, fallback: str | None = None) -> str:
+    """Return canonical method name for an ID."""
+    data = _load_json_cached("methods.json")
+    item = data.get(str(method_id))
+    if item and item.get("Name"):
+        return item["Name"]
+    return fallback or "Unknown"
 
 
 # ============================================================================
@@ -363,3 +420,30 @@ def map_parliament(scope: str) -> int:
         return lookup[scope_lower]
 
     return 0  # Default to Bundestag
+
+
+PARLIAMENT_SCOPE_BY_ID = {
+    0: "federal",
+    1: "bw",
+    2: "by",
+    3: "be",
+    4: "bb",
+    5: "hb",
+    6: "hh",
+    7: "he",
+    8: "mv",
+    9: "ni",
+    10: "nrw",
+    11: "rp",
+    12: "sl",
+    13: "sn",
+    14: "st",
+    15: "sh",
+    16: "th",
+    17: "eu",
+}
+
+
+def normalize_scope(scope: str | None) -> str:
+    """Normalize raw scraper scope to the API-facing canonical scope code."""
+    return PARLIAMENT_SCOPE_BY_ID.get(map_parliament(scope or ""), "federal")
