@@ -94,10 +94,21 @@ class ScraperRunner:
             return scraper_class(db=self.db, context=self.context, dry_run=self.dry_run)
         return scraper_class(db=self.db, context=self.context)
 
-    def run_all(self, include_dawum: bool = True) -> dict[str, int | str]:
-        """Run all discovered workers and optional DAWUM."""
+    @staticmethod
+    def _is_current_worker(entry: WorkerEntry) -> bool:
+        """Return True when worker class name contains 'current'."""
+        return "current" in entry.scraper_class.__name__.lower()
+
+    def run_all(
+        self,
+        include_dawum: bool = True,
+        current_only: bool = False,
+    ) -> dict[str, int | str]:
+        """Run discovered workers and optional DAWUM."""
         results: dict[str, int | str] = {}
         workers = self._discover_html_workers()
+        if current_only:
+            workers = [entry for entry in workers if self._is_current_worker(entry)]
         self.logger.info(f"Discovered {len(workers)} HTML workers")
         for entry in workers:
             try:
