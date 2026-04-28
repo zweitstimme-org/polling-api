@@ -9,7 +9,7 @@ from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
 from pollingapi.scraper.datamodel import BundElectionPoll, PartyResult, SurveyType
-from pollingapi.scraper.scraper_insertion import poll_to_raw_dict
+from pollingapi.scraper.insertion import poll_to_raw_dict
 from pollingapi.scraper.snapshots import save_html_snapshot
 
 
