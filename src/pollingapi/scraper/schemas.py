@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class PollPayload(BaseModel):
     """Schema for poll data payload from scrapers."""
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     publish_date: str | None = None
     respondents: str | None = None
@@ -24,6 +24,9 @@ class PollPayload(BaseModel):
     scope: str | None = None
     election_id: str | None = None
     method_id: str | None = None
+    worker: str | None = None
+    survey_type: str | None = None
+    pipeline_run_id: str | None = None
     date_downloaded: str | None = None
 
     @field_validator("respondents", "Befragte", mode="before")
