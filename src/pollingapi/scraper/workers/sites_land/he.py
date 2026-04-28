@@ -13,10 +13,10 @@ from pollingapi.scraper.insertion import poll_to_raw_dict
 from pollingapi.scraper.snapshots import save_html_snapshot
 
 
-class SHBaseScraper:
+class HEBaseScraper:
     URL: str = ""
     WORKER: str = ""
-    STATE = GermanState.SH
+    STATE = GermanState.HE
     SCOPE: str = "Landtagswahl"
     INSTITUTE: str = ""
     DATA_SOURCE: str = "wahlrecht.de"
@@ -159,9 +159,9 @@ class SHBaseScraper:
         return self.insert(polls)
 
 
-class SHCurrentScraper(SHBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/landtage/schleswig-holstein.htm"
-    WORKER = "schleswigholstein_current"
+class HECurrentScraper(HEBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/landtage/hessen.htm"
+    WORKER = "hessen_current"
     SCOPE = "Landtagswahl"
     INSTITUTE = ""
     DATA_SOURCE = "wahlrecht.de"
