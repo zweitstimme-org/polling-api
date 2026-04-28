@@ -1,6 +1,6 @@
 """Scraper schemas and data models."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -16,7 +16,7 @@ class PollPayload(BaseModel):
     zeitraum: str | None = Field(None, alias="Zeitraum")
     survey_date_start: str | None = None
     survey_date_end: str | None = None
-    parties: Dict[str, float] | None = None
+    parties: dict[str, float] | None = None
     institute_id: str | None = None
     provider: str | None = None
     tasker: str | None = None
@@ -39,7 +39,7 @@ class PollPayload(BaseModel):
 ALLOWED_POLL_COLUMNS = tuple(PollPayload.model_fields.keys())
 
 
-def filter_poll_payloads(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def filter_poll_payloads(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Filter and validate poll payload records.
 
     Args:

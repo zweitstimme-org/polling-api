@@ -3,11 +3,33 @@
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
 
 from pollingapi.core import DATA_DIR
+
+
+def load_htlm_snapshot(worker, date_str, filename):
+    """Load html snapshot from disk
+
+    Args:
+        worker: worker_name
+        date_str: Date string
+        filename: Original filename
+    Returns:
+        Html Content as string, or none if not found
+    """
+    html_dir = DATA_DIR / worker / "html"
+    filepath = html_dir / filename
+
+    if not filepath.exists():
+        return None
+
+    with open(filepath, encoding="utf-8") as f:
+        return f.read()
+
+    pass
 
 
 def _sanitize_filename(name: str) -> str:
@@ -41,7 +63,8 @@ def save_table_snapshot(worker_name: str, df: pd.DataFrame, label: str, date_str
     return filepath
 
 
-def save_normalized_snapshot(worker_name: str, df: pd.DataFrame, label: str, date_str: str) -> Path:
+# Old function name: save_normalized_snapshot(worker_name: str, df: pd.DataFrame, label: str, date_str: str) -> Path:
+def save_csv_snapshot(worker_name: str, df: pd.DataFrame, label: str, date_str: str) -> Path:
     """Save normalized DataFrame snapshot."""
     csvs_dir = DATA_DIR / worker_name / "csvs"
     csvs_dir.mkdir(parents=True, exist_ok=True)
@@ -53,7 +76,26 @@ def save_normalized_snapshot(worker_name: str, df: pd.DataFrame, label: str, dat
     return filepath
 
 
-def save_debug_snapshot(worker_name: str, data: Dict[str, Any], timestamp: str) -> Path:
+def save_json_snapshot(worker: str, data: Any, label: str, date_str: str) -> Path:
+    """Save JSON data snapshot (for API dumps).
+    Args:
+        worker: Worker name (e.g., "dawum")
+        data: Data to serialize (dict, list, or object)
+        label: Label for the snapshot (e.g., "api_dump", "wrangled")
+        date_str: Date string (e.g., "2026-04-27")
+    Returns:
+        Path to saved JSON file.
+    """
+    json_dir = DATA_DIR / worker / "json"
+    json_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"{date_str}_{_sanitize_filename(label)}.json"
+    filepath = json_dir / filename
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2, default=str)
+    return filepath
+
+
+def save_debug_snapshot(worker_name: str, data: dict[str, Any], timestamp: str) -> Path:
     """Save debug snapshot with aggregated data."""
     debug_dir = DATA_DIR / "debug"
     debug_dir.mkdir(parents=True, exist_ok=True)

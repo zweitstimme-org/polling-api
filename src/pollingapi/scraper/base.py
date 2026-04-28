@@ -20,7 +20,6 @@ from pollingapi.scraper.context import RunContext
 from pollingapi.scraper.schemas import filter_poll_payloads
 from pollingapi.scraper.snapshots import (
     save_html_snapshot,
-    save_normalized_snapshot,
 )
 
 
@@ -315,13 +314,13 @@ class BaseScraper(ABC):
                 # Apply metadata
                 df = self._apply_metadata(df)
 
-                # Save normalized snapshot
-                save_normalized_snapshot(
-                    self.config.worker_name,
-                    df,
-                    "normalized",
-                    self.context.today_str,
-                )
+                # # Save normalized snapshot
+                # save_normalized_snapshot(
+                #     self.config.worker_name,
+                #     df,
+                #     "normalized",
+                #     self.context.today_str,
+                # )
 
                 # Filter and validate
                 records = df.to_dict("records")
