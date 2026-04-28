@@ -1,17 +1,64 @@
-"""Insertion helpers: convert scraper poll models to polls_raw dict."""
+"""Insertion helpers for scraper poll models and raw insertions."""
 
 import json
+import re
 from datetime import datetime
+from typing import Any
 
+from sqlalchemy.orm import Session
+
+from pollingapi.models import RawPoll
 from pollingapi.scraper.datamodel import BundElectionPoll, LandElectionPoll, PartyResult
 
 ScraperPoll = BundElectionPoll | LandElectionPoll
+_DEDUP_KEYS = (
+    "publish_date",
+    "survey_date_start",
+    "survey_date_end",
+    "respondents",
+    "zeitraum",
+    "parties",
+    "institute_id",
+    "provider",
+    "tasker",
+    "source",
+    "scope",
+    "election_id",
+    "method_id",
+    "worker",
+    "survey_type",
+)
 
 
 def _coerce_datetime(value: datetime | str) -> datetime:
     if isinstance(value, str):
         return datetime.fromisoformat(value)
     return value
+
+
+def _looks_like_respondent_count(value: str) -> bool:
+    compact = value.replace(" ", "")
+    if not compact:
+        return False
+    if any(sep in compact for sep in ("-", "–", "/")):
+        return False
+    return re.fullmatch(r"\d+(?:[\.,]\d+)*", compact) is not None
+
+
+def _normalize_respondents_zeitraum(
+    respondents: str | None, zeitraum: str | None
+) -> tuple[str | None, str | None]:
+    respondents_value = (respondents or "").strip() or None
+    zeitraum_value = (zeitraum or "").strip() or None
+
+    if not respondents_value and zeitraum_value:
+        lower = zeitraum_value.lower()
+        if "wahl" in lower:
+            return None, None
+        if _looks_like_respondent_count(zeitraum_value):
+            return zeitraum_value, None
+
+    return respondents_value, zeitraum_value
 
 
 def poll_to_raw_dict(
@@ -39,13 +86,14 @@ def poll_to_raw_dict(
     Returns:
         Dictionary matching polls_raw table columns.
     """
+    respondents, zeitraum = _normalize_respondents_zeitraum(poll.befragte, poll.zeitraum)
     parties_dict = {p.name: p.value for p in poll.results}
     return {
         "publish_date": poll.datum,
         "survey_date_start": survey_date_start,
         "survey_date_end": survey_date_end,
-        "respondents": poll.befragte,
-        "zeitraum": poll.zeitraum,
+        "respondents": respondents,
+        "zeitraum": zeitraum,
         "parties": json.dumps(parties_dict, sort_keys=True),
         "institute_id": poll.institut,
         "provider": provider or poll.data_source,
@@ -56,9 +104,52 @@ def poll_to_raw_dict(
         "method_id": method_id or "99",
         "date_downloaded": poll.scraped_at.isoformat(),
         "worker": poll.worker,
-        "survey_type": survey_type,
+        "survey_type": survey_type or getattr(poll, "survey_type", None),
         "pipeline_run_id": pipeline_run_id,
     }
+
+
+def _raw_poll_exists(db: Session, raw_dict: dict[str, Any]) -> bool:
+    query = db.query(RawPoll)
+    for key in _DEDUP_KEYS:
+        column = getattr(RawPoll, key)
+        value = raw_dict.get(key)
+        query = query.filter(column.is_(None)) if value is None else query.filter(column == value)
+    return query.first() is not None
+
+
+def insert_new_polls(
+    db: Session,
+    polls: list[ScraperPoll],
+    provider: str,
+    source: str,
+    election_id: str,
+    method_id: str,
+    pipeline_run_id: str | None,
+) -> tuple[int, int]:
+    inserted = 0
+    skipped = 0
+
+    for poll in polls:
+        raw_dict = poll_to_raw_dict(
+            poll,
+            provider=provider,
+            source=source,
+            election_id=election_id,
+            method_id=method_id,
+            pipeline_run_id=pipeline_run_id,
+        )
+        if _raw_poll_exists(db, raw_dict):
+            skipped += 1
+            continue
+
+        db.add(RawPoll(**raw_dict))
+        inserted += 1
+
+    if inserted:
+        db.commit()
+
+    return inserted, skipped
 
 
 def raw_dict_to_poll(data: dict) -> BundElectionPoll:
