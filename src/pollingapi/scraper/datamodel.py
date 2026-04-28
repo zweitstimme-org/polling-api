@@ -29,6 +29,7 @@ class BundElectionPoll(BaseModel):
     datum: str  # what is the publish date of the poll?
     befragte: str  # this includes the amount of the people polled as well as mehtod and timeframe of people polled
     zeitraum: str  # timeframe of the poll
+    survey_type: str | None = None  # optional survey type parameter
     results: list[PartyResult]
 
     @field_validator("scraped_at", mode="before")
@@ -69,7 +70,7 @@ class GermanState(StrEnum):
     HE = "HE"  # (Hessen)
     MV = "MV"  # (Mecklenburg-Vorpommern)
     NI = "NI"  # (Niedersachsen)
-    NRW = "NRW"  # (Nordrhein-Westfalen)
+    NW = "NRW"  # (Nordrhein-Westfalen)
     RP = "RP"  # (Rheinland-Pfalz)
     SL = "SL"  # (Saarland)
     SN = "SN"  # (Sachsen)
@@ -91,3 +92,12 @@ class SurveyMethod(StrEnum):
     TELEFON_ONLINE = "Telefon & Online"
     PERSOENLICH = "Persönlich"
     UNBEKANNT = "99"
+
+
+class SurveyType(StrEnum):
+    PROJEKTION = "Projektion"
+    POLITISCHE_STIMMUNG = "Stimmung"
+
+
+class Institute(StrEnum):
+    INFRATEST = "Infratest Dimap"
