@@ -6,10 +6,9 @@ from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 
 from pollingapi.logging_config import get_logger
-from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
 from pollingapi.scraper.datamodel import GermanState, LandElectionPoll, PartyResult
-from pollingapi.scraper.insertion import poll_to_raw_dict
+from pollingapi.scraper.insertion import insert_new_polls
 from pollingapi.scraper.snapshots import save_html_snapshot
 
 
@@ -134,22 +133,16 @@ class THBaseScraper:
         if not polls:
             return 0
 
-        inserted = 0
-        for poll in polls:
-            raw_dict = poll_to_raw_dict(
-                poll,
-                provider=self.DATA_SOURCE,
-                source="html_scraper",
-                election_id=self.SCOPE,
-                method_id="99",
-                pipeline_run_id=self.context.run_id if self.context else None,
-            )
-            raw_poll = RawPoll(**raw_dict)
-            self.db.add(raw_poll)
-            inserted += 1
-
-        self.db.commit()
-        self.logger.info(f"Inserted {inserted} polls for {self.WORKER}")
+        inserted, skipped = insert_new_polls(
+            db=self.db,
+            polls=polls,
+            provider=self.DATA_SOURCE,
+            source="html_scraper",
+            election_id=self.SCOPE,
+            method_id="99",
+            pipeline_run_id=self.context.run_id if self.context else None,
+        )
+        self.logger.info(f"Inserted {inserted} polls for {self.WORKER} (skipped {skipped})")
         return inserted
 
     def run(self) -> int:
