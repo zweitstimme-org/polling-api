@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.datamodel import BundElectionPoll, PartyResult
+from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, PartyResult
 from pollingapi.scraper.insertion import poll_to_raw_dict
 from pollingapi.scraper.snapshots import save_html_snapshot
 
@@ -17,7 +17,7 @@ from pollingapi.scraper.snapshots import save_html_snapshot
 class ForsaBaseScraper:
     URL: str = ""
     WORKER: str = ""
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -163,7 +163,7 @@ class ForsaBaseScraper:
 # This worker targets the main site and therefore is the one to keep in check first
 class ForsaCurrentScraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_current"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -175,7 +175,7 @@ class ForsaCurrentScraper(ForsaBaseScraper):
 # with the end of 2013 there are no more east west differences
 class Forsa2013Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2013.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_2013"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -186,7 +186,7 @@ class Forsa2013Scraper(ForsaBaseScraper):
 
 class Forsa2008Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2008.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_2008"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -197,7 +197,7 @@ class Forsa2008Scraper(ForsaBaseScraper):
 
 class Forsa2007Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2007.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_2007"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -208,7 +208,7 @@ class Forsa2007Scraper(ForsaBaseScraper):
 
 class Forsa2006Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2006.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_2006"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -219,7 +219,7 @@ class Forsa2006Scraper(ForsaBaseScraper):
 
 class Forsa2005Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2005.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_2005"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -230,7 +230,7 @@ class Forsa2005Scraper(ForsaBaseScraper):
 
 class Forsa2004Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2004.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_2004"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -241,7 +241,7 @@ class Forsa2004Scraper(ForsaBaseScraper):
 
 class Forsa2003Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2003.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_2003"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -252,7 +252,7 @@ class Forsa2003Scraper(ForsaBaseScraper):
 
 class Forsa2002Total(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2002.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_2002_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -263,7 +263,7 @@ class Forsa2002Total(ForsaBaseScraper):
 
 class Forsa2002Ost(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2002o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "forsa_2002_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -274,7 +274,7 @@ class Forsa2002Ost(ForsaBaseScraper):
 
 class Forsa2002West(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2002w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "forsa_2002_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -285,7 +285,7 @@ class Forsa2002West(ForsaBaseScraper):
 
 class Forsa2001Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2001.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_2001"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -296,7 +296,7 @@ class Forsa2001Scraper(ForsaBaseScraper):
 
 class Forsa2000Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/2000.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_2000"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -307,7 +307,7 @@ class Forsa2000Scraper(ForsaBaseScraper):
 
 class Forsa1999Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/1999.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_1999"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"
@@ -318,7 +318,7 @@ class Forsa1999Scraper(ForsaBaseScraper):
 
 class Forsa1998Scraper(ForsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/forsa/1998.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forsa_1998"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forsa"

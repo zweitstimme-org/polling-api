@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.datamodel import BundElectionPoll, PartyResult
+from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, PartyResult
 from pollingapi.scraper.insertion import poll_to_raw_dict
 from pollingapi.scraper.snapshots import save_html_snapshot
 
@@ -17,7 +17,7 @@ from pollingapi.scraper.snapshots import save_html_snapshot
 class AllensbachBaseScraper:
     URL: str = ""
     WORKER: str = ""
-    STATE: str = "Bund"
+    STATE = GermanState.BUND
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -163,7 +163,6 @@ class AllensbachBaseScraper:
 # This worker targets the main site and therefore is the one to keep in check first
 class AllensbachCurrentScraper(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach.htm"
-    STATE: str = "Bund"
     WORKER = "allensbach_current"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -174,7 +173,7 @@ class AllensbachCurrentScraper(AllensbachBaseScraper):
 
 class Allensbach2017Scraper(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2013.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "allensbach_2017"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -186,7 +185,6 @@ class Allensbach2017Scraper(AllensbachBaseScraper):
 # with the end of 2013 there are no more east west differences
 class Allensbach2013Total(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2013.htm"
-    STATE: str = "Bund"
     WORKER = "allensbach_2017_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -197,7 +195,7 @@ class Allensbach2013Total(AllensbachBaseScraper):
 
 class Allensbach2013Ost(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2013o.htm"
-    STATE: str = "Ost"
+    STATE = GermanState.OST
     WORKER = "allensbach_2017_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -208,7 +206,7 @@ class Allensbach2013Ost(AllensbachBaseScraper):
 
 class Allensbach2013West(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2013w.htm"
-    STATE: str = "West"
+    STATE = GermanState.WEST
     WORKER = "allensbach_2017_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -219,7 +217,6 @@ class Allensbach2013West(AllensbachBaseScraper):
 
 class Allensbach2009Total(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2009.htm"
-    STATE: str = "Bund"
     WORKER = "allensbach_2009_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -230,7 +227,7 @@ class Allensbach2009Total(AllensbachBaseScraper):
 
 class Allensbach2009Ost(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2009o.htm"
-    STATE: str = "Ost"
+    STATE = GermanState.OST
     WORKER = "allensbach_2009_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -241,7 +238,7 @@ class Allensbach2009Ost(AllensbachBaseScraper):
 
 class Allensbach2009West(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2009w.htm"
-    STATE: str = "West"
+    STATE = GermanState.WEST
     WORKER = "allensbach_2009_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -252,7 +249,6 @@ class Allensbach2009West(AllensbachBaseScraper):
 
 class Allensbach2005Total(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2005.htm"
-    STATE: str = "Bund"
     WORKER = "allensbach_2005_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -263,7 +259,7 @@ class Allensbach2005Total(AllensbachBaseScraper):
 
 class Allensbach2005Ost(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2005o.htm"
-    STATE: str = "Ost"
+    STATE = GermanState.OST
     WORKER = "allensbach_2005_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -274,7 +270,7 @@ class Allensbach2005Ost(AllensbachBaseScraper):
 
 class Allensbach2005West(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2005w.htm"
-    STATE: str = "West"
+    STATE = GermanState.WEST
     WORKER = "allensbach_2005_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -285,7 +281,7 @@ class Allensbach2005West(AllensbachBaseScraper):
 
 class Allensbach2002Total(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2002.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "allensbach_2002_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -296,7 +292,7 @@ class Allensbach2002Total(AllensbachBaseScraper):
 
 class Allensbach2002Ost(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2002o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "allensbach_2002_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"
@@ -307,7 +303,7 @@ class Allensbach2002Ost(AllensbachBaseScraper):
 
 class Allensbach2002West(AllensbachBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/allensbach/2002w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "allensbach_2002_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Allensbach"

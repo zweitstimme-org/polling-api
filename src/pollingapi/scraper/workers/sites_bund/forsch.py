@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.datamodel import BundElectionPoll, PartyResult, SurveyType
+from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, PartyResult
 from pollingapi.scraper.insertion import poll_to_raw_dict
 from pollingapi.scraper.snapshots import save_html_snapshot
 
@@ -17,7 +17,7 @@ from pollingapi.scraper.snapshots import save_html_snapshot
 class ForschBaseScraper:
     URL: str = ""
     WORKER: str = ""
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Forschungsgruppe Wahlen"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -164,7 +164,7 @@ class ForschBaseScraper:
 
 class ForschCurrentProjektionScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "Forschungsgruppewahlen_current_projektion"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Projektion"
@@ -175,7 +175,7 @@ class ForschCurrentProjektionScraper(ForschBaseScraper):
 
 class ForschCurrentStimmungScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_current_stimmung"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Stimmung"
@@ -186,7 +186,7 @@ class ForschCurrentStimmungScraper(ForschBaseScraper):
 
 class Forsch2017ProjektionScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-2017.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_2017_projektion"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Projektion"
@@ -197,7 +197,7 @@ class Forsch2017ProjektionScraper(ForschBaseScraper):
 
 class Forsch2017StimmungScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-2017.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_2017_stimmung"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Stimmung"
@@ -208,7 +208,7 @@ class Forsch2017StimmungScraper(ForschBaseScraper):
 
 class Forsch2013ProjektionScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-2013.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_2013_projektion"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Projektion"
@@ -219,7 +219,7 @@ class Forsch2013ProjektionScraper(ForschBaseScraper):
 
 class Forsch2013StimmungScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-2013.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_2013_stimmung"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Stimmung"
@@ -230,7 +230,7 @@ class Forsch2013StimmungScraper(ForschBaseScraper):
 
 class Forsch2009ProjektionScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-2009.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_2009_projektion"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Projektion"
@@ -241,7 +241,7 @@ class Forsch2009ProjektionScraper(ForschBaseScraper):
 
 class Forsch2009StimmungScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-2009.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_2009_stimmung"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Stimmung"
@@ -252,7 +252,7 @@ class Forsch2009StimmungScraper(ForschBaseScraper):
 
 class Forsch2005ProjektionScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-2005.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_2005_projektion"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Projektion"
@@ -263,7 +263,7 @@ class Forsch2005ProjektionScraper(ForschBaseScraper):
 
 class Forsch2005StimmungScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-2005.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_2005_stimmung"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Stimmung"
@@ -274,7 +274,7 @@ class Forsch2005StimmungScraper(ForschBaseScraper):
 
 class Forsch2002ProjektionScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-2002.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_2002_projektion"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Projektion"
@@ -285,7 +285,7 @@ class Forsch2002ProjektionScraper(ForschBaseScraper):
 
 class Forsch2002StimmungScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-2002.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_2002_stimmung"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Stimmung"
@@ -296,7 +296,7 @@ class Forsch2002StimmungScraper(ForschBaseScraper):
 
 class Forsch1998ProjektionScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-1998.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_1998_projektion"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Projektion"
@@ -307,7 +307,7 @@ class Forsch1998ProjektionScraper(ForschBaseScraper):
 
 class Forsch1998StimmungScraper(ForschBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-1998.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "forschungsgruppewahlen_1998_stimmung"
     SCOPE: str = "Bundestagswahl"
     Survey_Type: str = "Stimmung"

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.datamodel import BundElectionPoll, PartyResult, SurveyType
+from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, PartyResult
 from pollingapi.scraper.insertion import poll_to_raw_dict
 from pollingapi.scraper.snapshots import save_html_snapshot
 
@@ -17,7 +17,7 @@ from pollingapi.scraper.snapshots import save_html_snapshot
 class GmsBaseScraper:
     URL: str = ""
     WORKER: str = ""
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -164,7 +164,7 @@ class GmsBaseScraper:
 
 class GmsCurrentProjektionScraper(GmsBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/gms.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "gms_current_projektion"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"
@@ -176,7 +176,7 @@ class GmsCurrentProjektionScraper(GmsBaseScraper):
 
 class GmsCurrentStimmungScraper(GmsBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/gms/stimmung.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "gms_current_stimmung"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"
@@ -188,7 +188,7 @@ class GmsCurrentStimmungScraper(GmsBaseScraper):
 
 class Gms2017ProjektionScraper(GmsBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/gms/projektion-2017.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "gms_2017_projektion"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"
@@ -200,7 +200,7 @@ class Gms2017ProjektionScraper(GmsBaseScraper):
 
 class Gms2017StimmungScraper(GmsBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/gms/stimmung-2017.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "gms_2017_stimmung"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"
@@ -212,7 +212,7 @@ class Gms2017StimmungScraper(GmsBaseScraper):
 
 class Gms2013ProjektionScraper(GmsBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/gms/projektion-2013.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "gms_2013_projektion"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"
@@ -224,7 +224,7 @@ class Gms2013ProjektionScraper(GmsBaseScraper):
 
 class Gms2013StimmungScraper(GmsBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/gms/stimmung-2013.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "gms_2013_stimmung"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"
@@ -236,7 +236,7 @@ class Gms2013StimmungScraper(GmsBaseScraper):
 
 class Gms2009ProjektionScraper(GmsBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/gms/projektion-2009.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "gms_2009_projektion"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"
@@ -248,7 +248,7 @@ class Gms2009ProjektionScraper(GmsBaseScraper):
 
 class Gms2009StimmungScraper(GmsBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/gms/stimmung-2009.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "gms_2009_stimmung"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"
@@ -260,7 +260,7 @@ class Gms2009StimmungScraper(GmsBaseScraper):
 
 class Gms2005ProjektionScraper(GmsBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/gms/projektion-2005.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "gms_2005_projektion"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"
@@ -272,7 +272,7 @@ class Gms2005ProjektionScraper(GmsBaseScraper):
 
 class Gms2005StimmungScraper(GmsBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/gms/stimmung-2005.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "gms_2005_stimmung"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "GMS"

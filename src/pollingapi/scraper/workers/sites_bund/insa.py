@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.datamodel import BundElectionPoll, PartyResult
+from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, PartyResult
 from pollingapi.scraper.insertion import poll_to_raw_dict
 from pollingapi.scraper.snapshots import save_html_snapshot
 
@@ -18,7 +18,7 @@ from pollingapi.scraper.snapshots import save_html_snapshot
 class InsaBaseScraper:
     URL: str = ""
     WORKER: str = ""
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Insa"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -164,7 +164,7 @@ class InsaBaseScraper:
 # This worker targets the main site and therefore is the one to keep in check first
 class InsaCurrentScraper(InsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/Insa.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "insa_current"
     SCOPE: str = "Bundestagswahl"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -174,7 +174,7 @@ class InsaCurrentScraper(InsaBaseScraper):
 
 class Insa2021Scraper(InsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/insa/2021.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "insa_2021"
     SCOPE: str = "Bundestagswahl"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -184,7 +184,7 @@ class Insa2021Scraper(InsaBaseScraper):
 
 class Insa2017Scraper(InsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/insa/2017.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "insa_2017"
     SCOPE: str = "Bundestagswahl"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -194,7 +194,7 @@ class Insa2017Scraper(InsaBaseScraper):
 
 class Insa2013Scraper(InsaBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/insa/2013.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "insa_2013"
     SCOPE: str = "Bundestagswahl"
     DATA_SOURCE: str = "wahlrecht.de"

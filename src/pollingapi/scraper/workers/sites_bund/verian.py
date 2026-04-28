@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.datamodel import BundElectionPoll, PartyResult
+from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, PartyResult
 from pollingapi.scraper.insertion import poll_to_raw_dict
 from pollingapi.scraper.snapshots import save_html_snapshot
 
@@ -17,7 +17,7 @@ from pollingapi.scraper.snapshots import save_html_snapshot
 class VerianBaseScraper:
     URL: str = ""
     WORKER: str = ""
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -162,7 +162,7 @@ class VerianBaseScraper:
 
 class VerianCurrentScraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_current"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -173,7 +173,7 @@ class VerianCurrentScraper(VerianBaseScraper):
 
 class Verian2013Scraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2013.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_2013"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -184,7 +184,7 @@ class Verian2013Scraper(VerianBaseScraper):
 
 class Verian2008Scraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2008.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_2008"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -195,7 +195,7 @@ class Verian2008Scraper(VerianBaseScraper):
 
 class Verian2007Scraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2007.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_2008"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -206,7 +206,7 @@ class Verian2007Scraper(VerianBaseScraper):
 
 class Verian2006Scraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2006.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_2006"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -217,7 +217,7 @@ class Verian2006Scraper(VerianBaseScraper):
 
 class Verian2005Total(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2005.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_2005"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -228,7 +228,7 @@ class Verian2005Total(VerianBaseScraper):
 
 class Verian2005Ost(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2005o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "verian_2005_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -239,7 +239,7 @@ class Verian2005Ost(VerianBaseScraper):
 
 class Verian2005West(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2005w.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "verian_2005_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -250,7 +250,7 @@ class Verian2005West(VerianBaseScraper):
 
 class Verian2004Total(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2004.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_2004"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -261,7 +261,7 @@ class Verian2004Total(VerianBaseScraper):
 
 class Verian2004Ost(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2004o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "verian_2004_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -272,7 +272,7 @@ class Verian2004Ost(VerianBaseScraper):
 
 class Verian2004West(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2004w.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "verian_2004_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -283,7 +283,7 @@ class Verian2004West(VerianBaseScraper):
 
 class Verian2003Scraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2003.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_2003"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -294,7 +294,7 @@ class Verian2003Scraper(VerianBaseScraper):
 
 class Verian2002Scraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2002.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_2002"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -305,7 +305,7 @@ class Verian2002Scraper(VerianBaseScraper):
 
 class Verian2001Scraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2001.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_2001"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -316,7 +316,7 @@ class Verian2001Scraper(VerianBaseScraper):
 
 class Verian2000Scraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/2000.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_2000"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -327,7 +327,7 @@ class Verian2000Scraper(VerianBaseScraper):
 
 class Verian1999Scraper(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/1999.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_1999"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -338,7 +338,7 @@ class Verian1999Scraper(VerianBaseScraper):
 
 class Verian1998Total(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/1998.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "verian_1998"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -349,7 +349,7 @@ class Verian1998Total(VerianBaseScraper):
 
 class Verian1998Ost(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/1998o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "verian_1998_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
@@ -360,7 +360,7 @@ class Verian1998Ost(VerianBaseScraper):
 
 class Verian1998West(VerianBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/emnid/1998w.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "verian_1998_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"

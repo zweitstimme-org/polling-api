@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.datamodel import BundElectionPoll, PartyResult
+from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, PartyResult
 from pollingapi.scraper.insertion import poll_to_raw_dict
 from pollingapi.scraper.snapshots import save_html_snapshot
 
@@ -18,7 +18,7 @@ from pollingapi.scraper.snapshots import save_html_snapshot
 class YougovBaseScraper:
     URL: str = ""
     WORKER: str = ""
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Yougov"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -164,7 +164,7 @@ class YougovBaseScraper:
 # This worker targets the main site and therefore is the one to keep in check first
 class YougovCurrentScraper(YougovBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/yougov.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "yougov_current"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Yougov"

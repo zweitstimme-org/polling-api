@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.datamodel import BundElectionPoll, PartyResult
+from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, PartyResult
 from pollingapi.scraper.insertion import poll_to_raw_dict
 from pollingapi.scraper.snapshots import save_html_snapshot
 
@@ -17,7 +17,7 @@ from pollingapi.scraper.snapshots import save_html_snapshot
 class InfratestBaseScraper:
     URL: str = ""
     WORKER: str = ""
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
     DATA_SOURCE: str = "wahlrecht.de"
@@ -163,7 +163,7 @@ class InfratestBaseScraper:
 # This worker targets the main site and therefore is the one to keep in check first
 class InfratestCurrentScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_current"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -174,7 +174,7 @@ class InfratestCurrentScraper(InfratestBaseScraper):
 
 class InfratestCurrentOstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/ost.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_current_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -185,7 +185,7 @@ class InfratestCurrentOstScraper(InfratestBaseScraper):
 
 class InfratestCurrentWestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/west.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_current_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -196,7 +196,7 @@ class InfratestCurrentWestScraper(InfratestBaseScraper):
 
 class Infratest2013TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2013.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2013_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -207,7 +207,7 @@ class Infratest2013TotalScraper(InfratestBaseScraper):
 
 class Infratest2013OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2013o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2013_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -218,7 +218,7 @@ class Infratest2013OstScraper(InfratestBaseScraper):
 
 class Infratest2013WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2013w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2013_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -229,7 +229,7 @@ class Infratest2013WestScraper(InfratestBaseScraper):
 
 class Infratest2008TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2008.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2008_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -240,7 +240,7 @@ class Infratest2008TotalScraper(InfratestBaseScraper):
 
 class Infratest2008OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2008o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2008_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -251,7 +251,7 @@ class Infratest2008OstScraper(InfratestBaseScraper):
 
 class Infratest2008WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2008w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2008_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -262,7 +262,7 @@ class Infratest2008WestScraper(InfratestBaseScraper):
 
 class Infratest2007TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2007.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2007_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -273,7 +273,7 @@ class Infratest2007TotalScraper(InfratestBaseScraper):
 
 class Infratest2007OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2007o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2007_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -284,7 +284,7 @@ class Infratest2007OstScraper(InfratestBaseScraper):
 
 class Infratest2007WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2007w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2007_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -295,7 +295,7 @@ class Infratest2007WestScraper(InfratestBaseScraper):
 
 class Infratest2012TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2012.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2012_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -306,7 +306,7 @@ class Infratest2012TotalScraper(InfratestBaseScraper):
 
 class Infratest2012OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2012o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2012_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -317,7 +317,7 @@ class Infratest2012OstScraper(InfratestBaseScraper):
 
 class Infratest2012WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2012w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2012_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -328,7 +328,7 @@ class Infratest2012WestScraper(InfratestBaseScraper):
 
 class Infratest2011TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2011.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2011_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -339,7 +339,7 @@ class Infratest2011TotalScraper(InfratestBaseScraper):
 
 class Infratest2011OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2011o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2011_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -350,7 +350,7 @@ class Infratest2011OstScraper(InfratestBaseScraper):
 
 class Infratest2011WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2011w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2011_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -361,7 +361,7 @@ class Infratest2011WestScraper(InfratestBaseScraper):
 
 class Infratest2010TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2010.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2010_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -372,7 +372,7 @@ class Infratest2010TotalScraper(InfratestBaseScraper):
 
 class Infratest2010OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2010o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2010_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -383,7 +383,7 @@ class Infratest2010OstScraper(InfratestBaseScraper):
 
 class Infratest2010WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2010w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2010_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -394,7 +394,7 @@ class Infratest2010WestScraper(InfratestBaseScraper):
 
 class Infratest2009TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2009.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2009_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -405,7 +405,7 @@ class Infratest2009TotalScraper(InfratestBaseScraper):
 
 class Infratest2009OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2009o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2009_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -416,7 +416,7 @@ class Infratest2009OstScraper(InfratestBaseScraper):
 
 class Infratest2009WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2009w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2009_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -427,7 +427,7 @@ class Infratest2009WestScraper(InfratestBaseScraper):
 
 class Infratest2006TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2006.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2006_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -438,7 +438,7 @@ class Infratest2006TotalScraper(InfratestBaseScraper):
 
 class Infratest2006OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2006o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2006_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -449,7 +449,7 @@ class Infratest2006OstScraper(InfratestBaseScraper):
 
 class Infratest2006WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2006w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2006_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -460,7 +460,7 @@ class Infratest2006WestScraper(InfratestBaseScraper):
 
 class Infratest2005TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2005.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2005_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -471,7 +471,7 @@ class Infratest2005TotalScraper(InfratestBaseScraper):
 
 class Infratest2005OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2005o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2005_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -482,7 +482,7 @@ class Infratest2005OstScraper(InfratestBaseScraper):
 
 class Infratest2005WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2005w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2005_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -493,7 +493,7 @@ class Infratest2005WestScraper(InfratestBaseScraper):
 
 class Infratest2004TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2004.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2004_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -504,7 +504,7 @@ class Infratest2004TotalScraper(InfratestBaseScraper):
 
 class Infratest2004OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2004o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2004_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -515,7 +515,7 @@ class Infratest2004OstScraper(InfratestBaseScraper):
 
 class Infratest2004WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2004w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2004_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -526,7 +526,7 @@ class Infratest2004WestScraper(InfratestBaseScraper):
 
 class Infratest2003TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2003.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2003_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -537,7 +537,7 @@ class Infratest2003TotalScraper(InfratestBaseScraper):
 
 class Infratest2003OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2003o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2003_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -548,7 +548,7 @@ class Infratest2003OstScraper(InfratestBaseScraper):
 
 class Infratest2003WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2003w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2003_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -559,7 +559,7 @@ class Infratest2003WestScraper(InfratestBaseScraper):
 
 class Infratest2002TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2002.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2002_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -570,7 +570,7 @@ class Infratest2002TotalScraper(InfratestBaseScraper):
 
 class Infratest2002OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2002o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2002_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -581,7 +581,7 @@ class Infratest2002OstScraper(InfratestBaseScraper):
 
 class Infratest2002WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2002w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2002_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -592,7 +592,7 @@ class Infratest2002WestScraper(InfratestBaseScraper):
 
 class Infratest2001TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2001.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2001_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -603,7 +603,7 @@ class Infratest2001TotalScraper(InfratestBaseScraper):
 
 class Infratest2001OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2001o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2001_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -614,7 +614,7 @@ class Infratest2001OstScraper(InfratestBaseScraper):
 
 class Infratest2001WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2001w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2001_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -625,7 +625,7 @@ class Infratest2001WestScraper(InfratestBaseScraper):
 
 class Infratest2000TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2000.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_2000_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -636,7 +636,7 @@ class Infratest2000TotalScraper(InfratestBaseScraper):
 
 class Infratest2000OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2000o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_2000_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -647,7 +647,7 @@ class Infratest2000OstScraper(InfratestBaseScraper):
 
 class Infratest2000WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/2000w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_2000_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -658,7 +658,7 @@ class Infratest2000WestScraper(InfratestBaseScraper):
 
 class Infratest1999TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/1999.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_1999_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -669,7 +669,7 @@ class Infratest1999TotalScraper(InfratestBaseScraper):
 
 class Infratest1999OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/1999o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_1999_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -680,7 +680,7 @@ class Infratest1999OstScraper(InfratestBaseScraper):
 
 class Infratest1999WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/1999w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_1999_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -691,7 +691,7 @@ class Infratest1999WestScraper(InfratestBaseScraper):
 
 class Infratest1998TotalScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/1998.htm"
-    STATE: str = "Bund"
+    STATE: str = GermanState.BUND
     WORKER = "infratest_1998_total"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -702,7 +702,7 @@ class Infratest1998TotalScraper(InfratestBaseScraper):
 
 class Infratest1998OstScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/1998o.htm"
-    STATE: str = "Ost"
+    STATE: str = GermanState.OST
     WORKER = "infratest_1998_ost"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
@@ -713,7 +713,7 @@ class Infratest1998OstScraper(InfratestBaseScraper):
 
 class Infratest1998WestScraper(InfratestBaseScraper):
     URL = "https://www.wahlrecht.de/umfragen/dimap/1998w.htm"
-    STATE: str = "West"
+    STATE: str = GermanState.WEST
     WORKER = "infratest_1998_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Infratest Dimap"
