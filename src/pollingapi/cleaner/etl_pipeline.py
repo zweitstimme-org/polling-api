@@ -7,9 +7,9 @@ This pipeline:
 """
 
 import json
+import re
 from dataclasses import dataclass
-from datetime import date, datetime
-from typing import Dict, Tuple
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -35,6 +35,17 @@ from pollingapi.models import (
 
 logger = get_logger(__name__)
 
+NON_RESULT_PARTY_NAMES = {
+    "nichtwähler",
+    "nicht-wähler",
+    "nichtwähler/unentschl.",
+    "nichtwähler/unentschlos.",
+    "unent-schlossene",
+    "unentschlossene",
+    "summe",
+    "quelle",
+}
+
 
 @dataclass
 class CleaningStats:
@@ -47,7 +58,7 @@ class CleaningStats:
     errors: int = 0
 
 
-def parse_parties_json(parties_json: str | None) -> Dict[str, float]:
+def parse_parties_json(parties_json: str | None) -> dict[str, float]:
     """Parse parties JSON string to dictionary."""
     if not parties_json:
         return {}
@@ -56,6 +67,44 @@ def parse_parties_json(parties_json: str | None) -> Dict[str, float]:
     except json.JSONDecodeError:
         logger.warning(f"Failed to parse parties JSON: {parties_json[:100]}...")
         return {}
+
+
+def parse_percentage(value: object) -> float | None:
+    """Parse raw percentage values from scraper payloads.
+
+    Raw rows are immutable and may contain display strings such as ``"4,5 %"``
+    or placeholders such as ``"–"``. Return None for placeholders/unusable
+    values so the cleaned result table only stores numeric party results.
+    """
+    if value is None:
+        return None
+
+    if isinstance(value, int | float):
+        return float(value)
+
+    text = str(value).strip()
+    if not text:
+        return None
+
+    if text in {"-", "–", "—", "−"}:
+        return None
+
+    text = text.replace("\xa0", " ").replace("%", "").strip()
+    text = text.replace(",", ".")
+    match = re.search(r"-?\d+(?:\.\d+)?", text)
+    if not match:
+        return None
+
+    try:
+        return float(match.group(0))
+    except ValueError:
+        return None
+
+
+def is_non_result_party_name(name: str) -> bool:
+    """Return True for raw table columns that are metadata, not party results."""
+    normalized = re.sub(r"\s+", " ", name.lower().strip())
+    return normalized in NON_RESULT_PARTY_NAMES
 
 
 def get_or_create_institute(db: Session, name: str) -> Institute:
@@ -151,23 +200,19 @@ def get_or_create_election(db: Session, scope: str) -> Election:
 
 
 def find_existing_poll(
-    db: Session, publish_date: date | None, institute_id: int, scope: str, provider_id: int
+    db: Session,
+    raw_id: int,
 ) -> Poll | None:
-    """Find existing poll by key fields (including provider for uniqueness)."""
-    if not publish_date:
-        return None
+    """Find existing cleaned poll for a raw row.
 
-    return (
-        db.query(Poll)
-        .filter(Poll.publish_date == publish_date)
-        .filter(Poll.institute_id == institute_id)
-        .filter(Poll.scope == scope)
-        .filter(Poll.provider_id == provider_id)
-        .first()
-    )
+    ``polls_raw`` is immutable, so the stable idempotency key for cleaning is
+    ``RawPoll.id`` -> ``Poll.raw_id``. This avoids collapsing distinct raw rows
+    that share publish date, institute, provider, and scope.
+    """
+    return db.query(Poll).filter(Poll.raw_id == raw_id).first()
 
 
-def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool]:
+def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool]:
     """Clean a single raw poll and return cleaned poll.
 
     Args:
@@ -212,9 +257,7 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool
         election = get_or_create_election(db, raw_poll.scope or "")
 
         # Check for duplicate (include provider to distinguish between sources)
-        existing = find_existing_poll(
-            db, publish_date, institute.id, raw_poll.scope or "", provider.id
-        )
+        existing = find_existing_poll(db, raw_poll.id)
 
         if existing:
             poll = existing
@@ -261,7 +304,7 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> Tuple[Poll | None, bool
         raise
 
 
-def sync_poll_results(db: Session, poll: Poll, parties_data: Dict[str, float]) -> None:
+def sync_poll_results(db: Session, poll: Poll, parties_data: dict[str, float]) -> None:
     """Sync party results for a poll using JSON mappings.
 
     Args:
@@ -279,6 +322,17 @@ def sync_poll_results(db: Session, poll: Poll, parties_data: Dict[str, float]) -
     processed_parties = set()
 
     for party_name, percentage in parties_data.items():
+        if is_non_result_party_name(party_name):
+            logger.debug(f"Ignoring non-result column '{party_name}' in poll {poll.id}")
+            continue
+
+        parsed_percentage = parse_percentage(percentage)
+        if parsed_percentage is None:
+            logger.debug(
+                f"Skipping party '{party_name}' in poll {poll.id}: invalid value {percentage!r}"
+            )
+            continue
+
         # Map party name to ID using JSON
         party_id = map_party(party_name)
 
@@ -303,20 +357,29 @@ def sync_poll_results(db: Session, poll: Poll, parties_data: Dict[str, float]) -
         # Update or create result
         if party_id in existing_results:
             # Update existing
-            existing_results[party_id].percentage = float(percentage)
-            logger.debug(f"Updated result for party {party_id}: {percentage}%")
+            existing_results[party_id].percentage = parsed_percentage
+            logger.debug(f"Updated result for party {party_id}: {parsed_percentage}%")
         else:
             # Create new
             poll_result = PollResult(
-                poll_id=poll.id, party_id=party_id, percentage=float(percentage)
+                poll_id=poll.id, party_id=party_id, percentage=parsed_percentage
             )
             db.add(poll_result)
-            logger.debug(f"Created result for party {party_id}: {percentage}%")
+            logger.debug(f"Created result for party {party_id}: {parsed_percentage}%")
+
+    stale_party_ids = set(existing_results) - processed_parties
+    if stale_party_ids:
+        (
+            db.query(PollResultModel)
+            .filter(PollResultModel.poll_id == poll.id)
+            .filter(PollResultModel.party_id.in_(stale_party_ids))
+            .delete(synchronize_session=False)
+        )
 
 
 def run_cleaning_pipeline(
     db: Session, limit: int | None = None, dry_run: bool = False
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """Run the full cleaning pipeline.
 
     Args:

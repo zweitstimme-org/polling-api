@@ -1,7 +1,6 @@
 """Composable cleaning pipeline for data transformation."""
 
 from collections.abc import Callable
-from typing import List
 
 import pandas as pd
 
@@ -13,7 +12,7 @@ class DataCleaningPipeline:
 
     def __init__(self):
         """Initialize empty pipeline."""
-        self.steps: List[CleaningStep] = []
+        self.steps: list[CleaningStep] = []
 
     def add_step(self, step: CleaningStep) -> "DataCleaningPipeline":
         """Add a cleaning step to the pipeline."""

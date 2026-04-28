@@ -8,7 +8,6 @@ import json
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict
 
 
 def _load_json(filename: str) -> dict:
@@ -24,7 +23,7 @@ def _load_json(filename: str) -> dict:
 
 
 @lru_cache(maxsize=1)
-def _build_institute_lookup() -> Dict[str, int]:
+def _build_institute_lookup() -> dict[str, int]:
     """Build lookup: normalized name -> institute ID."""
     data = _load_json("institutes.json")
     lookup = {}
@@ -81,7 +80,7 @@ def map_institute(name: str) -> int:
 
 
 @lru_cache(maxsize=1)
-def _build_party_lookup() -> Dict[str, int]:
+def _build_party_lookup() -> dict[str, int]:
     """Build lookup: normalized party name -> party ID."""
     data = _load_json("parties.json")
     lookup = {}
@@ -144,6 +143,11 @@ def map_party(name: str) -> int | None:
         "fw": 8,
         "freie wähler": 8,
         "freie waehler": 8,
+        "sonstige": 0,
+        "andere": 0,
+        "übrige": 0,
+        "uebrige": 0,
+        "pds": 5,
     }
 
     if name_lower in variations:
@@ -172,7 +176,7 @@ def get_party_short_name(party_id: int) -> str | None:
 
 
 @lru_cache(maxsize=1)
-def _build_method_lookup() -> Dict[str, int]:
+def _build_method_lookup() -> dict[str, int]:
     """Build lookup: normalized method name -> method ID."""
     data = _load_json("methods.json")
     lookup = {}
@@ -233,7 +237,7 @@ def map_method(name: str) -> int | None:
 
 
 @lru_cache(maxsize=1)
-def _build_tasker_lookup() -> Dict[str, int]:
+def _build_tasker_lookup() -> dict[str, int]:
     """Build lookup: normalized tasker name -> tasker ID."""
     data = _load_json("taskers.json")
     lookup = {}
@@ -281,7 +285,7 @@ def map_tasker(name: str) -> int | None:
 
 
 @lru_cache(maxsize=1)
-def _build_parliament_lookup() -> Dict[str, int]:
+def _build_parliament_lookup() -> dict[str, int]:
     """Build lookup: parliament shortcut/scope -> parliament ID."""
     data = _load_json("parliaments.json")
     lookup = {}
@@ -328,6 +332,31 @@ def map_parliament(scope: str) -> int:
     lookup = _build_parliament_lookup()
 
     scope_lower = scope.lower().strip()
+
+    variations = {
+        "bund": 0,
+        "ost": 0,
+        "west": 0,
+        "bw": 1,
+        "by": 2,
+        "be": 3,
+        "bb": 4,
+        "hb": 5,
+        "hh": 6,
+        "he": 7,
+        "mv": 8,
+        "ni": 9,
+        "nw": 10,
+        "nrw": 10,
+        "rp": 11,
+        "sl": 12,
+        "sn": 13,
+        "st": 14,
+        "sh": 15,
+        "th": 16,
+    }
+    if scope_lower in variations:
+        return variations[scope_lower]
 
     # Direct match against all entries in JSON (Shortcut, Name, Election, Aliases)
     if scope_lower in lookup:

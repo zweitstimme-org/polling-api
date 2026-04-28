@@ -3,7 +3,6 @@
 import re
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Tuple
 
 import dateparser
 import pandas as pd
