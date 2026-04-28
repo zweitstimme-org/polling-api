@@ -205,9 +205,163 @@ class Verian2007Scraper(VerianBaseScraper):
 
 
 class Verian2006Scraper(VerianBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/emnid/2007.htm"
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2006.htm"
     STATE: str = "Bund"
-    WORKER = "verian_2008"
+    WORKER = "verian_2006"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian2005Total(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2005.htm"
+    STATE: str = "Bund"
+    WORKER = "verian_2005"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian2005Ost(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2005o.htm"
+    STATE: str = "Ost"
+    WORKER = "verian_2005_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian2005West(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2005w.htm"
+    STATE: str = "Ost"
+    WORKER = "verian_2005_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian2004Total(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2004.htm"
+    STATE: str = "Bund"
+    WORKER = "verian_2004"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian2004Ost(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2004o.htm"
+    STATE: str = "Ost"
+    WORKER = "verian_2004_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian2004West(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2004w.htm"
+    STATE: str = "Ost"
+    WORKER = "verian_2004_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian2003Scraper(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2003.htm"
+    STATE: str = "Bund"
+    WORKER = "verian_2003"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian2002Scraper(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2002.htm"
+    STATE: str = "Bund"
+    WORKER = "verian_2002"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian2001Scraper(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2001.htm"
+    STATE: str = "Bund"
+    WORKER = "verian_2001"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian2000Scraper(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/2000.htm"
+    STATE: str = "Bund"
+    WORKER = "verian_2000"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian1999Scraper(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/1999.htm"
+    STATE: str = "Bund"
+    WORKER = "verian_1999"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian1998Total(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/1998.htm"
+    STATE: str = "Bund"
+    WORKER = "verian_1998"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian1998Ost(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/1998o.htm"
+    STATE: str = "Ost"
+    WORKER = "verian_1998_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Verian (Kantar Public, Emnid)"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Verian1998West(VerianBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/emnid/1998w.htm"
+    STATE: str = "Ost"
+    WORKER = "verian_1998_west"
     SCOPE: str = "Bundestagswahl"
     INSTITUTE: str = "Verian (Kantar Public, Emnid)"
     DATA_SOURCE: str = "wahlrecht.de"
