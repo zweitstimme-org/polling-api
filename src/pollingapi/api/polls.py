@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, joinedload
 
-from pollingapi.cleaner.json_mappings import normalize_scope
+from pollingapi.cleaner.transforms.references import normalized_scope
 from pollingapi.database import get_db
 from pollingapi.models import Poll, PollResult, RawPoll
 
@@ -22,7 +22,7 @@ class PaginationMeta(BaseModel):
 
 
 class PollResultItem(BaseModel):
-    party_id: int
+    party_key: str
     party_short_name: str | None = None
     party_name: str | None = None
     percentage: float
@@ -30,20 +30,22 @@ class PollResultItem(BaseModel):
 
 class PollItem(BaseModel):
     id: int
+    public_id: str | None = None
     raw_id: int | None = None
+    raw_public_id: str | None = None
     publish_date: date | None = None
     survey_date_start: date | None = None
     survey_date_end: date | None = None
     respondents: int | None = None
     scope: str | None = None
     source: str | None = None
-    institute_id: int | None = None
+    institute_key: str | None = None
     institute_name: str | None = None
     provider_id: int | None = None
     provider_name: str | None = None
-    election_id: int | None = None
+    election_key: str | None = None
     election_type: str | None = None
-    method_id: int | None = None
+    method_key: str | None = None
     method_name: str | None = None
     date_downloaded: str | None = None
     results: list[PollResultItem] = Field(default_factory=list)
@@ -56,6 +58,7 @@ class PollListResponse(BaseModel):
 
 class RawPollItem(BaseModel):
     id: int
+    public_id: str | None = None
     publish_date: str | None = None
     survey_date_start: str | None = None
     survey_date_end: str | None = None
@@ -80,7 +83,7 @@ class RawPollListResponse(BaseModel):
 def _serialize_poll_result(result: PollResult) -> PollResultItem:
     party = result.party
     return PollResultItem(
-        party_id=result.party_id,
+        party_key=result.party_key,
         party_short_name=party.short_name if party else None,
         party_name=party.name if party else None,
         percentage=result.percentage,
@@ -90,20 +93,22 @@ def _serialize_poll_result(result: PollResult) -> PollResultItem:
 def _serialize_poll(poll: Poll, include_results: bool) -> PollItem:
     return PollItem(
         id=poll.id,
+        public_id=poll.public_id,
         raw_id=poll.raw_id,
+        raw_public_id=poll.raw_poll.public_id if poll.raw_poll else None,
         publish_date=poll.publish_date,
         survey_date_start=poll.survey_date_start,
         survey_date_end=poll.survey_date_end,
         respondents=poll.respondents,
         scope=poll.scope,
         source=poll.source,
-        institute_id=poll.institute_id,
+        institute_key=poll.institute_key,
         institute_name=poll.institute.name if poll.institute else None,
         provider_id=poll.provider_id,
         provider_name=poll.provider.name if poll.provider else None,
-        election_id=poll.election_id,
+        election_key=poll.election_key,
         election_type=poll.election.election_type if poll.election else None,
-        method_id=poll.method_id,
+        method_key=poll.method_key,
         method_name=poll.method.name if poll.method else None,
         date_downloaded=poll.date_downloaded.isoformat() if poll.date_downloaded else None,
         results=[_serialize_poll_result(r) for r in poll.results] if include_results else [],
@@ -116,10 +121,10 @@ def list_polls(
     limit: int = Query(1000, ge=1, description="Max rows to return"),
     offset: int = Query(0, ge=0, description="Rows to skip"),
     scope: str | None = Query(None, description="Filter by scope (e.g. federal, bayern)"),
-    institute_id: int | None = Query(None, description="Filter by institute ID"),
+    institute_id: str | None = Query(None, description="Filter by institute key"),
     provider_id: int | None = Query(None, description="Filter by provider ID"),
-    election_id: int | None = Query(None, description="Filter by election ID"),
-    method_id: int | None = Query(None, description="Filter by method ID"),
+    election_id: str | None = Query(None, description="Filter by election key"),
+    method_id: str | None = Query(None, description="Filter by method key"),
     date_from: date | None = Query(None, description="Publish date >= this date"),
     date_to: date | None = Query(None, description="Publish date <= this date"),
     include_results: bool = Query(True, description="Include party result rows"),
@@ -129,6 +134,7 @@ def list_polls(
         raise HTTPException(status_code=400, detail="date_from must be before or equal to date_to")
 
     query = db.query(Poll).options(
+        joinedload(Poll.raw_poll),
         joinedload(Poll.institute),
         joinedload(Poll.provider),
         joinedload(Poll.election),
@@ -137,15 +143,15 @@ def list_polls(
     )
 
     if scope:
-        query = query.filter(Poll.scope == normalize_scope(scope))
+        query = query.filter(Poll.scope == normalized_scope(scope))
     if institute_id is not None:
-        query = query.filter(Poll.institute_id == institute_id)
+        query = query.filter(Poll.institute_key == institute_id)
     if provider_id is not None:
         query = query.filter(Poll.provider_id == provider_id)
     if election_id is not None:
-        query = query.filter(Poll.election_id == election_id)
+        query = query.filter(Poll.election_key == election_id)
     if method_id is not None:
-        query = query.filter(Poll.method_id == method_id)
+        query = query.filter(Poll.method_key == method_id)
     if date_from is not None:
         query = query.filter(Poll.publish_date >= date_from)
     if date_to is not None:
@@ -167,12 +173,13 @@ def list_latest_polls(
     db: Session = Depends(get_db),
     scope: str | None = Query(None, description="Filter by scope (e.g. federal, bayern)"),
     provider_id: int | None = Query(None, description="Filter by provider ID"),
-    election_id: int | None = Query(None, description="Filter by election ID"),
-    institute_id: int | None = Query(None, description="Filter by institute ID"),
+    election_id: str | None = Query(None, description="Filter by election key"),
+    institute_id: str | None = Query(None, description="Filter by institute key"),
     include_results: bool = Query(True, description="Include party result rows"),
 ):
     """List latest 100 cleaned polls with optional filters."""
     query = db.query(Poll).options(
+        joinedload(Poll.raw_poll),
         joinedload(Poll.institute),
         joinedload(Poll.provider),
         joinedload(Poll.election),
@@ -181,13 +188,13 @@ def list_latest_polls(
     )
 
     if scope:
-        query = query.filter(Poll.scope == normalize_scope(scope))
+        query = query.filter(Poll.scope == normalized_scope(scope))
     if provider_id is not None:
         query = query.filter(Poll.provider_id == provider_id)
     if election_id is not None:
-        query = query.filter(Poll.election_id == election_id)
+        query = query.filter(Poll.election_key == election_id)
     if institute_id is not None:
-        query = query.filter(Poll.institute_id == institute_id)
+        query = query.filter(Poll.institute_key == institute_id)
 
     total = query.count()
     rows = query.order_by(Poll.publish_date.desc(), Poll.id.desc()).limit(100).all()
@@ -205,6 +212,7 @@ def get_poll(poll_id: int, db: Session = Depends(get_db), include_results: bool 
         db.query(Poll)
         .options(
             joinedload(Poll.institute),
+            joinedload(Poll.raw_poll),
             joinedload(Poll.provider),
             joinedload(Poll.election),
             joinedload(Poll.method),
@@ -281,12 +289,14 @@ def get_latest_raw_polls(db: Session = Depends(get_db)):
 
 class PollResultsItem(BaseModel):
     poll_id: int
+    poll_public_id: str | None = None
     raw_id: int | None = None
+    raw_public_id: str | None = None
     publish_date: date | None = None
     scope: str | None = None
-    institute_id: int | None = None
+    institute_key: str | None = None
     provider_id: int | None = None
-    election_id: int | None = None
+    election_key: str | None = None
     results: list[PollResultItem]
 
 
@@ -301,10 +311,11 @@ def list_results(
     limit: int = Query(100, ge=1, le=500, description="Max rows to return"),
     offset: int = Query(0, ge=0, description="Rows to skip"),
     scope: str | None = Query(None, description="Filter by scope (e.g. federal, bayern)"),
-    institute_id: int | None = Query(None, description="Filter by institute ID"),
+    institute_id: str | None = Query(None, description="Filter by institute key"),
     provider_id: int | None = Query(None, description="Filter by provider ID"),
-    election_id: int | None = Query(None, description="Filter by election ID"),
-    party_id: int | None = Query(None, description="Filter by party ID"),
+    election_id: str | None = Query(None, description="Filter by election key"),
+    party_id: str | None = Query(None, description="Legacy alias for party key"),
+    party_key: str | None = Query(None, description="Filter by party key"),
     date_from: date | None = Query(None, description="Publish date >= this date"),
     date_to: date | None = Query(None, description="Publish date <= this date"),
 ):
@@ -314,6 +325,7 @@ def list_results(
 
     # Build query on Poll
     query = db.query(Poll).options(
+        joinedload(Poll.raw_poll),
         joinedload(Poll.institute),
         joinedload(Poll.provider),
         joinedload(Poll.election),
@@ -322,13 +334,13 @@ def list_results(
 
     # Apply filters
     if scope is not None:
-        query = query.filter(Poll.scope == normalize_scope(scope))
+        query = query.filter(Poll.scope == normalized_scope(scope))
     if institute_id is not None:
-        query = query.filter(Poll.institute_id == institute_id)
+        query = query.filter(Poll.institute_key == institute_id)
     if provider_id is not None:
         query = query.filter(Poll.provider_id == provider_id)
     if election_id is not None:
-        query = query.filter(Poll.election_id == election_id)
+        query = query.filter(Poll.election_key == election_id)
     if date_from is not None:
         query = query.filter(Poll.publish_date >= date_from)
     if date_to is not None:
@@ -342,28 +354,29 @@ def list_results(
         query.order_by(Poll.publish_date.desc(), Poll.id.desc()).offset(offset).limit(limit).all()
     )
 
-    # Filter party_id in-memory if specified (since it's on PollResult)
+    requested_party_key = party_key or party_id
     items = []
     for poll in polls:
         results = poll.results
-        if party_id is not None:
-            results = [r for r in results if r.party_id == party_id]
+        if requested_party_key is not None:
+            results = [r for r in results if r.party_key == requested_party_key]
 
-        # Sort results by party_id
-        results = sorted(results, key=lambda r: r.party_id)
+        results = sorted(results, key=lambda r: r.party_key)
 
         items.append(
             PollResultsItem(
                 poll_id=poll.id,
+                poll_public_id=poll.public_id,
                 raw_id=poll.raw_id,
+                raw_public_id=poll.raw_poll.public_id if poll.raw_poll else None,
                 publish_date=poll.publish_date,
                 scope=poll.scope,
-                institute_id=poll.institute_id,
+                institute_key=poll.institute_key,
                 provider_id=poll.provider_id,
-                election_id=poll.election_id,
+                election_key=poll.election_key,
                 results=[
                     PollResultItem(
-                        party_id=r.party_id,
+                        party_key=r.party_key,
                         party_short_name=r.party.short_name if r.party else None,
                         party_name=r.party.name if r.party else None,
                         percentage=r.percentage,

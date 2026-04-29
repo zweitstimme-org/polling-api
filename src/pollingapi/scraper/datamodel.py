@@ -91,7 +91,7 @@ class SurveyMethod(StrEnum):
     TELEFONISCH = "Telefonisch"
     TELEFON_ONLINE = "Telefon & Online"
     PERSOENLICH = "Persönlich"
-    UNBEKANNT = "99"
+    UNBEKANNT = "Unbekannt"
 
 
 class SurveyType(StrEnum):
@@ -100,6 +100,7 @@ class SurveyType(StrEnum):
 
 
 class Institute(StrEnum):
+    UNKNOWN = "Unknown"
     INFRATEST = "Infratest Dimap"
     FORSA = "Forsa"
     INSA = "INSA"
@@ -274,3 +275,43 @@ class Party(StrEnum):
 class PartyResult(BaseModel):
     party: Party
     value: float
+
+
+PARTY_SHORT_NAMES: dict[Party, str] = {
+    Party.AFD: "AfD",
+    Party.BAYERNPARTEI: "BP",
+    Party.BD: "BD",
+    Party.BFTH: "BfTH",
+    Party.BSW: "BSW",
+    Party.BUNT_SAAR: "bunt.saar",
+    Party.BVB_FW: "BVB/FW",
+    Party.CDU: "CDU",
+    Party.CDU_CSU: "CDU/CSU",
+    Party.CSU: "CSU",
+    Party.DIE_PARTEI: "PARTEI",
+    Party.FAMILIE: "FAMILIE",
+    Party.FDP: "FDP",
+    Party.FREIE_WAEHLER: "FW",
+    Party.GRUENE: "Grüne",
+    Party.LINKE: "Linke",
+    Party.NPD: "NPD",
+    Party.OEDP: "ÖDP",
+    Party.PIRATEN: "Piraten",
+    Party.PLUS_BRANDENBURG: "Plus",
+    Party.SONSTIGE: "Sonstige",
+    Party.SPD: "SPD",
+    Party.SSW: "SSW",
+    Party.TIERSCHUTZPARTEI: "Tierschutz",
+    Party.VOLT: "Volt",
+    Party.WERTEUNION: "WerteUnion",
+}
+
+
+def enum_key(value: StrEnum) -> str:
+    """Return the stable database key for a domain enum member."""
+    return value.name
+
+
+def party_short_name(party: Party) -> str:
+    """Return the research-facing short handle for a party."""
+    return PARTY_SHORT_NAMES[party]

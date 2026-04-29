@@ -1,8 +1,7 @@
 """Tests for respondents parsing."""
 
-import pytest
 
-from pollingapi.cleaner.transforms.respondents import parse_respondents, RespondentParseResult
+from pollingapi.cleaner.transforms.respondents import parse_respondents
 
 
 class TestParseRespondents:
@@ -62,3 +61,11 @@ class TestParseRespondents:
         assert result.count is None
         assert result.method_hint is None
         assert result.date_range is None
+
+    def test_embedded_date_range_after_count(self):
+        """Test parsing concatenated count and date range from scraper output."""
+        result = parse_respondents("TOM • 1.00325.02.–03.03.", "03.03.2026")
+        assert result.count == 1003
+        assert result.method_hint == "Telefon & Online"
+        assert result.date_start == "2026-02-25"
+        assert result.date_end == "2026-03-03"

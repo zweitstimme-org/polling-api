@@ -2,30 +2,25 @@
 
 This pipeline:
 1. Reads from polls_raw table (never modifies it)
-2. Normalizes data using JSON-based mappings
+2. Normalizes data using declared datamodel definitions
 3. Inserts cleaned data into polls and poll_results tables
 """
 
-import json
 import re
 from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from pollingapi.cleaner.json_mappings import (
-    get_institute_name,
-    get_method_name,
-    get_party_name,
-    get_party_shortcut,
-    map_institute,
-    map_method,
-    map_parliament,
-    map_party,
-    normalize_scope,
-)
 from pollingapi.cleaner.transforms.dates import normalize_publish_date, normalize_survey_dates
+from pollingapi.cleaner.transforms.references import (
+    normalized_scope,
+    resolve_institute,
+    resolve_method,
+    resolve_state,
+)
 from pollingapi.cleaner.transforms.respondents import parse_respondents
+from pollingapi.cleaner.transforms.results import parse_party_results
 from pollingapi.logging_config import get_logger
 from pollingapi.models import (
     Election,
@@ -37,20 +32,17 @@ from pollingapi.models import (
     Provider,
     RawPoll,
 )
+from pollingapi.scraper.datamodel import (
+    ElectionScope,
+    GermanState,
+    enum_key,
+    party_short_name,
+)
+from pollingapi.scraper.datamodel import (
+    PartyResult as DomainPartyResult,
+)
 
 logger = get_logger(__name__)
-
-NON_RESULT_PARTY_NAMES = {
-    "nichtwähler",
-    "nicht-wähler",
-    "nichtwähler/unentschl.",
-    "nichtwähler/unentschlos.",
-    "unent-schlossene",
-    "unentschlossene",
-    "summe",
-    "quelle",
-}
-
 
 def normalize_raw_respondents_and_zeitraum(raw_poll: RawPoll) -> tuple[str | None, str | None]:
     """Return cleaner-facing respondents and timeframe without mutating RawPoll."""
@@ -84,75 +76,19 @@ class CleaningStats:
     errors: int = 0
 
 
-def parse_parties_json(parties_json: str | None) -> dict[str, float]:
-    """Parse parties JSON string to dictionary."""
-    if not parties_json:
-        return {}
-    try:
-        return json.loads(parties_json)
-    except json.JSONDecodeError:
-        logger.warning(f"Failed to parse parties JSON: {parties_json[:100]}...")
-        return {}
-
-
-def parse_percentage(value: object) -> float | None:
-    """Parse raw percentage values from scraper payloads.
-
-    Raw rows are immutable and may contain display strings such as ``"4,5 %"``
-    or placeholders such as ``"–"``. Return None for placeholders/unusable
-    values so the cleaned result table only stores numeric party results.
-    """
-    if value is None:
-        return None
-
-    if isinstance(value, int | float):
-        return float(value)
-
-    text = str(value).strip()
-    if not text:
-        return None
-
-    if text in {"-", "–", "—", "−"}:
-        return None
-
-    text = text.replace("\xa0", " ").replace("%", "").strip()
-    text = text.replace(",", ".")
-
-    range_match = re.fullmatch(r"(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)", text)
-    if range_match:
-        start, end = range_match.groups()
-        return (float(start) + float(end)) / 2
-
-    matches = re.findall(r"\d+(?:\.\d+)?", text)
-    if not matches:
-        return None
-
-    try:
-        return sum(float(match) for match in matches)
-    except ValueError:
-        return None
-
-
-def is_non_result_party_name(name: str) -> bool:
-    """Return True for raw table columns that are metadata, not party results."""
-    normalized = re.sub(r"\s+", " ", name.lower().strip())
-    return normalized in NON_RESULT_PARTY_NAMES
-
-
 def get_or_create_institute(db: Session, name: str) -> Institute:
-    """Get or create institute by name using JSON mapping."""
-    institute_id = map_institute(name)
+    """Get or create institute by canonical datamodel key."""
+    institute_definition = resolve_institute(name)
+    institute_key = enum_key(institute_definition)
 
-    # Try to find existing
-    institute = db.query(Institute).filter(Institute.id == institute_id).first()
+    institute = db.query(Institute).filter(Institute.key == institute_key).first()
     if institute:
         return institute
 
-    # Create new with ID from JSON
-    institute = Institute(id=institute_id, name=get_institute_name(institute_id, name))
+    institute = Institute(key=institute_key, name=institute_definition.value)
     db.add(institute)
     db.flush()
-    logger.debug(f"Created institute: {institute_id} - {name}")
+    logger.debug(f"Created institute: {institute_key} - {name}")
     return institute
 
 
@@ -175,59 +111,47 @@ def get_or_create_provider(db: Session, name: str) -> Provider:
 
 
 def get_or_create_method(db: Session, name: str | None) -> Method | None:
-    """Get or create method by name using JSON mapping.
+    """Get or create method by canonical datamodel key.
 
-    Returns None if method cannot be determined.
+    Returns None only if the method cannot be determined and should stay NULL.
     """
-    if not name:
-        return None
+    method_definition = resolve_method(name)
+    method_key = enum_key(method_definition)
 
-    method_id = map_method(name)
-
-    # If method is unknown, return None (will be stored as NULL in DB)
-    if method_id is None:
-        return None
-
-    # Try to find existing
-    method = db.query(Method).filter(Method.id == method_id).first()
+    method = db.query(Method).filter(Method.key == method_key).first()
     if method:
         return method
 
-    # Create new with ID from JSON
-    method = Method(id=method_id, name=get_method_name(method_id, name))
+    method = Method(key=method_key, name=method_definition.value)
     db.add(method)
     db.flush()
-    logger.debug(f"Created method: {method_id} - {name}")
+    logger.debug(f"Created method: {method_key} - {name}")
     return method
 
 
 def get_or_create_election(db: Session, scope: str) -> Election:
-    """Get or create election by scope using JSON mapping."""
-    parliament_id = map_parliament(scope)
+    """Get or create election/scope reference row by canonical state key."""
+    state = resolve_state(scope)
+    election_key = enum_key(state)
 
-    # Try to find existing by ID
-    election = db.query(Election).filter(Election.id == parliament_id).first()
+    election = db.query(Election).filter(Election.key == election_key).first()
     if election:
         return election
 
-    # Determine election type from scope
-    canonical_scope = normalize_scope(scope)
-    if parliament_id == 0:
-        election_type = "Bundestagswahl"
-    elif parliament_id == 17:
-        election_type = "Europawahl"
-    else:
-        election_type = "Landtagswahl"
+    election_type = (
+        ElectionScope.BUNDESTAGSWAHL.value
+        if state in {GermanState.BUND, GermanState.OST, GermanState.WEST}
+        else ElectionScope.LANDTAGSWAHL.value
+    )
 
-    # Create new with ID from JSON
     election = Election(
-        id=parliament_id,
+        key=election_key,
         election_type=election_type,
-        scope=canonical_scope,
+        scope=normalized_scope(scope),
     )
     db.add(election)
     db.flush()
-    logger.debug(f"Created election: {parliament_id} - {election_type}")
+    logger.debug(f"Created election: {election_key} - {election_type}")
     return election
 
 
@@ -242,26 +166,6 @@ def find_existing_poll(
     that share publish date, institute, provider, and scope.
     """
     return db.query(Poll).filter(Poll.raw_id == raw_id).first()
-
-
-def build_valid_party_results(parties_data: dict[str, object]) -> dict[int, float]:
-    """Map and parse raw party results into canonical party IDs and percentages."""
-    results: dict[int, float] = {}
-    for party_name, percentage in parties_data.items():
-        if is_non_result_party_name(party_name):
-            continue
-
-        parsed_percentage = parse_percentage(percentage)
-        if parsed_percentage is None:
-            continue
-
-        party_id = map_party(party_name)
-        if party_id is None:
-            continue
-
-        results.setdefault(party_id, parsed_percentage)
-
-    return results
 
 
 def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool]:
@@ -296,16 +200,33 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool
             return None, False
 
         # Parse respondents
-        respondents_result = parse_respondents(respondents_raw or "")
+        respondents_result = parse_respondents(respondents_raw, raw_poll.publish_date)
         respondents_count = respondents_result.count
 
-        parties_data = parse_parties_json(raw_poll.parties)
-        valid_results = build_valid_party_results(parties_data)
+        parsed_results = parse_party_results(raw_poll.parties)
+        for failed_entry in parsed_results.failed_entries:
+            logger.debug(
+                "Skipping party result in raw poll %s: %s",
+                raw_poll.id,
+                failed_entry.parse_error,
+            )
+        if parsed_results.parse_error:
+            logger.debug(
+                "Skipping raw poll %s party payload issue: %s",
+                raw_poll.id,
+                parsed_results.parse_error,
+            )
+        valid_results = parsed_results.party_results
         if not valid_results:
             logger.debug(f"Skipping raw poll {raw_poll.id}: no valid party results")
             return None, False
 
-        # Map foreign keys using JSON mappings
+        if not survey_start and respondents_result.date_start:
+            survey_start = normalize_publish_date(respondents_result.date_start)
+        if not survey_end and respondents_result.date_end:
+            survey_end = normalize_publish_date(respondents_result.date_end)
+
+        # Map foreign keys using declared datamodel definitions
         institute = get_or_create_institute(db, raw_poll.institute_id or "")
         provider = get_or_create_provider(db, raw_poll.provider or "")
 
@@ -313,9 +234,9 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool
         method_hint = respondents_result.method_hint or raw_poll.method_id
         method = get_or_create_method(db, method_hint or "")
 
-        # Classify election using JSON mapping
+        # Classify election/scope using declared datamodel definitions
         election = get_or_create_election(db, raw_poll.scope or "")
-        canonical_scope = normalize_scope(raw_poll.scope)
+        canonical_scope = normalized_scope(raw_poll.scope)
 
         # Check for duplicate (include provider to distinguish between sources)
         existing = find_existing_poll(db, raw_poll.id)
@@ -335,10 +256,10 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool
         poll.survey_date_start = survey_start
         poll.survey_date_end = survey_end
         poll.respondents = respondents_count
-        poll.institute_id = institute.id
+        poll.institute_key = institute.key
         poll.provider_id = provider.id
-        poll.method_id = method.id if method else None
-        poll.election_id = election.id
+        poll.method_key = method.key if method else None
+        poll.election_key = election.key
         poll.source = raw_poll.source
         poll.scope = canonical_scope
 
@@ -354,7 +275,6 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool
         db.add(poll)
         db.flush()
 
-        # Sync poll results using JSON party mappings
         sync_poll_results(db, poll, valid_results)
 
         return poll, is_new
@@ -364,58 +284,56 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool
         raise
 
 
-def sync_poll_results(db: Session, poll: Poll, results_data: dict[int, float]) -> None:
-    """Sync party results for a poll using JSON mappings.
+def sync_poll_results(db: Session, poll: Poll, results_data: list[DomainPartyResult]) -> None:
+    """Sync party results for a poll using canonical party enum keys.
 
     Args:
         db: Database session
         poll: Poll object
-        results_data: Dict mapping canonical party IDs to percentages
+        results_data: Canonical party result objects
     """
     # Query database directly for existing results to avoid relationship caching issues
     from pollingapi.models import PollResult as PollResultModel
 
     existing_results = {
-        r.party_id: r
+        r.party_key: r
         for r in db.query(PollResultModel).filter(PollResultModel.poll_id == poll.id).all()
     }
     processed_parties = set()
 
-    for party_id, parsed_percentage in results_data.items():
-        processed_parties.add(party_id)
+    for result in results_data:
+        party_key = enum_key(result.party)
+        processed_parties.add(party_key)
 
         # Ensure party exists in database
-        party = db.query(Party).filter(Party.id == party_id).first()
+        party = db.query(Party).filter(Party.key == party_key).first()
         if not party:
-            # Create party with ID from JSON
             party = Party(
-                id=party_id,
-                name=get_party_name(party_id),
-                short_name=get_party_shortcut(party_id),
+                key=party_key,
+                name=result.party.value,
+                short_name=party_short_name(result.party),
             )
             db.add(party)
             db.flush()
-            logger.debug(f"Created party: {party_id} - {party.name}")
+            logger.debug(f"Created party: {party_key} - {party.name}")
 
         # Update or create result
-        if party_id in existing_results:
+        if party_key in existing_results:
             # Update existing
-            existing_results[party_id].percentage = parsed_percentage
-            logger.debug(f"Updated result for party {party_id}: {parsed_percentage}%")
+            existing_results[party_key].percentage = result.value
+            logger.debug(f"Updated result for party {party_key}: {result.value}%")
         else:
             # Create new
-            poll_result = PollResult(
-                poll_id=poll.id, party_id=party_id, percentage=parsed_percentage
-            )
+            poll_result = PollResult(poll_id=poll.id, party_key=party_key, percentage=result.value)
             db.add(poll_result)
-            logger.debug(f"Created result for party {party_id}: {parsed_percentage}%")
+            logger.debug(f"Created result for party {party_key}: {result.value}%")
 
-    stale_party_ids = set(existing_results) - processed_parties
-    if stale_party_ids:
+    stale_party_keys = set(existing_results) - processed_parties
+    if stale_party_keys:
         (
             db.query(PollResultModel)
             .filter(PollResultModel.poll_id == poll.id)
-            .filter(PollResultModel.party_id.in_(stale_party_ids))
+            .filter(PollResultModel.party_key.in_(stale_party_keys))
             .delete(synchronize_session=False)
         )
 

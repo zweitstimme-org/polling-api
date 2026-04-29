@@ -39,13 +39,13 @@ class AllReferenceResponse(BaseModel):
 @router.get("/institutes", response_model=list[InstituteSchema])
 def list_institutes(db: Session = Depends(get_db)):
     """List all institutes."""
-    return db.query(Institute).order_by(Institute.id.asc()).all()
+    return db.query(Institute).order_by(Institute.key.asc()).all()
 
 
 @router.get("/parties", response_model=list[PartySchema])
 def list_parties(db: Session = Depends(get_db)):
     """List all parties."""
-    return db.query(Party).order_by(Party.id.asc()).all()
+    return db.query(Party).order_by(Party.key.asc()).all()
 
 
 @router.get("/providers", response_model=list[ProviderSchema])
@@ -57,13 +57,13 @@ def list_providers(db: Session = Depends(get_db)):
 @router.get("/methods", response_model=list[MethodSchema])
 def list_methods(db: Session = Depends(get_db)):
     """List all methods."""
-    return db.query(Method).order_by(Method.id.asc()).all()
+    return db.query(Method).order_by(Method.key.asc()).all()
 
 
 @router.get("/elections", response_model=list[ElectionSchema])
 def list_elections(db: Session = Depends(get_db)):
     """List all elections."""
-    return db.query(Election).order_by(Election.id.asc()).all()
+    return db.query(Election).order_by(Election.key.asc()).all()
 
 
 @router.get("/taskers", response_model=list[dict[str, Any]])
@@ -76,11 +76,11 @@ def list_taskers(db: Session = Depends(get_db)):
 @router.get("/all", response_model=AllReferenceResponse)
 def list_all_reference(db: Session = Depends(get_db)):
     """Get all reference tables in one response."""
-    institutes = db.query(Institute).order_by(Institute.id.asc()).all()
-    parties = db.query(Party).order_by(Party.id.asc()).all()
+    institutes = db.query(Institute).order_by(Institute.key.asc()).all()
+    parties = db.query(Party).order_by(Party.key.asc()).all()
     providers = db.query(Provider).order_by(Provider.id.asc()).all()
-    methods = db.query(Method).order_by(Method.id.asc()).all()
-    elections = db.query(Election).order_by(Election.id.asc()).all()
+    methods = db.query(Method).order_by(Method.key.asc()).all()
+    elections = db.query(Election).order_by(Election.key.asc()).all()
     taskers_rows = db.query(Tasker).order_by(Tasker.id.asc()).all()
     taskers = [
         {"id": row.id, "name": row.name, "description": row.description} for row in taskers_rows
