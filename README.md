@@ -1,6 +1,5 @@
 ![zweitstimme.org](https://zweitstimme.org/images/logo_orange.png)
 
-
 # polling-api
 
 All-in-one pipeline and API for German election polling data by zweitstimme.org
@@ -35,7 +34,7 @@ HTML workers + DAWUM API
       polls_raw (immutable source rows)
           |
           v
-  ETL cleaning + JSON mappings
+   ETL cleaning + transforms
           |
           v
    polls + poll_results + reference tables
@@ -77,8 +76,8 @@ This is the recommended way to explore and validate the current development vers
 
 ```bash
 uv run pollingapi pipeline:run                 # Full run: scrape + clean + export + optional archive
-uv run pollingapi pipeline:clean               # Clean only (from polls_raw into normalized tables)
-uv run pollingapi pipeline:inspect <raw_id>    # Inspect one raw row
+uv run pollingapi pipeline:clean           # Clean only (from polls_raw into normalized tables)
+uv run pollingapi pipeline:inspect <raw_id> # Inspect one raw row
 ```
 
 ### Scrapers
@@ -106,6 +105,15 @@ uv run pollingapi server:start --host 0.0.0.0 --port 8000 --reload
 uv run pollingapi server:prod --host 127.0.0.1 --port 8000
 ```
 
+### Logs and archive
+
+```bash
+uv run pollingapi logs:view
+uv run pollingapi logs:list
+uv run pollingapi data:archive
+uv run pollingapi data:list
+```
+
 ## API surface
 
 The app mounts versioned routes under `/v1`.
@@ -113,8 +121,12 @@ The app mounts versioned routes under `/v1`.
 - `GET /` basic API metadata
 - `GET /health` and `GET /heartbeat` service heartbeat and run freshness
 - `GET /v1/polls` cleaned, normalized polls (filters + pagination)
+- `GET /v1/polls/wide` cleaned polls with party percentages as dict
+- `GET /v1/polls/latest` latest polls optimized for app use
+- `GET /v1/polls/{id}` single poll by integer or public id
+- `GET /v1/observations` long-format poll-party observations for analysis
+- `GET /v1/results` backward-compatible alias for observations
 - `GET /v1/raw-polls` immutable raw scraped rows
-- `GET /v1/results` flattened grouped results view
 - `GET /v1/reference/*` lookup tables (institutes, parties, providers, methods, elections, taskers)
 - `GET /v1/elections` election summaries and metadata
 - `GET /v1/download/*` dataset downloads (json/csv/parquet/sqlite/raw/results)
@@ -160,24 +172,30 @@ pollingAPI/
 │   ├── cli.py                    # Typer CLI entrypoint
 │   ├── main.py                   # FastAPI app + /health + /heartbeat
 │   ├── database.py               # Engine/session/init helpers
-│   ├── models.py                 # SQLAlchemy models incl. PipelineRun
-│   ├── api/                      # Routers mounted at /v1
-│   │   ├── polls.py
-│   │   ├── dictionaries.py
-│   │   ├── elections.py
-│   │   ├── download.py
-│   │   └── data.py               # Archive endpoints
-│   ├── scraper/                  # Worker discovery + source scrapers
-│   │   ├── runner.py
-│   │   ├── dawum.py
-│   │   └── workers/
-│   ├── cleaner/                  # ETL normalization pipeline
+│   ├── database_seed.py         # Reference data seeding from JSON
+│   ├── models.py                # SQLAlchemy models incl. PipelineRun
+│   ├── schemas.py                # Pydantic request/response schemas
+│   ├── core/                    # Settings and configuration
+│   ├── notifications/            # Notification managers (ntfy, Slack)
+│   ├── api/                     # Routers mounted at /v1
+│   │   ├── polls.py             # Polls, observations, raw polls
+│   │   ├── dictionaries.py      # Reference lookup tables
+│   │   ├── elections.py        # Election metadata
+│   │   ├── download.py        # Dataset downloads
+│   │   └── data.py            # Archive endpoints
+│   ├── scraper/                 # Worker discovery + source scrapers
+│   │   ├── runner.py           # Scraper execution
+│   │   ├── context.py         # Run context management
+│   │   ├── datamodel.py        # Domain models and enums
+│   │   ├── dawum.py           # DAWUM API scraper
+│   │   └── workers/           # HTML scraper workers
+│   ├── cleaner/                 # ETL normalization pipeline
 │   │   ├── etl_pipeline.py
-│   │   ├── transforms/
-│   │   └── steps/
-│   └── services/s3.py            # Archive upload/listing
-├── json/                         # DAWUM reference snapshots / source dictionaries
-├── data/                         # SQLite DB, logs, exports
+│   │   ├── transforms/        # Data transformations (dates, results, references)
+│   │   └── validation/       # Data validation
+│   └── services/              # Export and S3 services
+├── json/                      # Reference snapshots and dictionaries
+├── data/                      # SQLite DB, logs, exports
 ├── tests/
 ├── .apiversion
 └── pyproject.toml
