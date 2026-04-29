@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date as DateType
-from datetime import datetime as DateTimeType
-from typing import List
+from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
@@ -16,6 +14,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    event,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -28,6 +27,7 @@ class RawPoll(Base):
     __tablename__ = "polls_raw"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    public_id: Mapped[str | None] = mapped_column(String(16), unique=True, index=True)
     publish_date: Mapped[str | None] = mapped_column(String(50))
     survey_date_start: Mapped[str | None] = mapped_column(String(50))
     survey_date_end: Mapped[str | None] = mapped_column(String(50))
@@ -41,6 +41,8 @@ class RawPoll(Base):
     scope: Mapped[str | None] = mapped_column(String(100))
     election_id: Mapped[str | None] = mapped_column(String(100))
     method_id: Mapped[str | None] = mapped_column(String(100))
+    worker: Mapped[str | None] = mapped_column(String(100))
+    survey_type: Mapped[str | None] = mapped_column(String(100))
     date_downloaded: Mapped[str | None] = mapped_column(String(50))
 
     # Run traceability — links this row to the pipeline_runs record that ingested it.
@@ -56,12 +58,12 @@ class Institute(Base):
 
     __tablename__ = "institutes"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    key: Mapped[str] = mapped_column(String(50), primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     description: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
-    polls: Mapped[List[Poll]] = relationship("Poll", back_populates="institute")
+    polls: Mapped[list[Poll]] = relationship("Poll", back_populates="institute")
 
 
 class Party(Base):
@@ -69,13 +71,13 @@ class Party(Base):
 
     __tablename__ = "parties"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    key: Mapped[str] = mapped_column(String(50), primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(150), unique=True, index=True)
     short_name: Mapped[str | None] = mapped_column(String(20))
     color: Mapped[str | None] = mapped_column(String(7))  # Hex color
 
     # Relationships
-    poll_results: Mapped[List[PollResult]] = relationship("PollResult", back_populates="party")
+    poll_results: Mapped[list[PollResult]] = relationship("PollResult", back_populates="party")
 
 
 class Provider(Base):
@@ -88,7 +90,7 @@ class Provider(Base):
     description: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
-    polls: Mapped[List[Poll]] = relationship("Poll", back_populates="provider")
+    polls: Mapped[list[Poll]] = relationship("Poll", back_populates="provider")
 
 
 class Tasker(Base):
@@ -106,14 +108,14 @@ class Election(Base):
 
     __tablename__ = "elections"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    key: Mapped[str] = mapped_column(String(50), primary_key=True, index=True)
     election_type: Mapped[str] = mapped_column(String(50), index=True)
     year: Mapped[int | None] = mapped_column(Integer)
     scope: Mapped[str | None] = mapped_column(String(50))
-    date: Mapped[DateType | None] = mapped_column(Date, nullable=True)
+    date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     # Relationships
-    polls: Mapped[List[Poll]] = relationship("Poll", back_populates="election")
+    polls: Mapped[list[Poll]] = relationship("Poll", back_populates="election")
 
     __table_args__ = (UniqueConstraint("election_type", "year", "scope", name="uix_election"),)
 
@@ -123,12 +125,12 @@ class Method(Base):
 
     __tablename__ = "methods"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    key: Mapped[str] = mapped_column(String(50), primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     description: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
-    polls: Mapped[List[Poll]] = relationship("Poll", back_populates="method")
+    polls: Mapped[list[Poll]] = relationship("Poll", back_populates="method")
 
 
 class Poll(Base):
@@ -137,20 +139,21 @@ class Poll(Base):
     __tablename__ = "polls"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    public_id: Mapped[str | None] = mapped_column(String(16), unique=True, index=True)
     raw_id: Mapped[int | None] = mapped_column(
         ForeignKey("polls_raw.id"), unique=True, nullable=True
     )
-    publish_date: Mapped[DateType | None] = mapped_column(Date)
-    survey_date_start: Mapped[DateType | None] = mapped_column(Date)
-    survey_date_end: Mapped[DateType | None] = mapped_column(Date)
+    publish_date: Mapped[date | None] = mapped_column(Date)
+    survey_date_start: Mapped[date | None] = mapped_column(Date)
+    survey_date_end: Mapped[date | None] = mapped_column(Date)
     respondents: Mapped[int | None] = mapped_column(Integer)
-    institute_id: Mapped[int | None] = mapped_column(ForeignKey("institutes.id"))
+    institute_key: Mapped[str | None] = mapped_column(ForeignKey("institutes.key"))
     provider_id: Mapped[int | None] = mapped_column(ForeignKey("providers.id"))
-    election_id: Mapped[int | None] = mapped_column(ForeignKey("elections.id"))
-    method_id: Mapped[int | None] = mapped_column(ForeignKey("methods.id"))
+    election_key: Mapped[str | None] = mapped_column(ForeignKey("elections.key"))
+    method_key: Mapped[str | None] = mapped_column(ForeignKey("methods.key"))
     source: Mapped[str | None] = mapped_column(String(100))
     scope: Mapped[str | None] = mapped_column(String(100))
-    date_downloaded: Mapped[DateTimeType | None] = mapped_column(DateTime)
+    date_downloaded: Mapped[datetime | None] = mapped_column(DateTime)
 
     # Relationships
     raw_poll: Mapped[RawPoll | None] = relationship("RawPoll", back_populates="cleaned_poll")
@@ -158,7 +161,7 @@ class Poll(Base):
     provider: Mapped[Provider | None] = relationship("Provider", back_populates="polls")
     election: Mapped[Election | None] = relationship("Election", back_populates="polls")
     method: Mapped[Method | None] = relationship("Method", back_populates="polls")
-    results: Mapped[List[PollResult]] = relationship(
+    results: Mapped[list[PollResult]] = relationship(
         "PollResult", back_populates="poll", cascade="all, delete-orphan"
     )
 
@@ -170,14 +173,14 @@ class PollResult(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     poll_id: Mapped[int] = mapped_column(ForeignKey("polls.id"))
-    party_id: Mapped[int] = mapped_column(ForeignKey("parties.id"))
+    party_key: Mapped[str] = mapped_column(ForeignKey("parties.key"))
     percentage: Mapped[float] = mapped_column(Float)
 
     # Relationships
     poll: Mapped[Poll] = relationship("Poll", back_populates="results")
     party: Mapped[Party] = relationship("Party", back_populates="poll_results")
 
-    __table_args__ = (UniqueConstraint("poll_id", "party_id", name="uix_poll_party"),)
+    __table_args__ = (UniqueConstraint("poll_id", "party_key", name="uix_poll_party"),)
 
 
 class PipelineRun(Base):
@@ -195,8 +198,8 @@ class PipelineRun(Base):
     run_id: Mapped[str] = mapped_column(String(36), unique=True, index=True)
 
     # Timing
-    started_at: Mapped[DateTimeType] = mapped_column(DateTime, nullable=False)
-    finished_at: Mapped[DateTimeType] = mapped_column(DateTime, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    finished_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     duration_seconds: Mapped[float] = mapped_column(Float, nullable=False)
 
     # Outcome
@@ -224,3 +227,34 @@ class PipelineRun(Base):
     # Archive (optional)
     archive_created: Mapped[bool] = mapped_column(Boolean, default=False)
     archive_size_mb: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
+def _format_public_id(prefix: str, row_id: int) -> str:
+    """Return the namespaced public identifier for a database row."""
+    return f"{prefix}{row_id:08d}"
+
+
+@event.listens_for(RawPoll, "after_insert")
+def _set_raw_poll_public_id(_mapper, connection, target: RawPoll) -> None:
+    """Populate RawPoll.public_id after autoincrement assigned the integer PK."""
+    if target.public_id:
+        return
+    public_id = _format_public_id("R", target.id)
+    connection.execute(
+        RawPoll.__table__.update()
+        .where(RawPoll.__table__.c.id == target.id)
+        .values(public_id=public_id)
+    )
+    target.public_id = public_id
+
+
+@event.listens_for(Poll, "after_insert")
+def _set_poll_public_id(_mapper, connection, target: Poll) -> None:
+    """Populate Poll.public_id after autoincrement assigned the integer PK."""
+    if target.public_id:
+        return
+    public_id = _format_public_id("C", target.id)
+    connection.execute(
+        Poll.__table__.update().where(Poll.__table__.c.id == target.id).values(public_id=public_id)
+    )
+    target.public_id = public_id

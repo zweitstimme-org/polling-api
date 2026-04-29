@@ -54,7 +54,9 @@ class ExportService:
         for poll in polls:
             poll_dict = {
                 "id": poll.id,
+                "public_id": poll.public_id,
                 "raw_id": poll.raw_id,
+                "raw_public_id": poll.raw_poll.public_id if poll.raw_poll else None,
                 "publish_date": poll.publish_date.isoformat() if poll.publish_date else None,
                 "survey_date_start": poll.survey_date_start.isoformat()
                 if poll.survey_date_start
@@ -63,13 +65,19 @@ class ExportService:
                 if poll.survey_date_end
                 else None,
                 "respondents": poll.respondents,
-                "institute_id": poll.institute_id,
+                "institute_key": poll.institute_key,
                 "provider_id": poll.provider_id,
-                "method_id": poll.method_id,
-                "election_id": poll.election_id,
+                "method_key": poll.method_key,
+                "election_key": poll.election_key,
                 "scope": poll.scope,
                 "results": [
-                    {"party_id": r.party_id, "percentage": r.percentage} for r in poll.results
+                    {
+                        "party_key": r.party_key,
+                        "party_short_name": r.party.short_name if r.party else None,
+                        "party_name": r.party.name if r.party else None,
+                        "percentage": r.percentage,
+                    }
+                    for r in poll.results
                 ],
             }
             polls_data.append(poll_dict)
@@ -87,11 +95,15 @@ class ExportService:
             for result in poll.get("results", []):
                 poll_results_data.append(
                     {
-                        "poll_id": poll["id"],
-                        "raw_id": poll.get("raw_id"),
+                "poll_id": poll["id"],
+                "poll_public_id": poll.get("public_id"),
+                "raw_id": poll.get("raw_id"),
+                "raw_public_id": poll.get("raw_public_id"),
                         "publish_date": poll.get("publish_date"),
                         "scope": poll.get("scope"),
-                        "party_id": result.get("party_id"),
+                        "party_key": result.get("party_key"),
+                        "party_short_name": result.get("party_short_name"),
+                        "party_name": result.get("party_name"),
                         "percentage": result.get("percentage"),
                     }
                 )
@@ -128,6 +140,7 @@ class ExportService:
         for raw in raw_polls:
             raw_dict = {
                 "id": raw.id,
+                "public_id": raw.public_id,
                 "publish_date": raw.publish_date,
                 "survey_date_start": raw.survey_date_start,
                 "survey_date_end": raw.survey_date_end,

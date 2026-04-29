@@ -2,8 +2,6 @@
 
 from datetime import date
 
-import pytest
-
 from pollingapi.cleaner.transforms.dates import (
     normalize_publish_date,
     normalize_survey_dates,
@@ -83,15 +81,27 @@ class TestNormalizeSurveyDates:
         assert should_ignore is False
 
     def test_zeitraum_with_default_year(self):
-        """Test Zeitraum without year uses default year."""
+        """Test January publish dates infer previous-year December ranges."""
         start, end, should_ignore = normalize_survey_dates(
             start_date_str=None,
             end_date_str=None,
             zeitraum="09.12.–13.12.",
             publish_date=date(2024, 1, 1),
         )
-        assert start == date(2024, 12, 9)
-        assert end == date(2024, 12, 13)
+        assert start == date(2023, 12, 9)
+        assert end == date(2023, 12, 13)
+        assert should_ignore is False
+
+    def test_zeitraum_cross_year(self):
+        """Test ranges crossing New Year keep the end date in publish year."""
+        start, end, should_ignore = normalize_survey_dates(
+            start_date_str=None,
+            end_date_str=None,
+            zeitraum="30.12.–03.01.",
+            publish_date=date(2024, 1, 4),
+        )
+        assert start == date(2023, 12, 30)
+        assert end == date(2024, 1, 3)
         assert should_ignore is False
 
     def test_explicit_dates_take_precedence(self):

@@ -12,15 +12,15 @@ from pollingapi.scraper.insertion import insert_new_polls
 from pollingapi.scraper.snapshots import save_html_snapshot
 
 
-# NOTE: implementation DONE
 # implementation of the base class in this file
-class InsaBaseScraper:
+class ForschBaseScraper:
     URL: str = ""
     WORKER: str = ""
     STATE: str = GermanState.BUND
     SCOPE: str = "Bundestagswahl"
-    INSTITUTE: str = "Insa"
+    INSTITUTE: str = "Forschungsgruppe Wahlen"
     DATA_SOURCE: str = "wahlrecht.de"
+    SURVEY_TYPE: str = "Projektion"
     REQUEST_DELAY: float = 1.0
     META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
 
@@ -122,6 +122,7 @@ class InsaBaseScraper:
                         auftraggeber=row_data.get("Auftraggeber") or None,
                         datum=row_data.get("Datum", ""),
                         zeitraum=row_data.get("Zeitraum", ""),
+                        survey_type=self.SURVEY_TYPE,
                         results=parties,
                     )
                     extracted_polls.append(poll)
@@ -154,42 +155,155 @@ class InsaBaseScraper:
         return self.insert(polls)
 
 
-# This worker targets the main site and therefore is the one to keep in check first
-class InsaCurrentScraper(InsaBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/insa.htm"
+class ForschCurrentProjektionScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer.htm"
     STATE: str = GermanState.BUND
-    WORKER = "insa_current"
+    WORKER = "Forschungsgruppewahlen_current_projektion"
     SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Projektion"
     DATA_SOURCE: str = "wahlrecht.de"
     REQUEST_DELAY: float = 1.0
     META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
 
 
-class Insa2021Scraper(InsaBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/insa/2021.htm"
+class ForschCurrentStimmungScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung.htm"
     STATE: str = GermanState.BUND
-    WORKER = "insa_2021"
+    WORKER = "forschungsgruppewahlen_current_stimmung"
     SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Stimmung"
     DATA_SOURCE: str = "wahlrecht.de"
     REQUEST_DELAY: float = 1.0
     META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
 
 
-class Insa2017Scraper(InsaBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/insa/2017.htm"
+class Forsch2017ProjektionScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-2017.htm"
     STATE: str = GermanState.BUND
-    WORKER = "insa_2017"
+    WORKER = "forschungsgruppewahlen_2017_projektion"
     SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Projektion"
     DATA_SOURCE: str = "wahlrecht.de"
     REQUEST_DELAY: float = 1.0
     META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
 
 
-class Insa2013Scraper(InsaBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/insa/2013.htm"
+class Forsch2017StimmungScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-2017.htm"
     STATE: str = GermanState.BUND
-    WORKER = "insa_2013"
+    WORKER = "forschungsgruppewahlen_2017_stimmung"
     SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Stimmung"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Forsch2013ProjektionScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-2013.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "forschungsgruppewahlen_2013_projektion"
+    SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Projektion"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Forsch2013StimmungScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-2013.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "forschungsgruppewahlen_2013_stimmung"
+    SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Stimmung"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Forsch2009ProjektionScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-2009.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "forschungsgruppewahlen_2009_projektion"
+    SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Projektion"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Forsch2009StimmungScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-2009.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "forschungsgruppewahlen_2009_stimmung"
+    SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Stimmung"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Forsch2005ProjektionScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-2005.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "forschungsgruppewahlen_2005_projektion"
+    SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Projektion"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Forsch2005StimmungScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-2005.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "forschungsgruppewahlen_2005_stimmung"
+    SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Stimmung"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Forsch2002ProjektionScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-2002.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "forschungsgruppewahlen_2002_projektion"
+    SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Projektion"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Forsch2002StimmungScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-2002.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "forschungsgruppewahlen_2002_stimmung"
+    SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Stimmung"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Forsch1998ProjektionScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/politbarometer-1998.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "forschungsgruppewahlen_1998_projektion"
+    SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Projektion"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Forsch1998StimmungScraper(ForschBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/politbarometer/stimmung-1998.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "forschungsgruppewahlen_1998_stimmung"
+    SCOPE: str = "Bundestagswahl"
+    Survey_Type: str = "Stimmung"
     DATA_SOURCE: str = "wahlrecht.de"
     REQUEST_DELAY: float = 1.0
     META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}

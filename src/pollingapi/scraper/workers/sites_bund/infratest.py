@@ -1,37 +1,583 @@
-"""Infratest dimap scraper worker."""
+import time
+from datetime import datetime
 
-from pollingapi.scraper.config import ScraperConfig
-from pollingapi.scraper.wahlrecht import WahlrechtBundScraper
+import requests
+from bs4 import BeautifulSoup
+from sqlalchemy.orm import Session
+
+from pollingapi.logging_config import get_logger
+from pollingapi.scraper.context import RunContext
+from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, SourcePartyResult
+from pollingapi.scraper.insertion import insert_new_polls
+from pollingapi.scraper.snapshots import save_html_snapshot
 
 
-class InfratestScraper(WahlrechtBundScraper):
-    """Scraper for Infratest dimap polling data."""
+# implementation of the base class in this file
+class InfratestBaseScraper:
+    URL: str = ""
+    WORKER: str = ""
+    STATE: str = GermanState.BUND
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
 
-    @classmethod
-    def get_config(cls) -> ScraperConfig:
-        """Get configuration for Infratest dimap scraper."""
-        return ScraperConfig(
-            worker_name="infratest",
-            institute_id="infratest",
-            provider="Wahlrecht.de",
-            source="html_scraper",
-            scope="federal",
-            election_id="Bundestagswahl",
-            method_id="99",
-            urls=[
-                {"url": "https://www.wahlrecht.de/umfragen/dimap/2001.htm", "drop_footer": 4},
-                {"url": "https://www.wahlrecht.de/umfragen/dimap/2002.htm", "drop_footer": 4},
-                {"url": "https://www.wahlrecht.de/umfragen/dimap/2005.htm", "drop_footer": 4},
-                {"url": "https://www.wahlrecht.de/umfragen/dimap/2009.htm", "drop_footer": 4},
-                {"url": "https://www.wahlrecht.de/umfragen/dimap/2013.htm", "drop_footer": 4},
-                {"url": "https://www.wahlrecht.de/umfragen/dimap/2017.htm", "drop_footer": 4},
-                {"url": "https://www.wahlrecht.de/umfragen/dimap/2021.htm", "drop_footer": 4},
-                {"url": "https://www.wahlrecht.de/umfragen/dimap.htm", "drop_footer": 4},
-            ],
-            type="wahlrecht_bund",
+    def __init__(self, db: Session, context: RunContext | None = None):
+        self.db = db
+        self.context = context
+        self.logger = get_logger(self.WORKER)
+        self.session = requests.Session()
+        self.session.headers.update(
+            {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Scraper/1.0"}
         )
 
+    def fetch(self) -> str:
+        self.logger.info(f"Fetching: {self.URL}")
+        time.sleep(self.REQUEST_DELAY)
+        response = self.session.get(self.URL, timeout=15)
+        response.raise_for_status()
+        return response.text
 
-def get_config():
-    """Return config for discovery."""
-    return InfratestScraper.get_config()
+    def save_snapshot(self, html: str) -> None:
+        date_str = self.context.today_str if self.context else datetime.now().strftime("%Y-%m-%d")
+        save_html_snapshot(self.WORKER, self.URL, html, date_str)
+
+    def _normalize_text(self, value: str) -> str:
+        return value.replace("\xa0", " ").strip()
+
+    def _extract_headers(self, table) -> list[str]:
+        headers = [self._normalize_text(th.get_text()) for th in table.select("thead th")]
+
+        if not headers:
+            first_row = table.find("tr")
+            if first_row:
+                headers = [
+                    self._normalize_text(th.get_text()) for th in first_row.find_all(["th", "td"])
+                ]
+
+        if headers and headers[0] == "":
+            headers[0] = "Datum"
+
+        return headers
+
+    def _extract_row_data(self, headers: list[str], tr) -> dict[str, str] | None:
+        cells = tr.find_all("td")
+        if len(cells) < len(headers):
+            return None
+
+        return {headers[i]: self._normalize_text(cells[i].get_text()) for i in range(len(headers))}
+
+    def _extract_parties(self, row_data: dict[str, str]) -> list[SourcePartyResult]:
+        parties: list[SourcePartyResult] = []
+        for key, value in row_data.items():
+            if not key or key in self.META_KEYS:
+                continue
+            if not value:
+                continue
+            parties.append(SourcePartyResult(name=key, value=value))
+        return parties
+
+    def parse(self, html: str) -> list[BundElectionPoll]:
+        self.logger.info("Parsing HTML content...")
+        soup = BeautifulSoup(html, "html.parser")
+
+        tables = soup.find_all("table", class_="wilko")
+        if not tables:
+            self.logger.warning("No tables with class '.wilko' found.")
+            return []
+
+        extracted_polls: list[BundElectionPoll] = []
+
+        for table_idx, table in enumerate(tables):
+            self.logger.info(f"Processing table {table_idx + 1} of {len(tables)}...")
+
+            headers = self._extract_headers(table)
+            if not headers:
+                self.logger.debug(f"Table {table_idx} has no headers, skipping.")
+                continue
+
+            rows = table.select("tbody tr")
+            if not rows:
+                rows = table.find_all("tr")[1:]
+
+            for row_idx, tr in enumerate(rows):
+                row_data = self._extract_row_data(headers, tr)
+                if not row_data:
+                    continue
+
+                try:
+                    parties = self._extract_parties(row_data)
+                    if not parties:
+                        continue
+
+                    poll = BundElectionPoll(
+                        data_source=self.DATA_SOURCE,
+                        worker=self.WORKER,
+                        scope=self.SCOPE,
+                        state=self.STATE,
+                        institut=self.INSTITUTE,
+                        befragte=row_data.get("Befragte", ""),
+                        auftraggeber=row_data.get("Auftraggeber") or None,
+                        datum=row_data.get("Datum", ""),
+                        zeitraum=row_data.get("Zeitraum", ""),
+                        results=parties,
+                    )
+                    extracted_polls.append(poll)
+
+                except Exception:
+                    self.logger.debug(f"Table {table_idx} Row {row_idx} failed validation.")
+
+        return extracted_polls
+
+    def insert(self, polls: list[BundElectionPoll]) -> int:
+        if not polls:
+            return 0
+
+        inserted, skipped = insert_new_polls(
+            db=self.db,
+            polls=polls,
+            provider=self.DATA_SOURCE,
+            source="html_scraper",
+            election_id=self.SCOPE,
+            method_id="99",
+            pipeline_run_id=self.context.run_id if self.context else None,
+        )
+        self.logger.info(f"Inserted {inserted} polls for {self.WORKER} (skipped {skipped})")
+        return inserted
+
+    def run(self) -> int:
+        html = self.fetch()
+        self.save_snapshot(html)
+        polls = self.parse(html)
+        return self.insert(polls)
+
+
+# This worker targets the main site and therefore is the one to keep in check first
+class InfratestCurrentScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_current"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class InfratestCurrentOstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/ost.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_current_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class InfratestCurrentWestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/west.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_current_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2013TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2013.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_2013_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2013OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2013o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_2013_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2013WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2013w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_2013_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2008TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2008.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_2008_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2008OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2008o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_2008_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2008WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2008w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_2008_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2007TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2007.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_2007_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2007OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2007o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_2007_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2007WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2007w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_2007_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2006TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2006.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_2006_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2006OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2006o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_2006_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2006WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2006w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_2006_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2005TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2005.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_2005_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2005OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2005o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_2005_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2005WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2005w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_2005_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2004TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2004.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_2004_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2004OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2004o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_2004_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2004WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2004w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_2004_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2003TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2003.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_2003_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2003OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2003o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_2003_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2003WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2003w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_2003_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2002TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2002.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_2002_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2002OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2002o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_2002_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2002WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2002w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_2002_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2001TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2001.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_2001_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2001OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2001o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_2001_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2001WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2001w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_2001_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2000TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2000.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_2000_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2000OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2000o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_2000_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest2000WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/2000w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_2000_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest1999TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/1999.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_1999_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest1999OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/1999o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_1999_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest1999WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/1999w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_1999_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest1998TotalScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/1998.htm"
+    STATE: str = GermanState.BUND
+    WORKER = "infratest_1998_total"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest1998OstScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/1998o.htm"
+    STATE: str = GermanState.OST
+    WORKER = "infratest_1998_ost"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+
+
+class Infratest1998WestScraper(InfratestBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/dimap/1998w.htm"
+    STATE: str = GermanState.WEST
+    WORKER = "infratest_1998_west"
+    SCOPE: str = "Bundestagswahl"
+    INSTITUTE: str = "Infratest Dimap"
+    DATA_SOURCE: str = "wahlrecht.de"
+    REQUEST_DELAY: float = 1.0
+    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}

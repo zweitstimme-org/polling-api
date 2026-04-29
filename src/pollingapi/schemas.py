@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import date as DateType
-from datetime import datetime as DateTimeType
-from typing import Any, Dict, List
+import datetime as dt
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # Raw Poll Schemas
@@ -41,13 +40,14 @@ class RawPoll(RawPollBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    public_id: str | None = None
 
 
 # Poll Result Schemas
 class PollResultBase(BaseModel):
     """Base schema for poll results."""
 
-    party_id: int
+    party_key: str
     percentage: float
 
 
@@ -71,9 +71,9 @@ class PollResult(PollResultBase):
 class PollBase(BaseModel):
     """Base schema for polls."""
 
-    publish_date: DateType | None = None
-    survey_date_start: DateType | None = None
-    survey_date_end: DateType | None = None
+    publish_date: dt.date | None = None
+    survey_date_start: dt.date | None = None
+    survey_date_end: dt.date | None = None
     respondents: int | None = None
     source: str | None = None
     scope: str | None = None
@@ -83,12 +83,12 @@ class PollCreate(PollBase):
     """Schema for creating polls."""
 
     raw_id: int | None = None
-    institute_id: int | None = None
+    institute_key: str | None = None
     provider_id: int | None = None
-    election_id: int | None = None
-    method_id: int | None = None
-    date_downloaded: DateTimeType | None = None
-    results: List[PollResultCreate] = []
+    election_key: str | None = None
+    method_key: str | None = None
+    date_downloaded: dt.datetime | None = None
+    results: list[PollResultCreate] = Field(default_factory=list)
 
 
 class Poll(PollBase):
@@ -97,11 +97,12 @@ class Poll(PollBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    public_id: str | None = None
     institute: str | None = None
     provider: str | None = None
     election: str | None = None
     method: str | None = None
-    results: List[PollResult] = []
+    results: list[PollResult] = Field(default_factory=list)
 
 
 # Dictionary Schemas
@@ -123,7 +124,7 @@ class Institute(InstituteBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    key: str
 
 
 class PartyBase(BaseModel):
@@ -145,7 +146,7 @@ class Party(PartyBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    key: str
 
 
 class ProviderBase(BaseModel):
@@ -175,7 +176,7 @@ class ElectionBase(BaseModel):
     election_type: str
     year: int | None = None
     scope: str | None = None
-    date: DateType | None = None
+    date: dt.date | None = None
 
 
 class ElectionCreate(ElectionBase):
@@ -189,7 +190,7 @@ class Election(ElectionBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    key: str
 
 
 class MethodBase(BaseModel):
@@ -210,15 +211,15 @@ class Method(MethodBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    key: str
 
 
 # Export Schemas
 class ExportData(BaseModel):
     """Schema for exported data."""
 
-    polls: List[Poll]
-    metadata: Dict[str, Any]
+    polls: list[Poll]
+    metadata: dict[str, Any]
 
 
 # Scraper Schemas
@@ -232,7 +233,7 @@ class ScraperPayload(BaseModel):
     zeitraum: str | None = None
     survey_date_start: str | None = None
     survey_date_end: str | None = None
-    parties: Dict[str, float] | None = None
+    parties: dict[str, float] | None = None
     institute_id: str | None = None
     provider: str | None = None
     tasker: str | None = None
@@ -251,8 +252,8 @@ class HealthCheck(BaseModel):
     service: str
     version: str
     release_id: str
-    time: DateTimeType
+    time: dt.datetime
     total_polls: int
-    last_run_at: DateTimeType | None = None
+    last_run_at: dt.datetime | None = None
     time_since_last_run_seconds: int | None = None
-    checks: Dict[str, List[Dict[str, Any]]]
+    checks: dict[str, list[dict[str, Any]]]

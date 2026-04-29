@@ -2,11 +2,10 @@
 
 import json
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 import pandas as pd
 import requests
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from pollingapi.core import DATA_DIR
@@ -21,6 +20,7 @@ class DawumScraper:
 
     DATA_SOURCE = "DAWUM"
     SCOPE = "federal"
+    WORKER = "dawum"
     REQUEST_TIMEOUT = 30
 
     def __init__(
@@ -36,7 +36,7 @@ class DawumScraper:
         self.logger = get_logger("dawum")
         self.session = requests.Session()
 
-    def retrieve_data(self) -> Dict[str, Any]:
+    def retrieve_data(self) -> dict[str, Any]:
         """Fetch data from DAWUM API."""
         url = "https://api.dawum.de/"
         self.logger.info(f"Fetching data from DAWUM API: {url}")
@@ -44,7 +44,7 @@ class DawumScraper:
         response.raise_for_status()
         return response.json()
 
-    def wrangle_data(self, data: Dict[str, Any]) -> pd.DataFrame:
+    def wrangle_data(self, data: dict[str, Any]) -> pd.DataFrame:
         """Transform DAWUM API data to standard format."""
         # Extract entities
         parliaments = pd.DataFrame.from_dict(data.get("Parliaments", {}), orient="index")
@@ -128,7 +128,7 @@ class DawumScraper:
 
         return df
 
-    def prepare_db_payload(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
+    def prepare_db_payload(self, df: pd.DataFrame) -> list[dict[str, Any]]:
         """Prepare dataframe for database insertion."""
         df_mapped = df.copy()
 
@@ -147,6 +147,10 @@ class DawumScraper:
         df_mapped["source"] = "api"
         df_mapped["scope"] = self.SCOPE
         df_mapped["election_id"] = "Bundestagswahl"
+        df_mapped["worker"] = self.WORKER
+        df_mapped["zeitraum"] = None
+        df_mapped["survey_type"] = None
+        df_mapped["pipeline_run_id"] = self.context.run_id
         df_mapped["date_downloaded"] = datetime.now().isoformat()
 
         # Select only needed columns
@@ -161,6 +165,10 @@ class DawumScraper:
             "source",
             "scope",
             "election_id",
+            "worker",
+            "zeitraum",
+            "survey_type",
+            "pipeline_run_id",
             "date_downloaded",
             "survey_date_start",
             "survey_date_end",
@@ -169,85 +177,86 @@ class DawumScraper:
         available_cols = [col for col in keep_cols if col in df_mapped.columns]
         return df_mapped[available_cols].to_dict("records")
 
-    def _check_duplicate(self, payload: Dict[str, Any]) -> bool:
-        """Check if a poll already exists in the database."""
-        publish_date = payload.get("publish_date")
-        survey_date_start = payload.get("survey_date_start")
-        survey_date_end = payload.get("survey_date_end")
-        source = payload.get("source")
-        scope = payload.get("scope")
-        institute_id = payload.get("institute_id")
-        parties = payload.get("parties")
+    @staticmethod
+    def _parties_json(parties: Any) -> str | None:
+        if not parties:
+            return None
+        return json.dumps(parties, sort_keys=True)
 
-        parties_json = json.dumps(parties, sort_keys=True) if parties else None
-
-        query = """
-            SELECT id FROM polls_raw
-            WHERE publish_date IS NOT DISTINCT FROM :publish_date
-              AND survey_date_start IS NOT DISTINCT FROM :survey_date_start
-              AND survey_date_end IS NOT DISTINCT FROM :survey_date_end
-              AND source IS NOT DISTINCT FROM :source
-              AND scope IS NOT DISTINCT FROM :scope
-              AND institute_id IS NOT DISTINCT FROM :institute_id
-              AND parties IS NOT DISTINCT FROM :parties
-            LIMIT 1
-        """
-
-        result = self.db.execute(
-            text(query),
-            {
-                "publish_date": publish_date,
-                "survey_date_start": survey_date_start,
-                "survey_date_end": survey_date_end,
-                "source": source,
-                "scope": scope,
-                "institute_id": institute_id,
-                "parties": parties_json,
-            },
+    def _raw_poll_from_payload(self, payload: dict[str, Any]) -> RawPoll:
+        """Create a RawPoll row from a normalized DAWUM payload."""
+        return RawPoll(
+            publish_date=payload.get("publish_date"),
+            survey_date_start=payload.get("survey_date_start"),
+            survey_date_end=payload.get("survey_date_end"),
+            respondents=payload.get("respondents"),
+            zeitraum=payload.get("zeitraum"),
+            parties=self._parties_json(payload.get("parties")),
+            institute_id=payload.get("institute_id"),
+            provider=payload.get("provider"),
+            tasker=payload.get("tasker"),
+            source=payload.get("source"),
+            scope=payload.get("scope"),
+            election_id=payload.get("election_id"),
+            method_id=payload.get("method_id"),
+            worker=payload.get("worker"),
+            survey_type=payload.get("survey_type"),
+            date_downloaded=payload.get("date_downloaded"),
+            pipeline_run_id=payload.get("pipeline_run_id"),
         )
 
-        return result.scalar_one_or_none() is not None
+    def _check_duplicate(self, payload: dict[str, Any]) -> bool:
+        """Check if a poll already exists in the database."""
+        dedup_values = {
+            "publish_date": payload.get("publish_date"),
+            "survey_date_start": payload.get("survey_date_start"),
+            "survey_date_end": payload.get("survey_date_end"),
+            "respondents": payload.get("respondents"),
+            "zeitraum": payload.get("zeitraum"),
+            "parties": self._parties_json(payload.get("parties")),
+            "institute_id": payload.get("institute_id"),
+            "provider": payload.get("provider"),
+            "tasker": payload.get("tasker"),
+            "source": payload.get("source"),
+            "scope": payload.get("scope"),
+            "election_id": payload.get("election_id"),
+            "method_id": payload.get("method_id"),
+            "worker": payload.get("worker"),
+            "survey_type": payload.get("survey_type"),
+        }
 
-    def post_polls(self, payloads: List[Dict[str, Any]]) -> int:
+        query = self.db.query(RawPoll)
+        for key, value in dedup_values.items():
+            column = getattr(RawPoll, key)
+            query = query.filter(column.is_(None)) if value is None else query.filter(column == value)
+
+        return query.first() is not None
+
+    def _new_payloads(self, payloads: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Return only payloads that are not already present in polls_raw."""
+        return [payload for payload in payloads if not self._check_duplicate(payload)]
+
+    def post_polls(self, payloads: list[dict[str, Any]]) -> int:
         """Insert polls into database with deduplication."""
+        new_payloads = self._new_payloads(payloads)
+        skipped_count = len(payloads) - len(new_payloads)
+
         if self.dry_run:
-            self.logger.info(f"[DRY RUN] Would insert {len(payloads)} polls")
-            for payload in payloads[:3]:
+            self.logger.info(
+                f"[DRY RUN] Would insert {len(new_payloads)} DAWUM polls "
+                f"(skipped {skipped_count} duplicates)"
+            )
+            for payload in new_payloads[:3]:
                 self.logger.info(f"  {payload}")
-            if len(payloads) > 3:
-                self.logger.info(f"  ... and {len(payloads) - 3} more")
-            return len(payloads)
+            if len(new_payloads) > 3:
+                self.logger.info(f"  ... and {len(new_payloads) - 3} more")
+            return len(new_payloads)
 
         inserted_count = 0
-        skipped_count = 0
 
-        for payload in payloads:
+        for payload in new_payloads:
             try:
-                # Check for duplicates
-                if self._check_duplicate(payload):
-                    skipped_count += 1
-                    continue
-
-                # Create new raw poll
-                raw_poll = RawPoll(
-                    publish_date=payload.get("publish_date"),
-                    survey_date_start=payload.get("survey_date_start"),
-                    survey_date_end=payload.get("survey_date_end"),
-                    respondents=payload.get("respondents"),
-                    parties=json.dumps(payload.get("parties"), sort_keys=True)
-                    if payload.get("parties")
-                    else None,
-                    institute_id=payload.get("institute_id"),
-                    provider=payload.get("provider"),
-                    tasker=payload.get("tasker"),
-                    source=payload.get("source"),
-                    scope=payload.get("scope"),
-                    election_id=payload.get("election_id"),
-                    method_id=payload.get("method_id"),
-                    date_downloaded=payload.get("date_downloaded"),
-                )
-
-                self.db.add(raw_poll)
+                self.db.add(self._raw_poll_from_payload(payload))
                 inserted_count += 1
 
             except Exception as e:
@@ -294,10 +303,11 @@ class DawumScraper:
             payloads = filter_poll_payloads(payloads)
             self.logger.info(f"Prepared {len(payloads)} payloads for insertion")
 
-            inserted = self.post_polls(payloads)
-            self.logger.info(f"Successfully inserted {inserted} polls from DAWUM")
+            new_count = self.post_polls(payloads)
+            action = "Would insert" if self.dry_run else "Successfully inserted"
+            self.logger.info(f"{action} {new_count} polls from DAWUM")
 
-            return inserted
+            return new_count
 
         except Exception as e:
             self.logger.error(f"Error in DAWUM scraper: {e}")

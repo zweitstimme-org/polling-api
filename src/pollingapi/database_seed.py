@@ -1,230 +1,139 @@
-"""Database seeding from JSON files.
-
-This module handles seeding reference tables from JSON files.
-The JSON files in the json/ directory define the primary keys
-that will be used for relations in the database.
-"""
-
-import json
-from pathlib import Path
-from typing import Any
+"""Database seeding from declared domain models."""
 
 from sqlalchemy.orm import Session
 
-from pollingapi.models import Election, Institute, Method, Party, Tasker
+from pollingapi.models import Election, Institute, Method, Party
+from pollingapi.scraper.datamodel import (
+    ElectionScope,
+    GermanState,
+    SurveyMethod,
+    enum_key,
+    party_short_name,
+)
+from pollingapi.scraper.datamodel import (
+    Institute as InstituteDefinition,
+)
+from pollingapi.scraper.datamodel import (
+    Party as PartyDefinition,
+)
 
 
-def load_json_data(filename: str) -> dict[str, Any]:
-    """Load JSON data from the json directory."""
-    # Find project root by looking for json/ directory
-    current_dir = Path(__file__).parent
-
-    # Search up the tree for the project root containing json/
-    json_dir = None
-    for parent in [current_dir] + list(current_dir.parents):
-        potential_json_dir = parent / "json"
-        if potential_json_dir.exists() and potential_json_dir.is_dir():
-            json_dir = potential_json_dir
-            break
-
-    if json_dir is None:
-        # Fallback: assume project root is 3 levels up from pollingapi/database_seed.py
-        # src/pollingapi/database_seed.py -> project_root
-        json_dir = current_dir.parent.parent / "json"
-
-    file_path = json_dir / filename
-
-    if not file_path.exists():
-        raise FileNotFoundError(f"JSON file not found: {file_path}")
-
-    with open(file_path, encoding="utf-8") as f:
-        return json.load(f)
-
-
-def seed_institutes_from_json(db: Session) -> int:
-    """Seed institutes table from institutes.json.
-
-    Uses the exact IDs from the JSON file as primary keys.
-    """
-    data = load_json_data("institutes.json")
+def seed_institutes_from_datamodel(db: Session) -> int:
+    """Seed institutes from the declared institute enum."""
     count = 0
-
-    for institute_id_str, info in data.items():
-        institute_id = int(institute_id_str)
-        name = info.get("Name", f"Institute {institute_id}")
-
-        existing = db.query(Institute).filter(Institute.id == institute_id).first()
+    for definition in InstituteDefinition:
+        existing = db.query(Institute).filter(Institute.key == enum_key(definition)).first()
         if not existing:
-            institute = Institute(id=institute_id, name=name)
-            db.add(institute)
+            db.add(Institute(key=enum_key(definition), name=definition.value))
             count += 1
-        else:
-            # Update name if it has changed
-            if existing.name != name:
-                existing.name = name
-                count += 1
-
+        elif existing.name != definition.value:
+            existing.name = definition.value
+            count += 1
     db.commit()
     return count
 
 
-def seed_methods_from_json(db: Session) -> int:
-    """Seed methods table from methods.json.
-
-    Uses the exact IDs from the JSON file as primary keys.
-    """
-    data = load_json_data("methods.json")
+def seed_methods_from_datamodel(db: Session) -> int:
+    """Seed survey methods from the declared method enum."""
     count = 0
-
-    for method_id_str, info in data.items():
-        method_id = int(method_id_str)
-        name = info.get("Name", f"Method {method_id}")
-
-        existing = db.query(Method).filter(Method.id == method_id).first()
+    for definition in SurveyMethod:
+        existing = db.query(Method).filter(Method.key == enum_key(definition)).first()
         if not existing:
-            method = Method(id=method_id, name=name)
-            db.add(method)
+            db.add(Method(key=enum_key(definition), name=definition.value))
             count += 1
-        else:
-            # Update name if it has changed
-            if existing.name != name:
-                existing.name = name
-                count += 1
-
+        elif existing.name != definition.value:
+            existing.name = definition.value
+            count += 1
     db.commit()
     return count
 
 
-def seed_taskers_from_json(db: Session) -> int:
-    """Seed taskers table from taskers.json.
-
-    Uses the exact IDs from the JSON file as primary keys.
-    """
-    data = load_json_data("taskers.json")
+def seed_parties_from_datamodel(db: Session) -> int:
+    """Seed parties from the declared party enum and short-handle mapping."""
     count = 0
-
-    for tasker_id_str, info in data.items():
-        tasker_id = int(tasker_id_str)
-        name = info.get("Name", f"Tasker {tasker_id}")
-
-        existing = db.query(Tasker).filter(Tasker.id == tasker_id).first()
+    for definition in PartyDefinition:
+        short_name = party_short_name(definition)
+        existing = db.query(Party).filter(Party.key == enum_key(definition)).first()
         if not existing:
-            tasker = Tasker(id=tasker_id, name=name)
-            db.add(tasker)
-            count += 1
-        else:
-            # Update name if it has changed
-            if existing.name != name:
-                existing.name = name
-                count += 1
-
-    db.commit()
-    return count
-
-
-def seed_parties_from_json(db: Session) -> int:
-    """Seed parties table from parties.json.
-
-    Uses the exact IDs from the JSON file as primary keys.
-    """
-    data = load_json_data("parties.json")
-    count = 0
-
-    for party_id_str, info in data.items():
-        party_id = int(party_id_str)
-        name = info.get("Name", f"Party {party_id}")
-        short_name = info.get("Shortcut", "")
-
-        existing = db.query(Party).filter(Party.id == party_id).first()
-        if not existing:
-            party = Party(id=party_id, name=name, short_name=short_name)
-            db.add(party)
-            count += 1
-        else:
-            # Update if changed
-            updated = False
-            if existing.name != name:
-                existing.name = name
-                updated = True
-            if existing.short_name != short_name:
-                existing.short_name = short_name
-                updated = True
-            if updated:
-                count += 1
-
-    db.commit()
-    return count
-
-
-def seed_parliaments_as_elections(db: Session) -> int:
-    """Seed elections table from parliaments.json.
-
-    Maps parliaments to elections using the exact IDs from the JSON file.
-    The 'Election' field is used as the election_type, and the scope
-    is derived from the parliament's Shortcut.
-    """
-    data = load_json_data("parliaments.json")
-    count = 0
-
-    for parliament_id_str, info in data.items():
-        election_id = int(parliament_id_str)
-        shortcut = info.get("Shortcut", "")
-        name = info.get("Name", "")
-        info.get("Election", "")
-
-        # Determine scope from shortcut
-        scope = (
-            shortcut.lower().replace(" ", "-").replace("(", "").replace(")", "")
-            if shortcut
-            else None
-        )
-
-        # Determine election type and year
-        if "Bundestag" in name or election_id == 0:
-            election_type = "Bundestagswahl"
-            year = None  # Federal elections span multiple years
-            scope = "federal"
-        elif "Europäisches" in name:
-            election_type = "Europawahl"
-            year = None
-            scope = "eu"
-        else:
-            # State elections
-            election_type = "Landtagswahl"
-            year = None
-
-        existing = db.query(Election).filter(Election.id == election_id).first()
-        if not existing:
-            election = Election(
-                id=election_id, election_type=election_type, year=year, scope=scope, date=None
+            db.add(
+                Party(
+                    key=enum_key(definition),
+                    name=definition.value,
+                    short_name=short_name,
+                )
             )
-            db.add(election)
             count += 1
-        else:
-            # Update if changed
-            updated = False
-            if existing.election_type != election_type:
-                existing.election_type = election_type
-                updated = True
-            if existing.scope != scope:
-                existing.scope = scope
-                updated = True
-            if updated:
-                count += 1
+            continue
 
+        updated = False
+        if existing.name != definition.value:
+            existing.name = definition.value
+            updated = True
+        if existing.short_name != short_name:
+            existing.short_name = short_name
+            updated = True
+        if updated:
+            count += 1
+    db.commit()
+    return count
+
+
+def _election_type_for_state(state: GermanState) -> str:
+    if state in {GermanState.BUND, GermanState.OST, GermanState.WEST}:
+        return ElectionScope.BUNDESTAGSWAHL.value
+    return ElectionScope.LANDTAGSWAHL.value
+
+
+def _scope_for_state(state: GermanState) -> str:
+    if state is GermanState.BUND:
+        return "federal"
+    if state is GermanState.NW:
+        return "nrw"
+    return state.name.lower()
+
+
+def seed_elections_from_datamodel(db: Session) -> int:
+    """Seed election/scope reference rows from the declared state enum."""
+    count = 0
+    for state in GermanState:
+        existing = db.query(Election).filter(Election.key == enum_key(state)).first()
+        election_type = _election_type_for_state(state)
+        scope = _scope_for_state(state)
+        if not existing:
+            db.add(
+                Election(
+                    key=enum_key(state),
+                    election_type=election_type,
+                    scope=scope,
+                    year=None,
+                    date=None,
+                )
+            )
+            count += 1
+            continue
+
+        updated = False
+        if existing.election_type != election_type:
+            existing.election_type = election_type
+            updated = True
+        if existing.scope != scope:
+            existing.scope = scope
+            updated = True
+        if updated:
+            count += 1
     db.commit()
     return count
 
 
 def seed_all_from_json(db: Session) -> dict[str, int]:
-    """Seed all reference tables from JSON files.
+    """Seed all reference tables.
 
-    Returns a dictionary with counts of inserted/updated records.
+    The public function name is kept for CLI compatibility; the source of truth
+    is now the declared datamodel instead of numeric JSON mapping files.
     """
     return {
-        "institutes": seed_institutes_from_json(db),
-        "methods": seed_methods_from_json(db),
-        "taskers": seed_taskers_from_json(db),
-        "parties": seed_parties_from_json(db),
-        "elections": seed_parliaments_as_elections(db),
+        "institutes": seed_institutes_from_datamodel(db),
+        "methods": seed_methods_from_datamodel(db),
+        "parties": seed_parties_from_datamodel(db),
+        "elections": seed_elections_from_datamodel(db),
     }

@@ -41,7 +41,7 @@ def db_ping():
     except Exception as e:
         logger.error(f"Database connection failed: {e}")
         typer.echo(f"✗ Database connection failed: {e}", err=True)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command(name="db:init")
@@ -135,7 +135,10 @@ def db_reset(
 
 @app.command(name="scraper:run")
 def scraper_run(
-    worker: str = typer.Argument(..., help="Worker name (e.g., 'forsa', 'bayern', 'all')"),
+    worker: str = typer.Argument(
+        ...,
+        help="Worker name (e.g., 'forsa', 'bayern', 'all', 'current')",
+    ),
     debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug mode"),
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Dry run (don't insert to DB)"),
     force: bool = typer.Option(
@@ -154,9 +157,10 @@ def scraper_run(
 
     runner = ScraperRunner(db, context=context, dry_run=dry_run or debug)
 
-    if worker.lower() == "all":
-        logger.info("Running all scrapers")
-        results = runner.run_all(include_dawum=True)
+    if worker.lower() in {"all", "current"}:
+        current_only = worker.lower() == "current"
+        logger.info("Running current scrapers" if current_only else "Running all scrapers")
+        results = runner.run_all(include_dawum=not current_only, current_only=current_only)
 
         # Log results
         total_success = sum(1 for v in results.values() if isinstance(v, int))
@@ -176,15 +180,18 @@ def scraper_run(
         logger.info(f"Running scraper: {worker}")
         try:
             count = runner.run_worker(worker)
-            typer.echo(f"✓ {worker}: {count} polls inserted")
-            logger.info(f"Scraper {worker} completed: {count} polls inserted")
+            message = (
+                f"would insert {count} polls" if dry_run or debug else f"inserted {count} polls"
+            )
+            typer.echo(f"✓ {worker}: {message}")
+            logger.info(f"Scraper {worker} completed: {message}")
         except ValueError as e:
             logger.error(f"Scraper {worker} failed: {e}")
             typer.echo(f"✗ Error: {e}", err=True)
             typer.echo("\nAvailable workers:")
             for name in runner.list_workers():
                 typer.echo(f"  - {name}")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
 
 @app.command(name="scraper:list")
@@ -223,10 +230,16 @@ def scraper_status():
 @app.command(name="pipeline:clean")
 def pipeline_clean(
     limit: int | None = typer.Option(None, "--limit", "-l", help="Limit number of rows to process"),
+    reprocess: bool = typer.Option(False, "--reprocess", help="Reprocess already-cleaned rows"),
+    rebuild: bool = typer.Option(
+        False,
+        "--rebuild",
+        help="Delete cleaned poll/reference rows and rebuild from immutable raw rows",
+    ),
 ):
     """Run data cleaning pipeline on raw polls."""
     db = get_db()
-    stats = run_cleaning_pipeline(db, limit=limit)
+    stats = run_cleaning_pipeline(db, limit=limit, reprocess=reprocess, rebuild=rebuild)
 
     typer.echo("✓ Cleaning complete:")
     typer.echo(f"  Processed: {stats['processed']}")
@@ -620,11 +633,11 @@ def server_prod(
     except KeyboardInterrupt:
         typer.echo("\nShutting down server...")
         logger.info("Server shutdown requested via keyboard interrupt")
-        raise typer.Exit(0)
+        raise typer.Exit(0) from None
     except Exception as e:
         logger.error(f"Failed to start server: {e}")
         typer.echo(f"✗ Error starting server: {e}", err=True)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 # ============================================================================
@@ -805,7 +818,7 @@ def data_archive(
         typer.echo(f"✗ Error: {e}", err=True)
         if archive_path.exists():
             archive_path.unlink()
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command(name="data:list")

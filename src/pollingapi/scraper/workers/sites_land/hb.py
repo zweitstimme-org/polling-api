@@ -7,19 +7,17 @@ from sqlalchemy.orm import Session
 
 from pollingapi.logging_config import get_logger
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, SourcePartyResult
+from pollingapi.scraper.datamodel import GermanState, LandElectionPoll, SourcePartyResult
 from pollingapi.scraper.insertion import insert_new_polls
 from pollingapi.scraper.snapshots import save_html_snapshot
 
 
-# NOTE: implementation DONE
-# implementation of the base class in this file
-class InsaBaseScraper:
+class HBBaseScraper:
     URL: str = ""
     WORKER: str = ""
-    STATE: str = GermanState.BUND
-    SCOPE: str = "Bundestagswahl"
-    INSTITUTE: str = "Insa"
+    STATE = GermanState.HB
+    SCOPE: str = "Landtagswahl"
+    INSTITUTE: str = ""
     DATA_SOURCE: str = "wahlrecht.de"
     REQUEST_DELAY: float = 1.0
     META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
@@ -79,7 +77,7 @@ class InsaBaseScraper:
             parties.append(SourcePartyResult(name=key, value=value))
         return parties
 
-    def parse(self, html: str) -> list[BundElectionPoll]:
+    def parse(self, html: str) -> list[LandElectionPoll]:
         self.logger.info("Parsing HTML content...")
         soup = BeautifulSoup(html, "html.parser")
 
@@ -88,7 +86,7 @@ class InsaBaseScraper:
             self.logger.warning("No tables with class '.wilko' found.")
             return []
 
-        extracted_polls: list[BundElectionPoll] = []
+        extracted_polls: list[LandElectionPoll] = []
 
         for table_idx, table in enumerate(tables):
             self.logger.info(f"Processing table {table_idx + 1} of {len(tables)}...")
@@ -112,12 +110,12 @@ class InsaBaseScraper:
                     if not parties:
                         continue
 
-                    poll = BundElectionPoll(
+                    poll = LandElectionPoll(
                         data_source=self.DATA_SOURCE,
                         worker=self.WORKER,
                         scope=self.SCOPE,
                         state=self.STATE,
-                        institut=self.INSTITUTE,
+                        institut=row_data.get("Institut", self.INSTITUTE),
                         befragte=row_data.get("Befragte", ""),
                         auftraggeber=row_data.get("Auftraggeber") or None,
                         datum=row_data.get("Datum", ""),
@@ -131,7 +129,7 @@ class InsaBaseScraper:
 
         return extracted_polls
 
-    def insert(self, polls: list[BundElectionPoll]) -> int:
+    def insert(self, polls: list[LandElectionPoll]) -> int:
         if not polls:
             return 0
 
@@ -154,42 +152,9 @@ class InsaBaseScraper:
         return self.insert(polls)
 
 
-# This worker targets the main site and therefore is the one to keep in check first
-class InsaCurrentScraper(InsaBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/insa.htm"
-    STATE: str = GermanState.BUND
-    WORKER = "insa_current"
-    SCOPE: str = "Bundestagswahl"
-    DATA_SOURCE: str = "wahlrecht.de"
-    REQUEST_DELAY: float = 1.0
-    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
-
-
-class Insa2021Scraper(InsaBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/insa/2021.htm"
-    STATE: str = GermanState.BUND
-    WORKER = "insa_2021"
-    SCOPE: str = "Bundestagswahl"
-    DATA_SOURCE: str = "wahlrecht.de"
-    REQUEST_DELAY: float = 1.0
-    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
-
-
-class Insa2017Scraper(InsaBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/insa/2017.htm"
-    STATE: str = GermanState.BUND
-    WORKER = "insa_2017"
-    SCOPE: str = "Bundestagswahl"
-    DATA_SOURCE: str = "wahlrecht.de"
-    REQUEST_DELAY: float = 1.0
-    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
-
-
-class Insa2013Scraper(InsaBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/insa/2013.htm"
-    STATE: str = GermanState.BUND
-    WORKER = "insa_2013"
-    SCOPE: str = "Bundestagswahl"
-    DATA_SOURCE: str = "wahlrecht.de"
-    REQUEST_DELAY: float = 1.0
-    META_KEYS = {"Institut", "Auftraggeber", "Befragte", "Datum", "Zeitraum"}
+class HBCurrentScraper(HBBaseScraper):
+    URL = "https://www.wahlrecht.de/umfragen/landtage/bremen.htm"
+    WORKER = "bremen_current"
+    SCOPE = "Landtagswahl"
+    INSTITUTE = ""
+    DATA_SOURCE = "wahlrecht.de"

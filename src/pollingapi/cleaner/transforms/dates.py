@@ -1,5 +1,6 @@
 """Date transformation utilities."""
 
+import re
 from datetime import date, datetime
 
 import dateparser
@@ -67,6 +68,39 @@ def normalize_survey_dates(
     end_date = None
     should_ignore = False
 
+    def _has_explicit_year(value: str | None) -> bool:
+        return bool(value and re.search(r"\b\d{4}\b", value))
+
+    def _shift_year(value: date | None, years: int) -> date | None:
+        if value is None:
+            return None
+        try:
+            return value.replace(year=value.year + years)
+        except ValueError:
+            return value.replace(month=2, day=28, year=value.year + years)
+
+    def _fix_inferred_years(
+        start: date | None,
+        end: date | None,
+        raw_zeitraum: str | None,
+        reference: date | None,
+    ) -> tuple[date | None, date | None]:
+        if not reference or _has_explicit_year(raw_zeitraum):
+            return start, end
+
+        # Ranges like "27.12.–30.12." published in early January belong to
+        # the previous year, not the following December.
+        if end and end > reference:
+            start = _shift_year(start, -1)
+            end = _shift_year(end, -1)
+
+        # Ranges crossing New Year ("30.12.–03.01.") should have start in the
+        # previous year and end in the publish year.
+        if start and end and start > end:
+            start = _shift_year(start, -1)
+
+        return start, end
+
     # Parse explicit dates
     if start_date_str:
         start_date = normalize_publish_date(start_date_str)
@@ -95,6 +129,9 @@ def normalize_survey_dates(
         if result.is_single_date and result.start_date and not start_date:
             start_date = normalize_publish_date(result.start_date)
             # end_date remains None for single dates
+            start_date, end_date = _fix_inferred_years(
+                start_date, end_date, zeitraum, publish_date
+            )
             return start_date, end_date, should_ignore
 
         # Normal date range
@@ -102,5 +139,7 @@ def normalize_survey_dates(
             start_date = normalize_publish_date(result.start_date)
         if result.end_date and not end_date:
             end_date = normalize_publish_date(result.end_date)
+
+        start_date, end_date = _fix_inferred_years(start_date, end_date, zeitraum, publish_date)
 
     return start_date, end_date, should_ignore

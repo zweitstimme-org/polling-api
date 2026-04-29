@@ -1,0 +1,194 @@
+"""Insertion helpers for scraper poll models and raw insertions."""
+
+import json
+import re
+from datetime import datetime
+from typing import Any
+
+from sqlalchemy.orm import Session
+
+from pollingapi.models import RawPoll
+from pollingapi.scraper.datamodel import BundElectionPoll, LandElectionPoll, SourcePartyResult
+
+ScraperPoll = BundElectionPoll | LandElectionPoll
+_DEDUP_KEYS = (
+    "publish_date",
+    "survey_date_start",
+    "survey_date_end",
+    "respondents",
+    "zeitraum",
+    "parties",
+    "institute_id",
+    "provider",
+    "tasker",
+    "source",
+    "scope",
+    "election_id",
+    "method_id",
+    "worker",
+    "survey_type",
+)
+
+
+def _coerce_datetime(value: datetime | str) -> datetime:
+    if isinstance(value, str):
+        return datetime.fromisoformat(value)
+    return value
+
+
+def _looks_like_respondent_count(value: str) -> bool:
+    compact = value.replace(" ", "")
+    if not compact:
+        return False
+    if any(sep in compact for sep in ("-", "–", "/")):
+        return False
+    return re.fullmatch(r"\d+(?:[\.,]\d+)*", compact) is not None
+
+
+def _normalize_respondents_zeitraum(
+    respondents: str | None, zeitraum: str | None
+) -> tuple[str | None, str | None]:
+    respondents_value = (respondents or "").strip() or None
+    zeitraum_value = (zeitraum or "").strip() or None
+
+    if not respondents_value and zeitraum_value:
+        lower = zeitraum_value.lower()
+        if "wahl" in lower:
+            return None, None
+        if _looks_like_respondent_count(zeitraum_value):
+            return zeitraum_value, None
+
+    return respondents_value, zeitraum_value
+
+
+def poll_to_raw_dict(
+    poll: ScraperPoll,
+    survey_date_start: str | None = None,
+    survey_date_end: str | None = None,
+    provider: str | None = None,
+    source: str | None = None,
+    election_id: str | None = None,
+    method_id: str | None = None,
+    pipeline_run_id: str | None = None,
+    survey_type: str | None = None,
+) -> dict:
+    """Convert scraper poll model to polls_raw dict for database insertion.
+    Args:
+        poll: The scraper poll model to convert.
+        survey_date_start: Optional survey start date string.
+        survey_date_end: Optional survey end date string.
+        provider: Override for data source (defaults to poll.data_source).
+        source: Override for source type (defaults to "html_scraper").
+        election_id: Override for election type (defaults to poll.scope).
+        method_id: Override for survey method (defaults to "99").
+        pipeline_run_id: Optional pipeline run ID for traceability.
+        survey_type: Optional parameter on forecast or poll
+    Returns:
+        Dictionary matching polls_raw table columns.
+    """
+    respondents, zeitraum = _normalize_respondents_zeitraum(poll.befragte, poll.zeitraum)
+    parties_dict = {p.name: p.value for p in poll.results}
+    return {
+        "publish_date": poll.datum,
+        "survey_date_start": survey_date_start,
+        "survey_date_end": survey_date_end,
+        "respondents": respondents,
+        "zeitraum": zeitraum,
+        "parties": json.dumps(parties_dict, sort_keys=True),
+        "institute_id": poll.institut,
+        "provider": provider or poll.data_source,
+        "tasker": poll.auftraggeber,
+        "source": source or "html_scraper",
+        "scope": poll.state,
+        "election_id": election_id or poll.scope,
+        "method_id": method_id or "99",
+        "date_downloaded": poll.scraped_at.isoformat(),
+        "worker": poll.worker,
+        "survey_type": survey_type or getattr(poll, "survey_type", None),
+        "pipeline_run_id": pipeline_run_id,
+    }
+
+
+def _raw_poll_exists(db: Session, raw_dict: dict[str, Any]) -> bool:
+    query = db.query(RawPoll)
+    for key in _DEDUP_KEYS:
+        column = getattr(RawPoll, key)
+        value = raw_dict.get(key)
+        query = query.filter(column.is_(None)) if value is None else query.filter(column == value)
+    return query.first() is not None
+
+
+def insert_new_polls(
+    db: Session,
+    polls: list[ScraperPoll],
+    provider: str,
+    source: str,
+    election_id: str,
+    method_id: str,
+    pipeline_run_id: str | None,
+) -> tuple[int, int]:
+    inserted = 0
+    skipped = 0
+
+    for poll in polls:
+        raw_dict = poll_to_raw_dict(
+            poll,
+            provider=provider,
+            source=source,
+            election_id=election_id,
+            method_id=method_id,
+            pipeline_run_id=pipeline_run_id,
+        )
+        if _raw_poll_exists(db, raw_dict):
+            skipped += 1
+            continue
+
+        db.add(RawPoll(**raw_dict))
+        inserted += 1
+
+    if inserted:
+        db.commit()
+
+    return inserted, skipped
+
+
+def raw_dict_to_poll(data: dict) -> BundElectionPoll:
+    """Convert polls_raw dict back to BundElectionPoll.
+    Args:
+        data: Dictionary from polls_raw table row.
+    Returns:
+        BundElectionPoll model instance.
+    """
+    parties_raw = data.get("parties")
+    if isinstance(parties_raw, str):
+        parties_dict = json.loads(parties_raw)
+    elif isinstance(parties_raw, dict):
+        parties_dict = parties_raw
+    else:
+        parties_dict = {}
+
+    raw_scraped_at = data.get("date_downloaded") or data.get("scraped_at")
+    if isinstance(raw_scraped_at, datetime):
+        scraped_at = raw_scraped_at
+    elif isinstance(raw_scraped_at, str):
+        scraped_at = _coerce_datetime(raw_scraped_at)
+    else:
+        scraped_at = datetime.now()
+
+    results = [
+        SourcePartyResult(name=name, value=str(value)) for name, value in parties_dict.items()
+    ]
+    return BundElectionPoll(
+        scraped_at=scraped_at,
+        data_source=data.get("provider") or data.get("data_source", ""),
+        worker=data.get("worker", ""),
+        scope=data.get("election_id", ""),
+        state=data.get("scope", ""),
+        institut=data.get("institute_id", ""),
+        auftraggeber=data.get("tasker"),
+        datum=data.get("publish_date", ""),
+        befragte=data.get("respondents", ""),
+        zeitraum=data.get("zeitraum", ""),
+        survey_type=data.get("survey_type"),
+        results=results,
+    )

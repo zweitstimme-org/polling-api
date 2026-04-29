@@ -11,6 +11,9 @@ router = APIRouter(prefix="/download")
 EXPORT_DIR = settings.export_dir
 DATA_DIR = settings.data_dir
 
+# TODO: Rework export generation and download payloads around the normalized
+# researcher-facing API shapes, especially the long-format observations dataset.
+
 
 @router.get("/json")
 def download_json():
