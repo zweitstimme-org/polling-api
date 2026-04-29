@@ -112,11 +112,12 @@ def db_export():
     """Export data to JSON, CSV, and Parquet files."""
     db = get_db()
     export_service = ExportService(db)
-    stats = export_service.export_all()
-    typer.echo(
-        f"✓ Exported {stats.polls} polls, {stats.poll_results} poll results, "
-        f"and {stats.raw_polls} raw polls to {settings.export_dir}"
-    )
+    counts = export_service.export_all()
+    typer.echo(f"✓ Exported to {settings.export_dir}:")
+    typer.echo(f"  polls: {counts['polls']}")
+    typer.echo(f"  poll_results: {counts['results']}")
+    typer.echo(f"  observations: {counts['observations']}")
+    typer.echo(f"  raw_polls: {counts['raw']}")
 
 
 @app.command(name="db:reset")
@@ -314,10 +315,10 @@ def pipeline_run(
         typer.echo("=== Running Export ===")
         typer.echo("")
         export_service = ExportService(db)
-        export_stats = export_service.export_all()
-        run_result.export_polls = export_stats.polls
-        run_result.export_poll_results = export_stats.poll_results
-        run_result.export_raw_polls = export_stats.raw_polls
+        export_counts = export_service.export_all()
+        run_result.export_polls = export_counts["polls"]
+        run_result.export_poll_results = export_counts["results"]
+        run_result.export_raw_polls = export_counts["raw"]
 
         typer.echo(
             f"✓ Exported {run_result.export_polls} polls,"
@@ -748,10 +749,10 @@ def data_archive(
 
     db = get_db()
     export_service = ExportService(db)
-    export_stats = export_service.export_all()
+    export_counts = export_service.export_all()
     typer.echo(
-        f"✓ Exported {export_stats.polls} polls, {export_stats.poll_results} poll results, "
-        f"and {export_stats.raw_polls} raw polls"
+        f"✓ Exported {export_counts['polls']} polls, {export_counts['results']} poll results, "
+        f"and {export_counts['raw']} raw polls"
     )
 
     typer.echo("\nCreating data archive...")
