@@ -1,5 +1,7 @@
 """Election-focused API routes."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import func
@@ -9,6 +11,7 @@ from pollingapi.database import get_db
 from pollingapi.models import Election, Poll
 
 router = APIRouter(prefix="/elections", tags=["elections"])
+DBSession = Annotated[Session, Depends(get_db)]
 
 
 class ElectionSummaryItem(BaseModel):
@@ -21,7 +24,7 @@ class ElectionSummaryItem(BaseModel):
 
 
 @router.get("", response_model=list[ElectionSummaryItem])
-def list_election_summaries(db: Session = Depends(get_db)):
+def list_election_summaries(db: DBSession):
     """List elections with poll counts and latest publish date."""
     rows = (
         db.query(
@@ -54,7 +57,7 @@ def list_election_summaries(db: Session = Depends(get_db)):
 
 
 @router.get("/{election_key}", response_model=ElectionSummaryItem)
-def get_election_summary(election_key: str, db: Session = Depends(get_db)):
+def get_election_summary(election_key: str, db: DBSession):
     """Get one election summary by ID."""
     row = (
         db.query(

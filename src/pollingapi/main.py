@@ -41,8 +41,11 @@ app = FastAPI(
     lifespan=lifespan,
     openapi_tags=[
         {"name": "polls", "description": "Cleaned, normalized polling data"},
+        {
+            "name": "observations",
+            "description": "Long-format poll-party observations for analysis",
+        },
         {"name": "raw-polls", "description": "Raw scraped rows (immutable source data)"},
-        {"name": "results", "description": "Flattened poll results with filters"},
         {"name": "reference", "description": "Reference/dictionary tables"},
         {"name": "elections", "description": "Election summaries and metadata"},
         {"name": "downloads", "description": "File exports (JSON/CSV/SQLite)"},
@@ -62,6 +65,7 @@ app.add_middleware(
 
 # Include v1 routers
 app.include_router(polls.router, prefix="/v1")
+app.include_router(polls.observations_router, prefix="/v1")
 app.include_router(polls.raw_router, prefix="/v1")
 app.include_router(polls.results_router, prefix="/v1")
 app.include_router(download.router, prefix="/v1", tags=["downloads"])
@@ -81,6 +85,7 @@ async def root():
         "api_base": "/v1",
         "endpoints": [
             "/v1/polls",
+            "/v1/observations",
             "/v1/raw-polls",
             "/v1/reference/all",
             "/v1/elections",

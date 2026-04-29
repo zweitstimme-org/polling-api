@@ -108,6 +108,49 @@ class TestPollsEndpoints:
         response = client.get("/v1/polls?date_from=2024-01-01&date_to=2024-12-31")
         assert response.status_code == 200
 
+    def test_list_polls_research_payload(self, client):
+        """Test cleaned polls expose traceable normalized metadata."""
+        response = client.get("/v1/polls?limit=1")
+        assert response.status_code == 200
+        item = response.json()["items"][0]
+        assert item["public_id"].startswith("C")
+        assert item["raw_public_id"].startswith("R")
+        assert "institute_key" in item
+        assert "election_key" in item
+        assert item["results"]
+        assert "party_key" in item["results"][0]
+        assert "party_short_name" in item["results"][0]
+
+    def test_list_polls_rejects_invalid_date_range(self, client):
+        """Test list polls validates date ranges."""
+        response = client.get("/v1/polls?date_from=2025-01-01&date_to=2024-01-01")
+        assert response.status_code == 400
+
+    def test_get_poll_by_public_id(self, client):
+        """Test single poll lookup by public id."""
+        public_id = client.get("/v1/polls?limit=1").json()["items"][0]["public_id"]
+        response = client.get(f"/v1/polls/{public_id}")
+        assert response.status_code == 200
+        assert response.json()["public_id"] == public_id
+
+    def test_get_poll_results(self, client):
+        """Test single poll result lookup."""
+        public_id = client.get("/v1/polls?limit=1").json()["items"][0]["public_id"]
+        response = client.get(f"/v1/polls/{public_id}/results")
+        assert response.status_code == 200
+        results = response.json()
+        assert results
+        assert {"party_key", "party_short_name", "percentage"} <= results[0].keys()
+
+    def test_list_polls_wide(self, client):
+        """Test wide poll rows expose party percentages by party key."""
+        response = client.get("/v1/polls/wide?limit=1")
+        assert response.status_code == 200
+        item = response.json()["items"][0]
+        assert item["public_id"].startswith("C")
+        assert isinstance(item["results"], dict)
+        assert item["results"]
+
 
 class TestRawPollsEndpoints:
     """Tests for raw polls API endpoints."""
@@ -128,12 +171,32 @@ class TestRawPollsEndpoints:
         data = response.json()
         assert data["meta"]["limit"] == 50
 
+    def test_get_raw_poll_by_public_id(self, client):
+        """Test raw poll lookup by public id."""
+        public_id = client.get("/v1/raw-polls?limit=1").json()["items"][0]["public_id"]
+        response = client.get(f"/v1/raw-polls/{public_id}")
+        assert response.status_code == 200
+        assert response.json()["public_id"] == public_id
+
 
 class TestResultsEndpoints:
     """Tests for results API endpoints."""
 
-    def test_list_results_empty(self, client):
-        """Test list results returns empty when no data."""
+    def test_list_observations(self, client):
+        """Test observations endpoint returns long-format analysis rows."""
+        response = client.get("/v1/observations?limit=5")
+        assert response.status_code == 200
+        data = response.json()
+        assert "items" in data
+        assert "meta" in data
+        assert data["items"]
+        item = data["items"][0]
+        assert item["poll_public_id"].startswith("C")
+        assert item["raw_public_id"].startswith("R")
+        assert {"party_key", "party_short_name", "percentage"} <= item.keys()
+
+    def test_list_results_alias(self, client):
+        """Test results alias returns observation payload."""
         response = client.get("/v1/results")
         assert response.status_code == 200
         data = response.json()
@@ -141,9 +204,12 @@ class TestResultsEndpoints:
         assert "meta" in data
 
     def test_list_results_with_party_filter(self, client):
-        """Test list results accepts party_id filter."""
-        response = client.get("/v1/results?party_id=1")
+        """Test list results accepts party key filter."""
+        response = client.get("/v1/results?party_key=CDU_CSU")
         assert response.status_code == 200
+        items = response.json()["items"]
+        assert items
+        assert {item["party_key"] for item in items} == {"CDU_CSU"}
 
 
 class TestDictionariesEndpoints:
@@ -158,6 +224,9 @@ class TestDictionariesEndpoints:
         """Test get parties endpoint."""
         response = client.get("/v1/reference/parties")
         assert response.status_code == 200
+        parties = response.json()
+        assert parties
+        assert {"key", "name", "short_name"} <= parties[0].keys()
 
     def test_get_methods(self, client):
         """Test get methods endpoint."""
