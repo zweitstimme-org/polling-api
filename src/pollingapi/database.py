@@ -1,5 +1,7 @@
 """Database configuration and connection management."""
 
+from contextlib import suppress
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
@@ -112,12 +114,8 @@ def _apply_schema_migrations():
 # Run schema migrations eagerly so any process that imports this module
 # (including test clients that mock init_db_async) always works with an
 # up-to-date schema on existing databases.
-try:
+with suppress(Exception):
     _apply_schema_migrations()
-except Exception:
-    # Never crash at import time — if the DB isn't reachable yet the explicit
-    # init_db / init_db_async calls will handle it.
-    pass
 
 
 def get_db():

@@ -174,9 +174,9 @@ pollingAPI/
 │   ├── cleaner/                  # ETL normalization pipeline
 │   │   ├── etl_pipeline.py
 │   │   ├── transforms/
-│   │   └── json_mappings.py
+│   │   └── steps/
 │   └── services/s3.py            # Archive upload/listing
-├── json/                         # Mapping dictionaries / reference ids
+├── json/                         # DAWUM reference snapshots / source dictionaries
 ├── data/                         # SQLite DB, logs, exports
 ├── tests/
 ├── .apiversion

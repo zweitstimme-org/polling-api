@@ -10,28 +10,6 @@ import pandas as pd
 from pollingapi.core import DATA_DIR
 
 
-def load_htlm_snapshot(worker, date_str, filename):
-    """Load html snapshot from disk
-
-    Args:
-        worker: worker_name
-        date_str: Date string
-        filename: Original filename
-    Returns:
-        Html Content as string, or none if not found
-    """
-    html_dir = DATA_DIR / worker / "html"
-    filepath = html_dir / filename
-
-    if not filepath.exists():
-        return None
-
-    with open(filepath, encoding="utf-8") as f:
-        return f.read()
-
-    pass
-
-
 def _sanitize_filename(name: str) -> str:
     """Sanitize string for use in filename."""
     return re.sub(r"[^\w\-_.]", "_", name)

@@ -1,7 +1,5 @@
 """Tests for timeframe normalization."""
 
-import pytest
-
 from pollingapi.cleaner.steps.normalize_timeframe import (
     TimeframeResultType,
     parse_timeframe,
