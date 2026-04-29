@@ -38,7 +38,7 @@ dependencies = [
     "boto3>=1.35.0",
     # Utilities
     "toml>=0.10.2",
-    "pyarrow>=23.0.0",
+    "pyarrow>=24.0.0",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.7.1",
     "mkdocs-minify-plugin>=0.8.0",
