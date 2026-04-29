@@ -7,6 +7,7 @@ from pollingapi.scraper.datamodel import (
     ElectionScope,
     GermanState,
     PartyResult,
+    SourcePartyResult,
 )
 from pollingapi.scraper.schemas import ALLOWED_POLL_COLUMNS, PollPayload, filter_poll_payloads
 from pollingapi.scraper.snapshots import (
@@ -25,7 +26,8 @@ __all__ = [
     "save_table_snapshot",
     "save_debug_snapshot",
     "BundElectionPoll",
-    "PartyResult",
+    "SourcePartyResult",
     "ElectionScope",
     "GermanState",
+    "PartyResult",
 ]

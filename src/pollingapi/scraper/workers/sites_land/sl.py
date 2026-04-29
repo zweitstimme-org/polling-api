@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from pollingapi.logging_config import get_logger
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.datamodel import GermanState, LandElectionPoll, PartyResult
+from pollingapi.scraper.datamodel import GermanState, LandElectionPoll, SourcePartyResult
 from pollingapi.scraper.insertion import insert_new_polls
 from pollingapi.scraper.snapshots import save_html_snapshot
 
@@ -67,14 +67,14 @@ class SLBaseScraper:
 
         return {headers[i]: self._normalize_text(cells[i].get_text()) for i in range(len(headers))}
 
-    def _extract_parties(self, row_data: dict[str, str]) -> list[PartyResult]:
-        parties: list[PartyResult] = []
+    def _extract_parties(self, row_data: dict[str, str]) -> list[SourcePartyResult]:
+        parties: list[SourcePartyResult] = []
         for key, value in row_data.items():
             if not key or key in self.META_KEYS:
                 continue
             if not value:
                 continue
-            parties.append(PartyResult(name=key, value=value))
+            parties.append(SourcePartyResult(name=key, value=value))
         return parties
 
     def parse(self, html: str) -> list[LandElectionPoll]:

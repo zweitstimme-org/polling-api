@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from pollingapi.models import RawPoll
-from pollingapi.scraper.datamodel import BundElectionPoll, LandElectionPoll, PartyResult
+from pollingapi.scraper.datamodel import BundElectionPoll, LandElectionPoll, SourcePartyResult
 
 ScraperPoll = BundElectionPoll | LandElectionPoll
 _DEDUP_KEYS = (
@@ -175,7 +175,9 @@ def raw_dict_to_poll(data: dict) -> BundElectionPoll:
     else:
         scraped_at = datetime.now()
 
-    results = [PartyResult(name=name, value=str(value)) for name, value in parties_dict.items()]
+    results = [
+        SourcePartyResult(name=name, value=str(value)) for name, value in parties_dict.items()
+    ]
     return BundElectionPoll(
         scraped_at=scraped_at,
         data_source=data.get("provider") or data.get("data_source", ""),
