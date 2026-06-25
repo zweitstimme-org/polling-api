@@ -129,9 +129,7 @@ def normalize_survey_dates(
         if result.is_single_date and result.start_date and not start_date:
             start_date = normalize_publish_date(result.start_date)
             # end_date remains None for single dates
-            start_date, end_date = _fix_inferred_years(
-                start_date, end_date, zeitraum, publish_date
-            )
+            start_date, end_date = _fix_inferred_years(start_date, end_date, zeitraum, publish_date)
             return start_date, end_date, should_ignore
 
         # Normal date range

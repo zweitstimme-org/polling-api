@@ -465,13 +465,17 @@ def list_observations(
     endpoint for R, Python/pandas, Stata, and similar workflows.
     """
     _validate_date_range(date_from, date_to)
-    query = db.query(PollResult).join(Poll).options(
-        joinedload(PollResult.party),
-        joinedload(PollResult.poll).joinedload(Poll.raw_poll),
-        joinedload(PollResult.poll).joinedload(Poll.institute),
-        joinedload(PollResult.poll).joinedload(Poll.provider),
-        joinedload(PollResult.poll).joinedload(Poll.election),
-        joinedload(PollResult.poll).joinedload(Poll.method),
+    query = (
+        db.query(PollResult)
+        .join(Poll)
+        .options(
+            joinedload(PollResult.party),
+            joinedload(PollResult.poll).joinedload(Poll.raw_poll),
+            joinedload(PollResult.poll).joinedload(Poll.institute),
+            joinedload(PollResult.poll).joinedload(Poll.provider),
+            joinedload(PollResult.poll).joinedload(Poll.election),
+            joinedload(PollResult.poll).joinedload(Poll.method),
+        )
     )
     query = _apply_poll_filters(
         query,

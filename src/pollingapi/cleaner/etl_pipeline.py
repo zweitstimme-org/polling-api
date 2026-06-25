@@ -44,6 +44,7 @@ from pollingapi.scraper.datamodel import (
 
 logger = get_logger(__name__)
 
+
 def normalize_raw_respondents_and_zeitraum(raw_poll: RawPoll) -> tuple[str | None, str | None]:
     """Return cleaner-facing respondents and timeframe without mutating RawPoll."""
     respondents = (raw_poll.respondents or "").strip() or None
