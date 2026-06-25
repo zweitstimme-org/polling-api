@@ -228,7 +228,9 @@ class DawumScraper:
         query = self.db.query(RawPoll)
         for key, value in dedup_values.items():
             column = getattr(RawPoll, key)
-            query = query.filter(column.is_(None)) if value is None else query.filter(column == value)
+            query = (
+                query.filter(column.is_(None)) if value is None else query.filter(column == value)
+            )
 
         return query.first() is not None
 

@@ -1,6 +1,5 @@
 """Tests for respondents parsing."""
 
-
 from pollingapi.cleaner.transforms.respondents import parse_respondents
 
 
