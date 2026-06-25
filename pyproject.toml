@@ -75,6 +75,8 @@ generate-hashes = true
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -92,12 +94,12 @@ ignore = [
     "UP007", # Use X | Y for type annotations
 ]
 
+[tool.ruff.lint.isort]
+known-first-party = ["pollingapi"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
-
-[tool.ruff.isort]
-known-first-party = ["pollingapi"]
 
 [tool.mypy]
 python_version = "3.12"
