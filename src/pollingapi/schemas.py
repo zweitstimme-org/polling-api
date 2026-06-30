@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -257,3 +257,47 @@ class HealthCheck(BaseModel):
     last_run_at: dt.datetime | None = None
     time_since_last_run_seconds: int | None = None
     checks: dict[str, list[dict[str, Any]]]
+
+
+class ValidationCheck(BaseModel):
+    """Result of one data validation check."""
+
+    passed: bool
+    severity: Literal["error", "warning"] = "error"
+    observed: Any | None = None
+    expected: str | None = None
+    message: str | None = None
+    affected_parties: list[str] = Field(default_factory=list)
+
+
+class DataValidation(BaseModel):
+    """Validation result for one cleaned poll."""
+
+    poll_id: int
+    public_id: str | None = None
+
+    party_percentage_range: ValidationCheck
+    result_sum_check: ValidationCheck
+    date_consistency: ValidationCheck
+    respondents_plausible: ValidationCheck
+    core_parties_present: ValidationCheck
+    institute_result_jump: ValidationCheck
+    scope_result_jump: ValidationCheck
+
+    valid: bool
+
+
+class DataValidationSummary(BaseModel):
+    """Summary of validation results for a poll collection."""
+
+    total_polls: int
+    valid_polls: int
+    invalid_polls: int
+    warning_polls: int
+
+
+class DataValidationResponse(BaseModel):
+    """Response schema for data validation reports."""
+
+    summary: DataValidationSummary
+    items: list[DataValidation] = Field(default_factory=list)

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from pollingapi.cleaner import run_cleaning_pipeline
 from pollingapi.core import PROJECT_ROOT, settings
+from pollingapi.data_validation import DataValidationService
 from pollingapi.database import SessionLocal, init_db, seed_all_from_json
 from pollingapi.logging_config import get_logger, setup_logging
 from pollingapi.notifications import PipelineRunResult, create_notification_manager
@@ -118,6 +119,38 @@ def db_export():
     typer.echo(f"  poll_results: {counts['results']}")
     typer.echo(f"  observations: {counts['observations']}")
     typer.echo(f"  raw_polls: {counts['raw']}")
+
+
+@app.command(name="validation:run")
+def validation_run(
+    limit: int | None = typer.Option(None, "--limit", "-l", help="Limit polls to validate"),
+    show: int = typer.Option(20, "--show", help="Number of invalid/warning polls to print"),
+):
+    """Run read-only data validation on cleaned polls."""
+    db = get_db()
+    service = DataValidationService(db)
+    report = service.run(limit=limit)
+    summary = report.summary
+
+    typer.echo("Data validation complete:")
+    typer.echo(f"  Total polls   : {summary.total_polls}")
+    typer.echo(f"  Valid polls   : {summary.valid_polls}")
+    typer.echo(f"  Invalid polls : {summary.invalid_polls}")
+    typer.echo(f"  Warning polls : {summary.warning_polls}")
+
+    flagged = [
+        item
+        for item in report.items
+        if not item.valid
+        or not item.institute_result_jump.passed
+        or not item.scope_result_jump.passed
+    ][:show]
+    if flagged:
+        typer.echo("")
+        typer.echo(f"First {len(flagged)} invalid/warning polls:")
+        for item in flagged:
+            status = "invalid" if not item.valid else "warning"
+            typer.echo(f"  {item.public_id or item.poll_id}: {status}")
 
 
 @app.command(name="db:reset")
