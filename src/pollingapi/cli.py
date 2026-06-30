@@ -125,11 +125,14 @@ def db_export():
 def validation_run(
     limit: int | None = typer.Option(None, "--limit", "-l", help="Limit polls to validate"),
     show: int = typer.Option(20, "--show", help="Number of invalid/warning polls to print"),
+    persist: bool = typer.Option(False, "--persist", help="Write results to poll_validations"),
 ):
-    """Run read-only data validation on cleaned polls."""
+    """Run data validation on cleaned polls."""
+    if persist:
+        init_db()
     db = get_db()
     service = DataValidationService(db)
-    report = service.run(limit=limit)
+    report = service.run(limit=limit, persist=persist)
     summary = report.summary
 
     typer.echo("Data validation complete:")
@@ -137,6 +140,8 @@ def validation_run(
     typer.echo(f"  Valid polls   : {summary.valid_polls}")
     typer.echo(f"  Invalid polls : {summary.invalid_polls}")
     typer.echo(f"  Warning polls : {summary.warning_polls}")
+    if persist:
+        typer.echo("  Persisted to  : poll_validations")
 
     flagged = [
         item
@@ -151,6 +156,47 @@ def validation_run(
         for item in flagged:
             status = "invalid" if not item.valid else "warning"
             typer.echo(f"  {item.public_id or item.poll_id}: {status}")
+
+
+@app.command(name="validation:inspect")
+def validation_inspect(
+    poll_identifier: str = typer.Argument(..., help="Poll id or public id, e.g. 1 or C00000001"),
+):
+    """Inspect persisted validation for one poll."""
+    db = get_db()
+    service = DataValidationService(db)
+    item = service.get_persisted(poll_identifier)
+    if item is None:
+        typer.echo(
+            "✗ Validation not found. Run: pollingapi validation:run --persist",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    typer.echo(f"Validation for {item.public_id or item.poll_id}")
+    typer.echo(f"  Poll id      : {item.poll_id}")
+    typer.echo(f"  Valid        : {item.valid}")
+    typer.echo(f"  Validated at : {item.validated_at}")
+    typer.echo("")
+    typer.echo("Checks:")
+    for name in (
+        "party_percentage_range",
+        "result_sum_check",
+        "date_consistency",
+        "respondents_plausible",
+        "core_parties_present",
+        "institute_result_jump",
+        "scope_result_jump",
+    ):
+        check = getattr(item, name)
+        status = "pass" if check.passed else check.severity
+        typer.echo(f"  {name}: {status}")
+        if not check.passed and check.message:
+            typer.echo(f"    {check.message}")
+        if not check.passed and check.observed is not None:
+            typer.echo(f"    observed: {check.observed}")
+        if not check.passed and check.affected_parties:
+            typer.echo(f"    parties : {', '.join(check.affected_parties)}")
 
 
 @app.command(name="db:reset")

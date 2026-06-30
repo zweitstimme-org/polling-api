@@ -273,8 +273,10 @@ class ValidationCheck(BaseModel):
 class DataValidation(BaseModel):
     """Validation result for one cleaned poll."""
 
+    id: int | None = None
     poll_id: int
     public_id: str | None = None
+    validated_at: dt.datetime | None = None
 
     party_percentage_range: ValidationCheck
     result_sum_check: ValidationCheck

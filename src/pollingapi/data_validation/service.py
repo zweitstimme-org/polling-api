@@ -1,15 +1,22 @@
-"""Read-only validation for cleaned polling data."""
+"""Validation orchestration for cleaned polling data."""
 
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass
-from typing import Any
 
 from sqlalchemy.orm import Session, joinedload
 
-from pollingapi.data_validation.validate_sum import validate_sum
-from pollingapi.models import Poll, PollResult
+from pollingapi.data_validation.validate_core_parties import validate_core_parties
+from pollingapi.data_validation.validate_dates import validate_dates
+from pollingapi.data_validation.validate_jumps import (
+    PreviousResult,
+    remember_poll_results,
+    validate_jump,
+)
+from pollingapi.data_validation.validate_percentage_range import validate_percentage_range
+from pollingapi.data_validation.validate_respondents import validate_respondents
+from pollingapi.data_validation.validate_sum import validate_result_sum
+from pollingapi.models import Poll, PollResult, PollValidation
 from pollingapi.schemas import (
     DataValidation,
     DataValidationResponse,
@@ -17,36 +24,26 @@ from pollingapi.schemas import (
     ValidationCheck,
 )
 
-SUM_TOLERANCE = 2.0
-JUMP_THRESHOLD = 4.0
-
-RESPONDENT_LIMITS = {
-    "TELEFONISCH": (700, 4000),
-    "ONLINE": (500, 6000),
-    "TELEFON_ONLINE": (700, 4000),
-    "PERSOENLICH": (500, 3000),
-    "UNBEKANNT": (500, 6000),
-}
-
-
-@dataclass(frozen=True)
-class PreviousResult:
-    """Previous comparable party result."""
-
-    poll_id: int
-    public_id: str | None
-    percentage: float
+CHECK_NAMES = (
+    "party_percentage_range",
+    "result_sum_check",
+    "date_consistency",
+    "respondents_plausible",
+    "core_parties_present",
+    "institute_result_jump",
+    "scope_result_jump",
+)
 
 
 class DataValidationService:
-    """Validate cleaned polls without writing to the database."""
+    """Validate cleaned polls and optionally persist validation rows."""
 
     def __init__(self, db: Session, today: dt.date | None = None):
         """Initialize the validation service."""
         self.db = db
         self.today = today or dt.date.today()
 
-    def run(self, limit: int | None = None) -> DataValidationResponse:
+    def run(self, limit: int | None = None, persist: bool = False) -> DataValidationResponse:
         """Validate cleaned polls and return a report."""
         polls = self._load_polls(limit=limit)
         previous_by_institute: dict[tuple[str, str], PreviousResult] = {}
@@ -60,7 +57,12 @@ class DataValidationService:
                 previous_by_scope=previous_by_scope,
             )
             items.append(item)
-            self._remember_poll_results(poll, previous_by_institute, previous_by_scope)
+            remember_poll_results(poll, previous_by_institute, previous_by_scope)
+            if persist:
+                self._upsert_validation(item)
+
+        if persist:
+            self.db.commit()
 
         valid_polls = sum(item.valid for item in items)
         warning_polls = sum(self._has_warning(item) for item in items)
@@ -71,6 +73,21 @@ class DataValidationService:
             warning_polls=warning_polls,
         )
         return DataValidationResponse(summary=summary, items=items)
+
+    def get_persisted(self, poll_identifier: str) -> DataValidation | None:
+        """Return a persisted validation report by poll id or public id."""
+        query = self.db.query(Poll).options(joinedload(Poll.validation))
+        if poll_identifier.upper().startswith("C"):
+            query = query.filter(Poll.public_id == poll_identifier.upper())
+        elif poll_identifier.isdigit():
+            query = query.filter(Poll.id == int(poll_identifier))
+        else:
+            return None
+
+        poll = query.first()
+        if not poll or not poll.validation:
+            return None
+        return self._from_model(poll.validation)
 
     def _load_polls(self, limit: int | None) -> list[Poll]:
         query = (
@@ -94,18 +111,18 @@ class DataValidationService:
         previous_by_scope: dict[tuple[str, str], PreviousResult],
     ) -> DataValidation:
         checks = {
-            "party_percentage_range": self._validate_percentage_range(poll),
-            "result_sum_check": self._validate_result_sum(poll),
-            "date_consistency": self._validate_dates(poll),
-            "respondents_plausible": self._validate_respondents(poll),
-            "core_parties_present": self._validate_core_parties(poll),
-            "institute_result_jump": self._validate_jump(
+            "party_percentage_range": validate_percentage_range(poll),
+            "result_sum_check": validate_result_sum(poll),
+            "date_consistency": validate_dates(poll, today=self.today),
+            "respondents_plausible": validate_respondents(poll),
+            "core_parties_present": validate_core_parties(poll),
+            "institute_result_jump": validate_jump(
                 poll,
                 previous_by_institute,
                 group_value=poll.institute_key,
                 group_name="institute",
             ),
-            "scope_result_jump": self._validate_jump(
+            "scope_result_jump": validate_jump(
                 poll,
                 previous_by_scope,
                 group_value=poll.scope,
@@ -120,178 +137,41 @@ class DataValidationService:
             **checks,
         )
 
-    def _validate_percentage_range(self, poll: Poll) -> ValidationCheck:
-        invalid_parties = [
-            result.party_key for result in poll.results if not 0 <= result.percentage <= 100
-        ]
-        return ValidationCheck(
-            passed=not invalid_parties and bool(poll.results),
-            observed={result.party_key: result.percentage for result in poll.results},
-            expected="Each party percentage must be between 0 and 100.",
-            message=None
-            if not invalid_parties and poll.results
-            else "One or more party percentages are outside the allowed range.",
-            affected_parties=invalid_parties,
+    def _upsert_validation(self, item: DataValidation) -> None:
+        validation = (
+            self.db.query(PollValidation).filter(PollValidation.poll_id == item.poll_id).first()
         )
+        if validation is None:
+            validation = PollValidation(poll_id=item.poll_id, validated_at=dt.datetime.now())
+            self.db.add(validation)
 
-    def _validate_result_sum(self, poll: Poll) -> ValidationCheck:
-        percentages = [result.percentage for result in poll.results]
-        total = sum(percentages)
-        passed = bool(percentages) and validate_sum(percentages, tolerance=SUM_TOLERANCE)
-        return ValidationCheck(
-            passed=passed,
-            observed=round(total, 2),
-            expected=f"Sum between {100 - SUM_TOLERANCE:.0f} and {100 + SUM_TOLERANCE:.0f}.",
-            message=None if passed else "Party results do not sum to 100 within tolerance.",
+        checks = self._checks(item)
+        validation.valid = item.valid
+        validation.validated_at = dt.datetime.now()
+        validation.error_count = sum(
+            not check.passed for check in checks if check.severity == "error"
         )
-
-    def _validate_dates(self, poll: Poll) -> ValidationCheck:
-        dates = [poll.survey_date_start, poll.survey_date_end, poll.publish_date]
-        if any(value is None for value in dates):
-            return ValidationCheck(
-                passed=False,
-                observed=self._date_observation(poll),
-                expected="survey_date_start <= survey_date_end <= publish_date; no future dates.",
-                message="One or more required dates are missing.",
-            )
-
-        start = poll.survey_date_start
-        end = poll.survey_date_end
-        publish = poll.publish_date
-        passed = start <= end <= publish and all(value <= self.today for value in dates if value)
-        return ValidationCheck(
-            passed=passed,
-            observed=self._date_observation(poll),
-            expected="survey_date_start <= survey_date_end <= publish_date; no future dates.",
-            message=None if passed else "Poll dates are inconsistent or in the future.",
+        validation.warning_count = sum(
+            not check.passed for check in checks if check.severity == "warning"
         )
+        validation.party_percentage_range = item.party_percentage_range.passed
+        validation.result_sum_check = item.result_sum_check.passed
+        validation.date_consistency = item.date_consistency.passed
+        validation.respondents_plausible = item.respondents_plausible.passed
+        validation.core_parties_present = item.core_parties_present.passed
+        validation.institute_result_jump = item.institute_result_jump.passed
+        validation.scope_result_jump = item.scope_result_jump.passed
+        validation.details = item.model_dump(mode="json")
 
-    def _validate_respondents(self, poll: Poll) -> ValidationCheck:
-        method_key = poll.method_key or "UNBEKANNT"
-        lower, upper = RESPONDENT_LIMITS.get(method_key, RESPONDENT_LIMITS["UNBEKANNT"])
-        passed = poll.respondents is not None and lower <= poll.respondents <= upper
-        return ValidationCheck(
-            passed=passed,
-            observed=poll.respondents,
-            expected=f"{method_key}: respondents between {lower} and {upper}.",
-            message=None if passed else "Respondent count is missing or outside plausible range.",
-        )
+    def _from_model(self, validation: PollValidation) -> DataValidation:
+        details = dict(validation.details)
+        details["id"] = validation.id
+        details["poll_id"] = validation.poll_id
+        details["validated_at"] = validation.validated_at
+        return DataValidation.model_validate(details)
 
-    def _validate_core_parties(self, poll: Poll) -> ValidationCheck:
-        expected = self._expected_core_parties(poll)
-        present = {result.party_key for result in poll.results}
-        missing = sorted(expected - present)
-        return ValidationCheck(
-            passed=not missing,
-            observed=sorted(present),
-            expected=f"Core parties present: {', '.join(sorted(expected))}.",
-            message=None if not missing else "One or more expected core parties are missing.",
-            affected_parties=missing,
-        )
-
-    def _validate_jump(
-        self,
-        poll: Poll,
-        previous_results: dict[tuple[str, str], PreviousResult],
-        *,
-        group_value: str | None,
-        group_name: str,
-    ) -> ValidationCheck:
-        if not group_value:
-            return ValidationCheck(
-                passed=True,
-                severity="warning",
-                expected=f"Previous poll with same {group_name}.",
-                message=f"No {group_name} value available for jump check.",
-            )
-
-        jumps: list[dict[str, Any]] = []
-        for result in poll.results:
-            previous = previous_results.get((group_value, result.party_key))
-            if not previous:
-                continue
-            jump = result.percentage - previous.percentage
-            if abs(jump) > JUMP_THRESHOLD:
-                jumps.append(
-                    {
-                        "party_key": result.party_key,
-                        "jump": round(jump, 2),
-                        "current": result.percentage,
-                        "previous": previous.percentage,
-                        "previous_poll_id": previous.poll_id,
-                        "previous_public_id": previous.public_id,
-                    }
-                )
-
-        return ValidationCheck(
-            passed=not jumps,
-            severity="warning",
-            observed=jumps,
-            expected=f"No party jump greater than {JUMP_THRESHOLD:.0f} percentage points.",
-            message=None if not jumps else f"Large party result jump within same {group_name}.",
-            affected_parties=[jump["party_key"] for jump in jumps],
-        )
-
-    def _expected_core_parties(self, poll: Poll) -> set[str]:
-        year = self._poll_year(poll)
-        parties = {"SPD"}
-
-        if poll.scope == "by":
-            parties.add("CSU")
-        elif poll.scope and poll.scope != "federal":
-            parties.add("CDU")
-        else:
-            parties.add("CDU_CSU")
-
-        if year is None or year <= 2021:
-            parties.add("FDP")
-        if year is None or year >= 1990:
-            parties.add("GRUENE")
-        if year is None or year >= 2014:
-            parties.add("AFD")
-        return parties
-
-    def _poll_year(self, poll: Poll) -> int | None:
-        if poll.publish_date:
-            return poll.publish_date.year
-        if poll.election and poll.election.year:
-            return poll.election.year
-        return None
-
-    def _remember_poll_results(
-        self,
-        poll: Poll,
-        previous_by_institute: dict[tuple[str, str], PreviousResult],
-        previous_by_scope: dict[tuple[str, str], PreviousResult],
-    ) -> None:
-        for result in poll.results:
-            previous = PreviousResult(
-                poll_id=poll.id,
-                public_id=poll.public_id,
-                percentage=result.percentage,
-            )
-            if poll.institute_key:
-                previous_by_institute[(poll.institute_key, result.party_key)] = previous
-            if poll.scope:
-                previous_by_scope[(poll.scope, result.party_key)] = previous
-
-    def _date_observation(self, poll: Poll) -> dict[str, str | None]:
-        return {
-            "survey_date_start": poll.survey_date_start.isoformat()
-            if poll.survey_date_start
-            else None,
-            "survey_date_end": poll.survey_date_end.isoformat() if poll.survey_date_end else None,
-            "publish_date": poll.publish_date.isoformat() if poll.publish_date else None,
-        }
+    def _checks(self, item: DataValidation) -> list[ValidationCheck]:
+        return [getattr(item, name) for name in CHECK_NAMES]
 
     def _has_warning(self, item: DataValidation) -> bool:
-        checks = [
-            item.party_percentage_range,
-            item.result_sum_check,
-            item.date_consistency,
-            item.respondents_plausible,
-            item.core_parties_present,
-            item.institute_result_jump,
-            item.scope_result_jump,
-        ]
-        return any(check.severity == "warning" and not check.passed for check in checks)
+        return any(check.severity == "warning" and not check.passed for check in self._checks(item))
