@@ -201,13 +201,13 @@ class PollValidation(Base):
     error_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     warning_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    party_percentage_range: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    result_sum_check: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    date_consistency: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    respondents_plausible: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    core_parties_present: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    institute_result_jump: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    scope_result_jump: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_party_percentage_range: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_result_sum_check: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_date_consistency: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_respondents_plausible: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_core_parties_present: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_institute_result_jump: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_scope_result_jump: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     details: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
 

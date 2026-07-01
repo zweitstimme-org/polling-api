@@ -42,8 +42,8 @@ def test_validation_accepts_plausible_poll() -> None:
     )
 
     assert result.valid is True
-    assert result.result_sum_check.passed is True
-    assert result.institute_result_jump.severity == "warning"
+    assert result.qc_result_sum_check.passed is True
+    assert result.qc_institute_result_jump.severity == "warning"
 
 
 def test_validation_marks_sum_failure_invalid() -> None:
@@ -74,8 +74,8 @@ def test_validation_marks_sum_failure_invalid() -> None:
     )
 
     assert result.valid is False
-    assert result.result_sum_check.passed is False
-    assert result.result_sum_check.observed == 85
+    assert result.qc_result_sum_check.passed is False
+    assert result.qc_result_sum_check.observed == 85
 
 
 def test_validation_can_be_persisted_without_changing_poll() -> None:
@@ -111,7 +111,7 @@ def test_validation_can_be_persisted_without_changing_poll() -> None:
     assert report.summary.valid_polls == 1
     assert validation.poll_id == poll.id
     assert validation.valid is True
-    assert validation.result_sum_check is True
+    assert validation.qc_result_sum_check is True
     assert validation.details["public_id"] == "C00000001"
     assert session.query(Poll).one().respondents == 1200
 

@@ -25,14 +25,24 @@ from pollingapi.schemas import (
 )
 
 CHECK_NAMES = (
-    "party_percentage_range",
-    "result_sum_check",
-    "date_consistency",
-    "respondents_plausible",
-    "core_parties_present",
-    "institute_result_jump",
-    "scope_result_jump",
+    "qc_party_percentage_range",
+    "qc_result_sum_check",
+    "qc_date_consistency",
+    "qc_respondents_plausible",
+    "qc_core_parties_present",
+    "qc_institute_result_jump",
+    "qc_scope_result_jump",
 )
+
+LEGACY_CHECK_NAMES = {
+    "party_percentage_range": "qc_party_percentage_range",
+    "result_sum_check": "qc_result_sum_check",
+    "date_consistency": "qc_date_consistency",
+    "respondents_plausible": "qc_respondents_plausible",
+    "core_parties_present": "qc_core_parties_present",
+    "institute_result_jump": "qc_institute_result_jump",
+    "scope_result_jump": "qc_scope_result_jump",
+}
 
 
 class DataValidationService:
@@ -111,18 +121,18 @@ class DataValidationService:
         previous_by_scope: dict[tuple[str, str], PreviousResult],
     ) -> DataValidation:
         checks = {
-            "party_percentage_range": validate_percentage_range(poll),
-            "result_sum_check": validate_result_sum(poll),
-            "date_consistency": validate_dates(poll, today=self.today),
-            "respondents_plausible": validate_respondents(poll),
-            "core_parties_present": validate_core_parties(poll),
-            "institute_result_jump": validate_jump(
+            "qc_party_percentage_range": validate_percentage_range(poll),
+            "qc_result_sum_check": validate_result_sum(poll),
+            "qc_date_consistency": validate_dates(poll, today=self.today),
+            "qc_respondents_plausible": validate_respondents(poll),
+            "qc_core_parties_present": validate_core_parties(poll),
+            "qc_institute_result_jump": validate_jump(
                 poll,
                 previous_by_institute,
                 group_value=poll.institute_key,
                 group_name="institute",
             ),
-            "scope_result_jump": validate_jump(
+            "qc_scope_result_jump": validate_jump(
                 poll,
                 previous_by_scope,
                 group_value=poll.scope,
@@ -154,17 +164,20 @@ class DataValidationService:
         validation.warning_count = sum(
             not check.passed for check in checks if check.severity == "warning"
         )
-        validation.party_percentage_range = item.party_percentage_range.passed
-        validation.result_sum_check = item.result_sum_check.passed
-        validation.date_consistency = item.date_consistency.passed
-        validation.respondents_plausible = item.respondents_plausible.passed
-        validation.core_parties_present = item.core_parties_present.passed
-        validation.institute_result_jump = item.institute_result_jump.passed
-        validation.scope_result_jump = item.scope_result_jump.passed
+        validation.qc_party_percentage_range = item.qc_party_percentage_range.passed
+        validation.qc_result_sum_check = item.qc_result_sum_check.passed
+        validation.qc_date_consistency = item.qc_date_consistency.passed
+        validation.qc_respondents_plausible = item.qc_respondents_plausible.passed
+        validation.qc_core_parties_present = item.qc_core_parties_present.passed
+        validation.qc_institute_result_jump = item.qc_institute_result_jump.passed
+        validation.qc_scope_result_jump = item.qc_scope_result_jump.passed
         validation.details = item.model_dump(mode="json")
 
     def _from_model(self, validation: PollValidation) -> DataValidation:
         details = dict(validation.details)
+        for old_name, new_name in LEGACY_CHECK_NAMES.items():
+            if old_name in details and new_name not in details:
+                details[new_name] = details.pop(old_name)
         details["id"] = validation.id
         details["poll_id"] = validation.poll_id
         details["validated_at"] = validation.validated_at

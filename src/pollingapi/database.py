@@ -35,6 +35,16 @@ def _apply_schema_migrations():
     so it is a no-op when the column/index already exists.  Only touches tables
     that actually exist — new databases are fully covered by create_all.
     """
+    validation_column_renames = {
+        "party_percentage_range": "qc_party_percentage_range",
+        "result_sum_check": "qc_result_sum_check",
+        "date_consistency": "qc_date_consistency",
+        "respondents_plausible": "qc_respondents_plausible",
+        "core_parties_present": "qc_core_parties_present",
+        "institute_result_jump": "qc_institute_result_jump",
+        "scope_result_jump": "qc_scope_result_jump",
+    }
+
     with engine.connect() as conn:
         # --- polls_raw incremental columns -----------------------------------
         if "sqlite" in settings.database_url:
@@ -64,6 +74,18 @@ def _apply_schema_migrations():
 
             if "survey_type" not in existing_columns:
                 conn.execute(text("ALTER TABLE polls_raw ADD COLUMN survey_type TEXT"))
+
+            if "poll_validations" in tables:
+                rows = conn.execute(text("PRAGMA table_info(poll_validations)")).fetchall()
+                validation_columns = {row[1] for row in rows}
+                for old_name, new_name in validation_column_renames.items():
+                    if old_name in validation_columns and new_name not in validation_columns:
+                        conn.execute(
+                            text(
+                                f"ALTER TABLE poll_validations RENAME COLUMN"
+                                f" {old_name} TO {new_name}"
+                            )
+                        )
 
             conn.commit()
         else:
@@ -107,6 +129,26 @@ def _apply_schema_migrations():
             )
             if survey_type_result.fetchone() is None:
                 conn.execute(text("ALTER TABLE polls_raw ADD COLUMN survey_type VARCHAR(100)"))
+
+            for old_name, new_name in validation_column_renames.items():
+                old_column = conn.execute(
+                    text(
+                        "SELECT column_name FROM information_schema.columns"
+                        " WHERE table_name = 'poll_validations' AND column_name = :column_name"
+                    ),
+                    {"column_name": old_name},
+                ).fetchone()
+                new_column = conn.execute(
+                    text(
+                        "SELECT column_name FROM information_schema.columns"
+                        " WHERE table_name = 'poll_validations' AND column_name = :column_name"
+                    ),
+                    {"column_name": new_name},
+                ).fetchone()
+                if old_column is not None and new_column is None:
+                    conn.execute(
+                        text(f"ALTER TABLE poll_validations RENAME COLUMN {old_name} TO {new_name}")
+                    )
 
             conn.commit()
 

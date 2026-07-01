@@ -147,8 +147,8 @@ def validation_run(
         item
         for item in report.items
         if not item.valid
-        or not item.institute_result_jump.passed
-        or not item.scope_result_jump.passed
+        or not item.qc_institute_result_jump.passed
+        or not item.qc_scope_result_jump.passed
     ][:show]
     if flagged:
         typer.echo("")
@@ -180,13 +180,13 @@ def validation_inspect(
     typer.echo("")
     typer.echo("Checks:")
     for name in (
-        "party_percentage_range",
-        "result_sum_check",
-        "date_consistency",
-        "respondents_plausible",
-        "core_parties_present",
-        "institute_result_jump",
-        "scope_result_jump",
+        "qc_party_percentage_range",
+        "qc_result_sum_check",
+        "qc_date_consistency",
+        "qc_respondents_plausible",
+        "qc_core_parties_present",
+        "qc_institute_result_jump",
+        "qc_scope_result_jump",
     ):
         check = getattr(item, name)
         status = "pass" if check.passed else check.severity

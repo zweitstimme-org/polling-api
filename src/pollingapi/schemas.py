@@ -278,13 +278,13 @@ class DataValidation(BaseModel):
     public_id: str | None = None
     validated_at: dt.datetime | None = None
 
-    party_percentage_range: ValidationCheck
-    result_sum_check: ValidationCheck
-    date_consistency: ValidationCheck
-    respondents_plausible: ValidationCheck
-    core_parties_present: ValidationCheck
-    institute_result_jump: ValidationCheck
-    scope_result_jump: ValidationCheck
+    qc_party_percentage_range: ValidationCheck
+    qc_result_sum_check: ValidationCheck
+    qc_date_consistency: ValidationCheck
+    qc_respondents_plausible: ValidationCheck
+    qc_core_parties_present: ValidationCheck
+    qc_institute_result_jump: ValidationCheck
+    qc_scope_result_jump: ValidationCheck
 
     valid: bool
 
