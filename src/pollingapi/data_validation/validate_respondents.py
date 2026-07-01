@@ -1,21 +1,15 @@
 """Validate respondent counts."""
 
+from pollingapi.data_validation.config import get_validation_config
 from pollingapi.models import Poll
 from pollingapi.schemas import ValidationCheck
-
-RESPONDENT_LIMITS = {
-    "TELEFONISCH": (700, 4000),
-    "ONLINE": (500, 6000),
-    "TELEFON_ONLINE": (700, 4000),
-    "PERSOENLICH": (500, 3000),
-    "UNBEKANNT": (500, 6000),
-}
 
 
 def validate_respondents(poll: Poll) -> ValidationCheck:
     """Validate respondent count against method-specific plausible bounds."""
+    config = get_validation_config()
     method_key = poll.method_key or "UNBEKANNT"
-    lower, upper = RESPONDENT_LIMITS.get(method_key, RESPONDENT_LIMITS["UNBEKANNT"])
+    lower, upper = config.respondent_limits.get(method_key, config.respondent_default)
     passed = poll.respondents is not None and lower <= poll.respondents <= upper
     return ValidationCheck(
         passed=passed,

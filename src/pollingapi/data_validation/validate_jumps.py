@@ -5,10 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from pollingapi.data_validation.config import get_validation_config
 from pollingapi.models import Poll
 from pollingapi.schemas import ValidationCheck
-
-JUMP_THRESHOLD = 4.0
 
 
 @dataclass(frozen=True)
@@ -28,6 +27,7 @@ def validate_jump(
     group_name: str,
 ) -> ValidationCheck:
     """Validate jumps against previous results in the same group."""
+    threshold = get_validation_config().jump_threshold
     if not group_value:
         return ValidationCheck(
             passed=True,
@@ -42,7 +42,7 @@ def validate_jump(
         if not previous:
             continue
         jump = result.percentage - previous.percentage
-        if abs(jump) > JUMP_THRESHOLD:
+        if abs(jump) > threshold:
             jumps.append(
                 {
                     "party_key": result.party_key,
@@ -58,7 +58,7 @@ def validate_jump(
         passed=not jumps,
         severity="warning",
         observed=jumps,
-        expected=f"No party jump greater than {JUMP_THRESHOLD:.0f} percentage points.",
+        expected=f"No party jump greater than {threshold:.0f} percentage points.",
         message=None if not jumps else f"Large party result jump within same {group_name}.",
         affected_parties=[jump["party_key"] for jump in jumps],
     )

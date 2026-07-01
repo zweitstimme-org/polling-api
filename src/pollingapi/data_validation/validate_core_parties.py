@@ -1,5 +1,6 @@
 """Validate expected core parties."""
 
+from pollingapi.data_validation.config import get_validation_config
 from pollingapi.models import Poll
 from pollingapi.schemas import ValidationCheck
 
@@ -20,6 +21,7 @@ def validate_core_parties(poll: Poll) -> ValidationCheck:
 
 def expected_core_parties(poll: Poll) -> set[str]:
     """Return expected core party keys for the poll."""
+    config = get_validation_config().core_parties
     year = _poll_year(poll)
     parties = {"SPD"}
 
@@ -30,11 +32,11 @@ def expected_core_parties(poll: Poll) -> set[str]:
     else:
         parties.add("CDU_CSU")
 
-    if year is None or year <= 2021:
+    if year is None or year <= config.fdp_until_year:
         parties.add("FDP")
-    if year is None or year >= 1990:
+    if year is None or year >= config.green_from_year:
         parties.add("GRUENE")
-    if year is None or year >= 2014:
+    if year is None or year >= config.afd_from_year:
         parties.add("AFD")
     return parties
 
