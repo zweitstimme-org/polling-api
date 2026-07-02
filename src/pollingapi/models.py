@@ -255,6 +255,14 @@ class PipelineRun(Base):
     export_poll_results: Mapped[int] = mapped_column(Integer, default=0)
     export_raw_polls: Mapped[int] = mapped_column(Integer, default=0)
 
+    # Validation stats
+    validation_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    validation_total_polls: Mapped[int] = mapped_column(Integer, default=0)
+    validation_valid_polls: Mapped[int] = mapped_column(Integer, default=0)
+    validation_invalid_polls: Mapped[int] = mapped_column(Integer, default=0)
+    validation_warning_polls: Mapped[int] = mapped_column(Integer, default=0)
+    validation_valid_share: Mapped[float | None] = mapped_column(Float, nullable=True)
+
     # Archive (optional)
     archive_created: Mapped[bool] = mapped_column(Boolean, default=False)
     archive_size_mb: Mapped[float | None] = mapped_column(Float, nullable=True)

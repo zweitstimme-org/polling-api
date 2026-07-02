@@ -57,6 +57,15 @@ class PipelineRunResult:
     export_poll_results: int = 0
     export_raw_polls: int = 0
 
+    # ------------------------------------------------------------------ validation
+    validation_status: str | None = None
+    validation_total_polls: int = 0
+    validation_valid_polls: int = 0
+    validation_invalid_polls: int = 0
+    validation_warning_polls: int = 0
+    validation_valid_share: float | None = None
+    validation_top_failures: list[dict[str, int | str]] = field(default_factory=list)
+
     # ------------------------------------------------------------------ archive (optional)
     archive_created: bool = False
     archive_size_mb: float | None = None

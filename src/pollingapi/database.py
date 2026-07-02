@@ -44,6 +44,14 @@ def _apply_schema_migrations():
         "institute_result_jump": "qc_institute_result_jump",
         "scope_result_jump": "qc_scope_result_jump",
     }
+    pipeline_run_columns = {
+        "validation_status": "TEXT",
+        "validation_total_polls": "INTEGER DEFAULT 0",
+        "validation_valid_polls": "INTEGER DEFAULT 0",
+        "validation_invalid_polls": "INTEGER DEFAULT 0",
+        "validation_warning_polls": "INTEGER DEFAULT 0",
+        "validation_valid_share": "FLOAT",
+    }
 
     with engine.connect() as conn:
         # --- polls_raw incremental columns -----------------------------------
@@ -84,6 +92,17 @@ def _apply_schema_migrations():
                             text(
                                 f"ALTER TABLE poll_validations RENAME COLUMN"
                                 f" {old_name} TO {new_name}"
+                            )
+                        )
+
+            if "pipeline_runs" in tables:
+                rows = conn.execute(text("PRAGMA table_info(pipeline_runs)")).fetchall()
+                pipeline_columns = {row[1] for row in rows}
+                for column_name, column_type in pipeline_run_columns.items():
+                    if column_name not in pipeline_columns:
+                        conn.execute(
+                            text(
+                                f"ALTER TABLE pipeline_runs ADD COLUMN {column_name} {column_type}"
                             )
                         )
 
@@ -148,6 +167,19 @@ def _apply_schema_migrations():
                 if old_column is not None and new_column is None:
                     conn.execute(
                         text(f"ALTER TABLE poll_validations RENAME COLUMN {old_name} TO {new_name}")
+                    )
+
+            for column_name, column_type in pipeline_run_columns.items():
+                column = conn.execute(
+                    text(
+                        "SELECT column_name FROM information_schema.columns"
+                        " WHERE table_name = 'pipeline_runs' AND column_name = :column_name"
+                    ),
+                    {"column_name": column_name},
+                ).fetchone()
+                if column is None:
+                    conn.execute(
+                        text(f"ALTER TABLE pipeline_runs ADD COLUMN {column_name} {column_type}")
                     )
 
             conn.commit()

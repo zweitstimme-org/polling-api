@@ -303,3 +303,36 @@ class DataValidationResponse(BaseModel):
 
     summary: DataValidationSummary
     items: list[DataValidation] = Field(default_factory=list)
+
+
+class ValidationCheckSummary(BaseModel):
+    """Aggregated pass/fail summary for one validation check."""
+
+    check: str
+    passed: int
+    failed: int
+    pass_share: float
+
+
+class ValidationFailureSummary(BaseModel):
+    """Failure count for one validation check."""
+
+    check: str
+    failed: int
+
+
+class ValidationReport(BaseModel):
+    """Aggregate validation quality report."""
+
+    status: Literal["pass", "warn", "fail"]
+    generated_at: dt.datetime
+    total_polls: int
+    valid_polls: int
+    invalid_polls: int
+    warning_polls: int
+    valid_share: float
+    invalid_share: float
+    warning_share: float
+    latest_validated_at: dt.datetime | None = None
+    checks: list[ValidationCheckSummary] = Field(default_factory=list)
+    top_failure_checks: list[ValidationFailureSummary] = Field(default_factory=list)

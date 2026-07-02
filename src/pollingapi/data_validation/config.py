@@ -23,6 +23,15 @@ class CorePartyConfig:
 
 
 @dataclass(frozen=True)
+class ReportingConfig:
+    """Thresholds for validation reporting and health status."""
+
+    min_valid_share: float = 0.90
+    max_warning_share: float = 0.10
+    max_invalid_share: float = 0.05
+
+
+@dataclass(frozen=True)
 class ValidationConfig:
     """Runtime configuration for data validation."""
 
@@ -31,6 +40,7 @@ class ValidationConfig:
     respondent_limits: dict[str, tuple[int, int]]
     respondent_default: tuple[int, int]
     core_parties: CorePartyConfig
+    reporting: ReportingConfig
 
 
 DEFAULT_RESPONDENT_LIMITS = {
@@ -48,6 +58,7 @@ def get_validation_config(config_path: Path = CONFIG_PATH) -> ValidationConfig:
     data = _load_toml(config_path)
     respondents = data.get("respondents", {})
     core_parties = data.get("core_parties", {})
+    reporting = data.get("reporting", {})
 
     default_limit = _read_limit(respondents.get("default"), (500, 6000))
     limits = {
@@ -64,6 +75,11 @@ def get_validation_config(config_path: Path = CONFIG_PATH) -> ValidationConfig:
             green_from_year=int(core_parties.get("green_from_year", 1990)),
             afd_from_year=int(core_parties.get("afd_from_year", 2014)),
             fdp_until_year=int(core_parties.get("fdp_until_year", 2021)),
+        ),
+        reporting=ReportingConfig(
+            min_valid_share=float(reporting.get("min_valid_share", 0.90)),
+            max_warning_share=float(reporting.get("max_warning_share", 0.10)),
+            max_invalid_share=float(reporting.get("max_invalid_share", 0.05)),
         ),
     )
 

@@ -8,6 +8,7 @@ from typing import cast
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from pollingapi.data_validation.report import ValidationReportService
 from pollingapi.data_validation.service import DataValidationService
 from pollingapi.database import Base
 from pollingapi.models import Poll, PollResult, PollValidation
@@ -119,3 +120,8 @@ def test_validation_can_be_persisted_without_changing_poll() -> None:
     assert persisted is not None
     assert persisted.poll_id == poll.id
     assert persisted.valid is True
+
+    report = ValidationReportService(session).build_report()
+    assert report.total_polls == 1
+    assert report.valid_share == 1.0
+    assert report.checks[0].check.startswith("qc_")

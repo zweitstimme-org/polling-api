@@ -16,3 +16,8 @@ UNBEKANNT = [500, 6000]
 green_from_year = 1990
 afd_from_year = 2014
 fdp_until_year = 2021
+
+[reporting]
+min_valid_share = 0.90
+max_warning_share = 0.10
+max_invalid_share = 0.05
