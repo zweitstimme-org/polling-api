@@ -58,6 +58,7 @@ class ExportService:
                 joinedload(Poll.provider),
                 joinedload(Poll.election),
                 joinedload(Poll.method),
+                joinedload(Poll.matching_poll),
                 joinedload(Poll.results).joinedload(PollResult.party),
             )
             .all()
@@ -83,6 +84,11 @@ class ExportService:
                     "election_type": poll.election.election_type if poll.election else None,
                     "method_key": poll.method_key,
                     "method_name": poll.method.name if poll.method else None,
+                    "matching_poll_id": poll.matching_poll_id,
+                    "matching_poll_public_id": (
+                        poll.matching_poll.public_id if poll.matching_poll else None
+                    ),
+                    "matching_status": poll.matching_status,
                     "scope": poll.scope,
                     "source": poll.source,
                 }

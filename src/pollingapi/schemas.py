@@ -98,6 +98,9 @@ class Poll(PollBase):
 
     id: int
     public_id: str | None = None
+    matching_poll_id: int | None = None
+    matching_poll_public_id: str | None = None
+    matching_status: str | None = None
     institute: str | None = None
     provider: str | None = None
     election: str | None = None
