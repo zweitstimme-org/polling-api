@@ -32,6 +32,18 @@ class ReportingConfig:
 
 
 @dataclass(frozen=True)
+class PollMatchingConfig:
+    """Thresholds for linking equivalent polls across providers."""
+
+    date_window_days: int = 7
+    primary_provider: str = "Wahlrecht.de"
+    secondary_provider: str = "DAWUM"
+    result_parties: tuple[str, ...] = ("CDU_CSU", "SPD")
+    max_party_delta: float = 1.0
+    max_total_delta: float = 1.5
+
+
+@dataclass(frozen=True)
 class ValidationConfig:
     """Runtime configuration for data validation."""
 
@@ -41,6 +53,7 @@ class ValidationConfig:
     respondent_default: tuple[int, int]
     core_parties: CorePartyConfig
     reporting: ReportingConfig
+    poll_matching: PollMatchingConfig
 
 
 DEFAULT_RESPONDENT_LIMITS = {
@@ -59,6 +72,7 @@ def get_validation_config(config_path: Path = CONFIG_PATH) -> ValidationConfig:
     respondents = data.get("respondents", {})
     core_parties = data.get("core_parties", {})
     reporting = data.get("reporting", {})
+    poll_matching = data.get("poll_matching", {})
 
     default_limit = _read_limit(respondents.get("default"), (500, 6000))
     limits = {
@@ -80,6 +94,14 @@ def get_validation_config(config_path: Path = CONFIG_PATH) -> ValidationConfig:
             min_valid_share=float(reporting.get("min_valid_share", 0.90)),
             max_warning_share=float(reporting.get("max_warning_share", 0.10)),
             max_invalid_share=float(reporting.get("max_invalid_share", 0.05)),
+        ),
+        poll_matching=PollMatchingConfig(
+            date_window_days=int(poll_matching.get("date_window_days", 7)),
+            primary_provider=str(poll_matching.get("primary_provider", "Wahlrecht.de")),
+            secondary_provider=str(poll_matching.get("secondary_provider", "DAWUM")),
+            result_parties=tuple(poll_matching.get("result_parties", ["CDU_CSU", "SPD"])),
+            max_party_delta=float(poll_matching.get("max_party_delta", 1.0)),
+            max_total_delta=float(poll_matching.get("max_total_delta", 1.5)),
         ),
     )
 

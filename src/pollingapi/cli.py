@@ -358,6 +358,8 @@ def pipeline_clean(
     typer.echo(f"  Updated: {stats['updated']}")
     typer.echo(f"  Skipped: {stats['skipped']}")
     typer.echo(f"  Errors: {stats['errors']}")
+    typer.echo(f"  Matched pairs: {stats['matched_pairs']}")
+    typer.echo(f"  Multiple matches: {stats['multiple_matches']}")
 
 
 @app.command(name="pipeline:run")
@@ -419,6 +421,8 @@ def pipeline_run(
         typer.echo(f"✓ Updated   : {run_result.etl_updated}")
         typer.echo(f"✓ Skipped   : {run_result.etl_skipped}")
         typer.echo(f"✓ Errors    : {run_result.etl_errors}")
+        typer.echo(f"✓ Matches   : {etl_stats['matched_pairs']}")
+        typer.echo(f"✓ Ambiguous : {etl_stats['multiple_matches']}")
         typer.echo("")
 
         # -------------------------------------------------------------- validation

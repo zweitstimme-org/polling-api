@@ -75,6 +75,9 @@ class PollItem(BaseModel):
     method_key: str | None = None
     method_name: str | None = None
     date_downloaded: str | None = None
+    matching_poll_id: int | None = None
+    matching_poll_public_id: str | None = None
+    matching_status: str | None = None
     results: list[PollResultItem] = Field(default_factory=list)
 
 
@@ -106,6 +109,9 @@ class ObservationItem(BaseModel):
     election_type: str | None = None
     method_key: str | None = None
     method_name: str | None = None
+    matching_poll_id: int | None = None
+    matching_poll_public_id: str | None = None
+    matching_status: str | None = None
     party_key: str
     party_short_name: str | None = None
     party_name: str | None = None
@@ -138,6 +144,9 @@ class WidePollItem(BaseModel):
     election_type: str | None = None
     method_key: str | None = None
     method_name: str | None = None
+    matching_poll_id: int | None = None
+    matching_poll_public_id: str | None = None
+    matching_status: str | None = None
     results: dict[str, float] = Field(default_factory=dict)
 
 
@@ -197,6 +206,7 @@ def _base_poll_query(db: Session):
         joinedload(Poll.provider),
         joinedload(Poll.election),
         joinedload(Poll.method),
+        joinedload(Poll.matching_poll),
         joinedload(Poll.results).joinedload(PollResult.party),
     )
 
@@ -276,6 +286,9 @@ def _serialize_poll(poll: Poll, include_results: bool) -> PollItem:
         method_key=poll.method_key,
         method_name=poll.method.name if poll.method else None,
         date_downloaded=poll.date_downloaded.isoformat() if poll.date_downloaded else None,
+        matching_poll_id=poll.matching_poll_id,
+        matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
+        matching_status=poll.matching_status,
         results=[_serialize_poll_result(r) for r in poll.results] if include_results else [],
     )
 
@@ -302,6 +315,9 @@ def _serialize_observation(result: PollResult) -> ObservationItem:
         election_type=poll.election.election_type if poll.election else None,
         method_key=poll.method_key,
         method_name=poll.method.name if poll.method else None,
+        matching_poll_id=poll.matching_poll_id,
+        matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
+        matching_status=poll.matching_status,
         party_key=result.party_key,
         party_short_name=party.short_name if party else None,
         party_name=party.name if party else None,
@@ -327,6 +343,9 @@ def _serialize_wide_poll(poll: Poll) -> WidePollItem:
         election_type=poll.election.election_type if poll.election else None,
         method_key=poll.method_key,
         method_name=poll.method.name if poll.method else None,
+        matching_poll_id=poll.matching_poll_id,
+        matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
+        matching_status=poll.matching_status,
         results={result.party_key: result.percentage for result in poll.results},
     )
 
@@ -506,6 +525,7 @@ def list_observations(
             joinedload(PollResult.poll).joinedload(Poll.provider),
             joinedload(PollResult.poll).joinedload(Poll.election),
             joinedload(PollResult.poll).joinedload(Poll.method),
+            joinedload(PollResult.poll).joinedload(Poll.matching_poll),
         )
     )
     query = _apply_poll_filters(
