@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import timedelta
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from pollingapi.data_validation.config import PollMatchingConfig, get_validation_config
@@ -37,6 +39,10 @@ class MatchCandidate:
     primary: Poll
     secondary: Poll
     score: float
+    result_delta: float
+    publish_date_delta: int
+    survey_date_matched: bool = False
+    respondents_matched: bool = False
 
 
 def link_matching_polls(db: Session, config: PollMatchingConfig | None = None) -> PollMatchStats:
@@ -56,13 +62,13 @@ def link_matching_polls(db: Session, config: PollMatchingConfig | None = None) -
     secondary_by_id = {poll.id: poll for poll in secondary_polls}
     accepted = _accepted_candidates(primary_polls, secondary_polls, config)
     by_primary = _group_by_primary(accepted)
-    by_secondary = _group_by_secondary(accepted)
 
     matched_pairs = 0
     no_match = 0
     multiple_matches = 0
     missing_results = 0
     ambiguous_secondary_ids: set[int] = set()
+    primary_choices: dict[int, MatchCandidate] = {}
 
     for primary in primary_polls:
         candidates = by_primary.get(primary.id, [])
@@ -75,38 +81,44 @@ def link_matching_polls(db: Session, config: PollMatchingConfig | None = None) -
             no_match += 1
             continue
 
-        conflicted_candidates = [
-            candidate
-            for candidate in candidates
-            if len(by_secondary.get(candidate.secondary.id, [])) > 1
-        ]
-        if len(candidates) > 1 or conflicted_candidates:
+        candidate = _unique_best_candidate(candidates, config.min_score_gap)
+        if candidate is None:
             primary.matching_status = MULTIPLE_MATCHES
             multiple_matches += 1
             ambiguous_ids = [candidate.secondary.id for candidate in candidates]
             ambiguous_secondary_ids.update(ambiguous_ids)
             logger.warning(
-                "Multiple matching polls for primary poll %s: secondary candidates=%s",
+                "Multiple equivalent matching polls for primary poll %s: secondary candidates=%s",
                 primary.id,
                 ambiguous_ids,
             )
             continue
 
-        candidate = candidates[0]
-        primary.matching_poll_id = candidate.secondary.id
-        primary.matching_status = MATCHED
-        candidate.secondary.matching_poll_id = primary.id
+        primary_choices[primary.id] = candidate
+
+    choices_by_secondary = _group_choices_by_secondary(primary_choices.values())
+    for secondary_id, choices in choices_by_secondary.items():
+        if len(choices) > 1:
+            ambiguous_secondary_ids.add(secondary_id)
+            multiple_matches += sum(
+                1 for choice in choices if choice.primary.matching_status != MULTIPLE_MATCHES
+            )
+            for choice in choices:
+                choice.primary.matching_poll_id = None
+                choice.primary.matching_status = MULTIPLE_MATCHES
+            logger.warning(
+                "Secondary poll %s has multiple chosen primary matches: primary candidates=%s",
+                secondary_id,
+                [candidate.primary.id for candidate in choices],
+            )
+            continue
+
+        candidate = choices[0]
+        candidate.primary.matching_poll_id = candidate.secondary.id
+        candidate.primary.matching_status = MATCHED
+        candidate.secondary.matching_poll_id = candidate.primary.id
         candidate.secondary.matching_status = MATCHED
         matched_pairs += 1
-
-    for secondary_id, candidates in by_secondary.items():
-        if len(candidates) > 1:
-            ambiguous_secondary_ids.add(secondary_id)
-            logger.warning(
-                "Secondary poll %s has multiple primary matches: primary candidates=%s",
-                secondary_id,
-                [candidate.primary.id for candidate in candidates],
-            )
 
     for secondary_id in ambiguous_secondary_ids:
         secondary = secondary_by_id[secondary_id]
@@ -144,7 +156,7 @@ def _provider_polls(db: Session, provider_name: str) -> list[Poll]:
         db.query(Poll)
         .join(Provider)
         .options(joinedload(Poll.results).joinedload(PollResult.party))
-        .filter(Provider.name == provider_name)
+        .filter(func.lower(Provider.name) == provider_name.lower())
         .filter(Poll.publish_date.is_not(None))
         .order_by(Poll.publish_date, Poll.id)
         .all()
@@ -169,6 +181,7 @@ def _accepted_candidates(
         lower = primary.publish_date - timedelta(days=config.date_window_days)
         upper = primary.publish_date + timedelta(days=config.date_window_days)
 
+        primary_candidates = []
         for secondary in secondary_polls:
             if not secondary.publish_date or not lower <= secondary.publish_date <= upper:
                 continue
@@ -183,13 +196,17 @@ def _accepted_candidates(
                 continue
 
             days_apart = abs((primary.publish_date - secondary.publish_date).days)
-            accepted.append(
+            primary_candidates.append(
                 MatchCandidate(
                     primary=primary,
                     secondary=secondary,
-                    score=float(days_apart) + score,
+                    score=_candidate_score(days_apart, score),
+                    result_delta=score,
+                    publish_date_delta=days_apart,
                 )
             )
+
+        accepted.extend(_apply_hierarchical_evidence(primary, primary_candidates, config))
 
     return sorted(accepted, key=lambda candidate: (candidate.score, candidate.secondary.id))
 
@@ -213,11 +230,85 @@ def _group_by_primary(candidates: list[MatchCandidate]) -> dict[int, list[MatchC
     return grouped
 
 
-def _group_by_secondary(candidates: list[MatchCandidate]) -> dict[int, list[MatchCandidate]]:
+def _group_choices_by_secondary(
+    candidates: Iterable[MatchCandidate],
+) -> dict[int, list[MatchCandidate]]:
     grouped: dict[int, list[MatchCandidate]] = defaultdict(list)
     for candidate in candidates:
         grouped[candidate.secondary.id].append(candidate)
     return grouped
+
+
+def _apply_hierarchical_evidence(
+    primary: Poll,
+    candidates: list[MatchCandidate],
+    config: PollMatchingConfig,
+) -> list[MatchCandidate]:
+    candidates = _prefer_matching_survey_dates(primary, candidates, config)
+    candidates = _prefer_matching_respondents(primary, candidates, config)
+    return candidates
+
+
+def _prefer_matching_survey_dates(
+    primary: Poll,
+    candidates: list[MatchCandidate],
+    config: PollMatchingConfig,
+) -> list[MatchCandidate]:
+    if not _has_survey_dates(primary):
+        return candidates
+
+    candidates_with_survey = [
+        candidate for candidate in candidates if _has_survey_dates(candidate.secondary)
+    ]
+    if not candidates_with_survey:
+        return candidates
+
+    matching = [
+        _replace_candidate(candidate, survey_date_matched=True)
+        for candidate in candidates_with_survey
+        if _survey_dates_match(primary, candidate.secondary, config.survey_date_tolerance_days)
+    ]
+    return matching
+
+
+def _prefer_matching_respondents(
+    primary: Poll,
+    candidates: list[MatchCandidate],
+    config: PollMatchingConfig,
+) -> list[MatchCandidate]:
+    if primary.respondents is None:
+        return candidates
+
+    candidates_with_respondents = [
+        candidate for candidate in candidates if candidate.secondary.respondents is not None
+    ]
+    if not candidates_with_respondents:
+        return candidates
+
+    matching = [
+        _replace_candidate(candidate, respondents_matched=True)
+        for candidate in candidates_with_respondents
+        if abs(primary.respondents - candidate.secondary.respondents) <= config.respondent_tolerance
+    ]
+    return matching
+
+
+def _unique_best_candidate(
+    candidates: list[MatchCandidate],
+    min_score_gap: float,
+) -> MatchCandidate | None:
+    if not candidates:
+        return None
+    sorted_candidates = sorted(
+        candidates, key=lambda candidate: (candidate.score, candidate.secondary.id)
+    )
+    if len(sorted_candidates) == 1:
+        return sorted_candidates[0]
+    best = sorted_candidates[0]
+    second_best = sorted_candidates[1]
+    if second_best.score - best.score >= min_score_gap:
+        return best
+    return None
 
 
 def _has_required_results(poll: Poll, party_keys: tuple[str, ...]) -> bool:
@@ -244,3 +335,40 @@ def _max_party_delta(primary: Poll, secondary: Poll, party_keys: tuple[str, ...]
 
 def _result_map(poll: Poll) -> dict[str, float]:
     return {result.party_key: result.percentage for result in poll.results}
+
+
+def _has_survey_dates(poll: Poll) -> bool:
+    return poll.survey_date_start is not None and poll.survey_date_end is not None
+
+
+def _survey_dates_match(primary: Poll, secondary: Poll, tolerance_days: int) -> bool:
+    if not _has_survey_dates(primary) or not _has_survey_dates(secondary):
+        return False
+    start_delta = abs((primary.survey_date_start - secondary.survey_date_start).days)
+    end_delta = abs((primary.survey_date_end - secondary.survey_date_end).days)
+    return start_delta <= tolerance_days and end_delta <= tolerance_days
+
+
+def _candidate_score(publish_date_delta: int, result_delta: float) -> float:
+    return result_delta + (publish_date_delta * 0.1)
+
+
+def _replace_candidate(
+    candidate: MatchCandidate,
+    *,
+    survey_date_matched: bool | None = None,
+    respondents_matched: bool | None = None,
+) -> MatchCandidate:
+    return MatchCandidate(
+        primary=candidate.primary,
+        secondary=candidate.secondary,
+        score=candidate.score,
+        result_delta=candidate.result_delta,
+        publish_date_delta=candidate.publish_date_delta,
+        survey_date_matched=(
+            candidate.survey_date_matched if survey_date_matched is None else survey_date_matched
+        ),
+        respondents_matched=(
+            candidate.respondents_matched if respondents_matched is None else respondents_matched
+        ),
+    )
