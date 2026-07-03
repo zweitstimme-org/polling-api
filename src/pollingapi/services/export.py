@@ -203,6 +203,7 @@ class ExportService:
                 "method_id": r.method_id,
                 "worker": r.worker,
                 "survey_type": r.survey_type,
+                "content_hash": r.content_hash,
                 "pipeline_run_id": r.pipeline_run_id,
                 "date_downloaded": r.date_downloaded,
             }

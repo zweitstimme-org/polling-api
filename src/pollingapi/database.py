@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 from pollingapi.core import settings
+from pollingapi.scraper.fingerprint import build_content_hash
 
 # Create base class for models
 Base = declarative_base()
@@ -26,6 +27,32 @@ async_engine = create_async_engine(
     echo=False,
 )
 AsyncSessionLocal = async_sessionmaker(async_engine, expire_on_commit=False)
+
+
+def _backfill_raw_content_hashes(conn) -> None:
+    """Populate missing raw poll content hashes without collapsing existing rows."""
+    rows = conn.execute(
+        text(
+            "SELECT id, publish_date, survey_date_start, survey_date_end, respondents,"
+            ' "Zeitraum" AS zeitraum, parties, institute_id, provider, tasker, source,'
+            " scope, election_id, method_id, worker, survey_type, content_hash"
+            " FROM polls_raw"
+        )
+    ).fetchall()
+    existing_hashes = {row._mapping["content_hash"] for row in rows if row._mapping["content_hash"]}
+
+    for row in rows:
+        raw = dict(row._mapping)
+        if raw.get("content_hash"):
+            continue
+        content_hash = build_content_hash(raw)
+        if content_hash in existing_hashes:
+            continue
+        conn.execute(
+            text("UPDATE polls_raw SET content_hash = :content_hash WHERE id = :id"),
+            {"content_hash": content_hash, "id": raw["id"]},
+        )
+        existing_hashes.add(content_hash)
 
 
 def _apply_schema_migrations():
@@ -64,6 +91,16 @@ def _apply_schema_migrations():
 
             if "survey_type" not in existing_columns:
                 conn.execute(text("ALTER TABLE polls_raw ADD COLUMN survey_type TEXT"))
+
+            if "content_hash" not in existing_columns:
+                conn.execute(text("ALTER TABLE polls_raw ADD COLUMN content_hash TEXT"))
+            _backfill_raw_content_hashes(conn)
+            conn.execute(
+                text(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ix_polls_raw_content_hash"
+                    " ON polls_raw (content_hash)"
+                )
+            )
 
             conn.commit()
         else:
@@ -107,6 +144,22 @@ def _apply_schema_migrations():
             )
             if survey_type_result.fetchone() is None:
                 conn.execute(text("ALTER TABLE polls_raw ADD COLUMN survey_type VARCHAR(100)"))
+
+            content_hash_result = conn.execute(
+                text(
+                    "SELECT column_name FROM information_schema.columns"
+                    " WHERE table_name = 'polls_raw' AND column_name = 'content_hash'"
+                )
+            )
+            if content_hash_result.fetchone() is None:
+                conn.execute(text("ALTER TABLE polls_raw ADD COLUMN content_hash VARCHAR(64)"))
+            _backfill_raw_content_hashes(conn)
+            conn.execute(
+                text(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS ix_polls_raw_content_hash"
+                    " ON polls_raw (content_hash)"
+                )
+            )
 
             conn.commit()
 

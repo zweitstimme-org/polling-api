@@ -167,6 +167,7 @@ class RawPollItem(BaseModel):
     method_id: str | None = None
     worker: str | None = None
     survey_type: str | None = None
+    content_hash: str | None = None
     pipeline_run_id: str | None = None
     date_downloaded: str | None = None
 
