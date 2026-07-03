@@ -36,11 +36,14 @@ class PollMatchingConfig:
     """Thresholds for linking equivalent polls across providers."""
 
     date_window_days: int = 7
-    primary_provider: str = "Wahlrecht.de"
+    primary_provider: str = "wahlrecht.de"
     secondary_provider: str = "DAWUM"
-    result_parties: tuple[str, ...] = ("CDU_CSU", "SPD")
+    result_parties: tuple[str, ...] = ("SPD", "AFD")
     max_party_delta: float = 1.0
     max_total_delta: float = 1.5
+    survey_date_tolerance_days: int = 0
+    respondent_tolerance: int = 0
+    min_score_gap: float = 0.01
 
 
 @dataclass(frozen=True)
@@ -97,11 +100,14 @@ def get_validation_config(config_path: Path = CONFIG_PATH) -> ValidationConfig:
         ),
         poll_matching=PollMatchingConfig(
             date_window_days=int(poll_matching.get("date_window_days", 7)),
-            primary_provider=str(poll_matching.get("primary_provider", "Wahlrecht.de")),
+            primary_provider=str(poll_matching.get("primary_provider", "wahlrecht.de")),
             secondary_provider=str(poll_matching.get("secondary_provider", "DAWUM")),
-            result_parties=tuple(poll_matching.get("result_parties", ["CDU_CSU", "SPD"])),
+            result_parties=tuple(poll_matching.get("result_parties", ["SPD", "AFD"])),
             max_party_delta=float(poll_matching.get("max_party_delta", 1.0)),
             max_total_delta=float(poll_matching.get("max_total_delta", 1.5)),
+            survey_date_tolerance_days=int(poll_matching.get("survey_date_tolerance_days", 0)),
+            respondent_tolerance=int(poll_matching.get("respondent_tolerance", 0)),
+            min_score_gap=float(poll_matching.get("min_score_gap", 0.01)),
         ),
     )
 
