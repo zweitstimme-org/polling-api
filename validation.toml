@@ -24,7 +24,7 @@ max_invalid_share = 0.05
 
 [poll_matching]
 date_window_days = 7
-primary_provider = "Wahlrecht.de"
+primary_provider = "wahlrecht.de"
 secondary_provider = "DAWUM"
 result_parties = ["CDU_CSU", "SPD"]
 max_party_delta = 1.0
