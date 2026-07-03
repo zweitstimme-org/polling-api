@@ -15,8 +15,10 @@ from pollingapi.api import (
     download,
     elections,
     polls,
+    validation,
 )
 from pollingapi.core import settings
+from pollingapi.data_validation import ValidationReportService
 from pollingapi.database import get_db, init_db_async
 from pollingapi.models import PipelineRun, Poll
 from pollingapi.schemas import HealthCheck
@@ -49,6 +51,7 @@ app = FastAPI(
         {"name": "reference", "description": "Reference/dictionary tables"},
         {"name": "elections", "description": "Election summaries and metadata"},
         {"name": "downloads", "description": "File exports (JSON/CSV/SQLite)"},
+        {"name": "validation", "description": "Persisted data quality validation reports"},
         {"name": "archive", "description": "Data archive downloads (S3)"},
         {"name": "health", "description": "Service heartbeat and dependency checks"},
     ],
@@ -72,6 +75,7 @@ app.include_router(download.router, prefix="/v1", tags=["downloads"])
 app.include_router(elections.router, prefix="/v1")
 app.include_router(dictionaries.router, prefix="/v1")
 app.include_router(data.router, prefix="/v1")
+app.include_router(validation.router, prefix="/v1")
 
 
 @app.get("/")
@@ -89,6 +93,7 @@ async def root():
             "/v1/raw-polls",
             "/v1/reference/all",
             "/v1/elections",
+            "/v1/validation/report",
             "/v1/download",
         ],
     }
@@ -108,6 +113,8 @@ async def health_check(db: Session = DB_SESSION_DEP):
     latest_run = db.query(PipelineRun).order_by(PipelineRun.finished_at.desc()).first()
 
     pipeline_check_status = "pass"
+    validation_health = ValidationReportService(db).health_check()
+    validation_check_status = validation_health["status"]
     last_run_time = None
     last_run_ago_seconds = None
     if latest_run and latest_run.finished_at:
@@ -117,7 +124,11 @@ async def health_check(db: Session = DB_SESSION_DEP):
     else:
         pipeline_check_status = "warn"
 
-    overall_status = "pass" if pipeline_check_status == "pass" else "warn"
+    overall_status = "pass"
+    if "fail" in {pipeline_check_status, validation_check_status}:
+        overall_status = "fail"
+    elif "warn" in {pipeline_check_status, validation_check_status}:
+        overall_status = "warn"
 
     return {
         "status": overall_status,
@@ -147,6 +158,20 @@ async def health_check(db: Session = DB_SESSION_DEP):
                     "observed_value": last_run_ago_seconds,
                     "observed_unit": "s",
                     "time": last_run_time,
+                }
+            ],
+            "validation:quality": [
+                {
+                    "status": validation_check_status,
+                    "component_type": "system",
+                    "component_id": "validation",
+                    "observed_value": validation_health["valid_share"],
+                    "observed_unit": "valid_share",
+                    "time": validation_health["latest_validated_at"],
+                    "total_polls": validation_health["total_polls"],
+                    "invalid_share": validation_health["invalid_share"],
+                    "warning_share": validation_health["warning_share"],
+                    "top_failure_checks": validation_health["top_failure_checks"],
                 }
             ],
         },

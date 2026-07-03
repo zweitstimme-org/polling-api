@@ -33,8 +33,12 @@ logger = get_logger(__name__)
 
 def _format_blocks(result: PipelineRunResult) -> list[dict]:
     """Build a Slack Block Kit message for the pipeline run result."""
+    validation_alert = result.validation_status in {"warn", "fail"}
     status_emoji = ":white_check_mark:" if result.success else ":rotating_light:"
     status_label = "SUCCESS" if result.success else "FAILURE"
+    if result.success and validation_alert:
+        status_emoji = ":warning:"
+        status_label = "WARNING"
 
     header_text = f"{status_emoji} pollingAPI Pipeline — {status_label}"
 
@@ -72,6 +76,22 @@ def _format_blocks(result: PipelineRunResult) -> list[dict]:
             ),
         },
     ]
+    if result.validation_status:
+        valid_share = (
+            f"{result.validation_valid_share:.1%}"
+            if result.validation_valid_share is not None
+            else "n/a"
+        )
+        fields.append(
+            {
+                "type": "mrkdwn",
+                "text": (
+                    f"*Validation*\n{result.validation_status.upper()}"
+                    f" | valid {valid_share}"
+                    f" | invalid {result.validation_invalid_polls}"
+                ),
+            }
+        )
 
     blocks: list[dict] = [
         {
@@ -102,6 +122,20 @@ def _format_blocks(result: PipelineRunResult) -> list[dict]:
                 "text": {
                     "type": "mrkdwn",
                     "text": f":x: *Failed scrapers*\n{failed_lines}",
+                },
+            }
+        )
+
+    if result.validation_top_failures:
+        failed_lines = "\n".join(
+            f"• *{item['check']}*: {item['failed']}" for item in result.validation_top_failures
+        )
+        blocks.append(
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f":warning: *Validation top failures*\n{failed_lines}",
                 },
             }
         )

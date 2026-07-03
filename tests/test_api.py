@@ -53,7 +53,7 @@ class TestHealthEndpoint:
         response = client.get("/health")
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] in {"pass", "warn"}
+        assert data["status"] in {"pass", "warn", "fail"}
         assert data["service"] == "pollingapi"
         assert data["version"] == expected_version
         assert data["release_id"] == expected_version
@@ -63,13 +63,14 @@ class TestHealthEndpoint:
         assert "checks" in data
         assert "database:polls" in data["checks"]
         assert "pipeline:last_run" in data["checks"]
+        assert "validation:quality" in data["checks"]
 
     def test_heartbeat_alias(self, client):
         """Test heartbeat alias endpoint returns status."""
         response = client.get("/heartbeat")
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] in {"pass", "warn"}
+        assert data["status"] in {"pass", "warn", "fail"}
 
 
 class TestPollsEndpoints:
@@ -237,3 +238,16 @@ class TestDictionariesEndpoints:
         """Test get elections endpoint."""
         response = client.get("/v1/reference/elections")
         assert response.status_code == 200
+
+
+class TestValidationEndpoints:
+    """Tests for validation report endpoints."""
+
+    def test_get_validation_report(self, client):
+        """Test validation report endpoint returns aggregate payload."""
+        response = client.get("/v1/validation/report")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] in {"pass", "warn", "fail"}
+        assert "checks" in data
+        assert "top_failure_checks" in data

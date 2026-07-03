@@ -126,7 +126,7 @@ lint:
 
 # Format code
 [group('qa: format')]
-fmt:
+format:
     uv run ruff format src/
 
 # Type check

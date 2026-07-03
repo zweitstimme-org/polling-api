@@ -23,7 +23,11 @@ The **main operational entrypoint** is:
 uv run pollingapi pipeline:run
 ```
 
-That command runs the full end-to-end process (all workers + cleaning + export + optional archive).
+That command runs the full end-to-end process:
+
+```text
+scrape -> clean -> validate -> export -> optional archive -> notifications
+```
 
 ## Dataflow at a glance
 
@@ -38,6 +42,9 @@ HTML workers + DAWUM API
           |
           v
    polls + poll_results + reference tables
+          |
+          v
+   data validation -> poll_validations
           |
           +--> export files in data/export/
           |
@@ -75,10 +82,22 @@ This is the recommended way to explore and validate the current development vers
 ### Pipeline (main)
 
 ```bash
-uv run pollingapi pipeline:run                 # Full run: scrape + clean + export + optional archive
+uv run pollingapi pipeline:run             # Full run: scrape + clean + validate + export + optional archive
 uv run pollingapi pipeline:clean           # Clean only (from polls_raw into normalized tables)
 uv run pollingapi pipeline:inspect <raw_id> # Inspect one raw row
 ```
+
+### Validation
+
+```bash
+uv run pollingapi validation:run                  # Run validation without writing results
+uv run pollingapi validation:run --persist        # Store results in poll_validations
+uv run pollingapi validation:inspect C00000001    # Inspect one persisted validation result
+uv run pollingapi validation:report               # Aggregate quality report
+```
+
+`pipeline:run` already runs validation with persistence. The standalone validation commands are useful
+for development, debugging, and re-running quality control after changing `validation.toml`.
 
 ### Scrapers
 
@@ -124,6 +143,8 @@ The app mounts versioned routes under `/v1`.
 - `GET /v1/polls/wide` cleaned polls with party percentages as dict
 - `GET /v1/polls/latest` latest polls optimized for app use
 - `GET /v1/polls/{id}` single poll by integer or public id
+- `GET /v1/polls/{id}/validation` persisted validation report for one poll
+- `GET /v1/validation/report` aggregate validation quality report
 - `GET /v1/observations` long-format poll-party observations for analysis
 - `GET /v1/results` backward-compatible alias for observations
 - `GET /v1/raw-polls` immutable raw scraped rows
@@ -140,9 +161,15 @@ The app mounts versioned routes under `/v1`.
 - total poll count in the database
 - last successful pipeline run timestamp
 - time since last run in seconds
-- component checks (`database:polls`, `pipeline:last_run`)
+- component checks (`database:polls`, `pipeline:last_run`, `validation:quality`)
 
 Pipeline runs are persisted in `pipeline_runs` for auditability and exposed through heartbeat freshness.
+The run record also stores a compact validation summary: validation status, validated poll count, valid
+poll count, invalid poll count, warning count, and valid share.
+
+The validation check in `/health` is based on persisted rows in `poll_validations`. It reports valid,
+invalid, and warning shares plus the top failing checks. If no validation data exists yet, validation
+health reports a warning instead of failing the API.
 
 ## Configuration
 
@@ -159,6 +186,17 @@ Common variables:
 - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_NAME`, `AWS_S3_REGION`,
   `AWS_S3_ENDPOINT_URL` (for archive upload)
 - `NTFY_URL`, `SLACK_WEBHOOK_URL` (optional notifications after pipeline runs)
+
+Validation thresholds are configured in `validation.toml` at the project root. This includes:
+
+- result sum tolerance
+- jump threshold
+- respondent limits by method
+- core-party year rules
+- reporting thresholds for `pass`, `warn`, and `fail`
+
+Slack and ntfy notifications include the validation summary from `pipeline:run`. If validation status
+is `warn` or `fail`, notifications include the top failing quality checks.
 
 ### Versioning
 
@@ -179,6 +217,7 @@ pollingAPI/
 │   ├── notifications/            # Notification managers (ntfy, Slack)
 │   ├── api/                     # Routers mounted at /v1
 │   │   ├── polls.py             # Polls, observations, raw polls
+│   │   ├── validation.py        # Validation quality report endpoint
 │   │   ├── dictionaries.py      # Reference lookup tables
 │   │   ├── elections.py        # Election metadata
 │   │   ├── download.py        # Dataset downloads
@@ -191,13 +230,14 @@ pollingAPI/
 │   │   └── workers/           # HTML scraper workers
 │   ├── cleaner/                 # ETL normalization pipeline
 │   │   ├── etl_pipeline.py
-│   │   ├── transforms/        # Data transformations (dates, results, references)
-│   │   └── validation/       # Data validation
+│   │   └── transforms/        # Data transformations (dates, results, references)
+│   ├── data_validation/         # Quality checks, persisted validation, reports
 │   └── services/              # Export and S3 services
 ├── json/                      # Reference snapshots and dictionaries
 ├── data/                      # SQLite DB, logs, exports
 ├── tests/
 ├── .apiversion
+├── validation.toml            # Validation thresholds and reporting limits
 └── pyproject.toml
 ```
 
@@ -222,4 +262,5 @@ uv run pytest tests/
 - `pollingapi` and `zweitstimme` are both installed CLI entrypoints.
 - `pipeline:run` is designed for repeatable scheduled execution (cron/systemd/CI).
 - Raw rows remain in `polls_raw`; normalization writes to `polls` and `poll_results`.
+- Validation writes only to `poll_validations` and does not change source poll rows.
 - Treat this README as a **local development guide** first; production hardening docs will follow.

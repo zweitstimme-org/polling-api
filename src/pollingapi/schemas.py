@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -257,3 +257,82 @@ class HealthCheck(BaseModel):
     last_run_at: dt.datetime | None = None
     time_since_last_run_seconds: int | None = None
     checks: dict[str, list[dict[str, Any]]]
+
+
+class ValidationCheck(BaseModel):
+    """Result of one data validation check."""
+
+    passed: bool
+    severity: Literal["error", "warning"] = "error"
+    observed: Any | None = None
+    expected: str | None = None
+    message: str | None = None
+    affected_parties: list[str] = Field(default_factory=list)
+
+
+class DataValidation(BaseModel):
+    """Validation result for one cleaned poll."""
+
+    id: int | None = None
+    poll_id: int
+    public_id: str | None = None
+    validated_at: dt.datetime | None = None
+
+    qc_party_percentage_range: ValidationCheck
+    qc_result_sum_check: ValidationCheck
+    qc_date_consistency: ValidationCheck
+    qc_respondents_plausible: ValidationCheck
+    qc_core_parties_present: ValidationCheck
+    qc_institute_result_jump: ValidationCheck
+    qc_scope_result_jump: ValidationCheck
+
+    valid: bool
+
+
+class DataValidationSummary(BaseModel):
+    """Summary of validation results for a poll collection."""
+
+    total_polls: int
+    valid_polls: int
+    invalid_polls: int
+    warning_polls: int
+
+
+class DataValidationResponse(BaseModel):
+    """Response schema for data validation reports."""
+
+    summary: DataValidationSummary
+    items: list[DataValidation] = Field(default_factory=list)
+
+
+class ValidationCheckSummary(BaseModel):
+    """Aggregated pass/fail summary for one validation check."""
+
+    check: str
+    passed: int
+    failed: int
+    pass_share: float
+
+
+class ValidationFailureSummary(BaseModel):
+    """Failure count for one validation check."""
+
+    check: str
+    failed: int
+
+
+class ValidationReport(BaseModel):
+    """Aggregate validation quality report."""
+
+    status: Literal["pass", "warn", "fail"]
+    generated_at: dt.datetime
+    total_polls: int
+    valid_polls: int
+    invalid_polls: int
+    warning_polls: int
+    valid_share: float
+    invalid_share: float
+    warning_share: float
+    latest_validated_at: dt.datetime | None = None
+    checks: list[ValidationCheckSummary] = Field(default_factory=list)
+    top_failure_checks: list[ValidationFailureSummary] = Field(default_factory=list)

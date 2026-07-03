@@ -77,6 +77,27 @@ def _format_message(result: PipelineRunResult, title_prefix: str) -> str:
         f"  Skipped  : {result.etl_skipped}  |  Errors : {result.etl_errors}",
     ]
 
+    # ------------------------------------------------------------------ validation
+    if result.validation_status:
+        valid_share = (
+            f"{result.validation_valid_share:.1%}"
+            if result.validation_valid_share is not None
+            else "n/a"
+        )
+        lines += [
+            "",
+            "--- Validation ---",
+            f"  Status   : {result.validation_status.upper()}",
+            f"  Valid    : {result.validation_valid_polls}/{result.validation_total_polls}"
+            f" ({valid_share})",
+            f"  Invalid  : {result.validation_invalid_polls}",
+            f"  Warnings : {result.validation_warning_polls}",
+        ]
+        if result.validation_top_failures:
+            lines.append("  Top failures:")
+            for item in result.validation_top_failures:
+                lines.append(f"    • {item['check']}: {item['failed']}")
+
     # ------------------------------------------------------------------ export
     lines += [
         "",
@@ -133,10 +154,18 @@ class NtfyNotifier(BaseNotifier):
         status = "SUCCESS" if result.success else "FAILURE"
         title = f"[{self._title_prefix}] Pipeline {status}"
         body = _format_message(result, self._title_prefix)
-        priority = _PRIORITY_URGENT if not result.success else _PRIORITY_DEFAULT
+        validation_alert = result.validation_status in {"warn", "fail"}
+        if not result.success:
+            priority = _PRIORITY_URGENT
+        elif validation_alert:
+            priority = _PRIORITY_HIGH
+        else:
+            priority = _PRIORITY_DEFAULT
 
         # Tags: white_check_mark on success, rotating_light on failure
-        tags = "white_check_mark" if result.success else "rotating_light,skull"
+        tags = "warning" if validation_alert and result.success else "white_check_mark"
+        if not result.success:
+            tags = "rotating_light,skull"
 
         try:
             data = body.encode("utf-8")

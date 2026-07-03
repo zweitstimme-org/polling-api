@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import Any
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     Date,
     DateTime,
@@ -164,6 +166,9 @@ class Poll(Base):
     results: Mapped[list[PollResult]] = relationship(
         "PollResult", back_populates="poll", cascade="all, delete-orphan"
     )
+    validation: Mapped[PollValidation | None] = relationship(
+        "PollValidation", back_populates="poll", cascade="all, delete-orphan"
+    )
 
 
 class PollResult(Base):
@@ -181,6 +186,32 @@ class PollResult(Base):
     party: Mapped[Party] = relationship("Party", back_populates="poll_results")
 
     __table_args__ = (UniqueConstraint("poll_id", "party_key", name="uix_poll_party"),)
+
+
+class PollValidation(Base):
+    """Persisted validation report for one cleaned poll."""
+
+    __tablename__ = "poll_validations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    poll_id: Mapped[int] = mapped_column(ForeignKey("polls.id"), unique=True, index=True)
+    validated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    valid: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    error_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    warning_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    qc_party_percentage_range: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_result_sum_check: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_date_consistency: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_respondents_plausible: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_core_parties_present: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_institute_result_jump: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    qc_scope_result_jump: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    details: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+    poll: Mapped[Poll] = relationship("Poll", back_populates="validation")
 
 
 class PipelineRun(Base):
@@ -223,6 +254,14 @@ class PipelineRun(Base):
     export_polls: Mapped[int] = mapped_column(Integer, default=0)
     export_poll_results: Mapped[int] = mapped_column(Integer, default=0)
     export_raw_polls: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Validation stats
+    validation_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    validation_total_polls: Mapped[int] = mapped_column(Integer, default=0)
+    validation_valid_polls: Mapped[int] = mapped_column(Integer, default=0)
+    validation_invalid_polls: Mapped[int] = mapped_column(Integer, default=0)
+    validation_warning_polls: Mapped[int] = mapped_column(Integer, default=0)
+    validation_valid_share: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Archive (optional)
     archive_created: Mapped[bool] = mapped_column(Boolean, default=False)
