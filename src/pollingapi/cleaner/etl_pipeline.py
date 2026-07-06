@@ -12,6 +12,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from pollingapi.cleaner.fingerprint import build_poll_fingerprint
 from pollingapi.cleaner.transforms.dates import normalize_publish_date, normalize_survey_dates
 from pollingapi.cleaner.transforms.references import (
     normalized_scope,
@@ -169,6 +170,15 @@ def find_existing_poll(
     return db.query(Poll).filter(Poll.raw_id == raw_id).first()
 
 
+def find_existing_poll_by_fingerprint(db: Session, fingerprint: str) -> Poll | None:
+    """Find an existing cleaned poll by deterministic cleaned fingerprint."""
+    return db.query(Poll).filter(Poll.fingerprint == fingerprint).first()
+
+
+def _results_by_party_key(results: list[DomainPartyResult]) -> dict[str, float]:
+    return {enum_key(result.party): result.value for result in results}
+
+
 def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool]:
     """Clean a single raw poll and return cleaned poll.
 
@@ -238,8 +248,22 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool
         # Classify election/scope using declared datamodel definitions
         election = get_or_create_election(db, raw_poll.scope or "")
         canonical_scope = normalized_scope(raw_poll.scope)
+        method_key = method.key if method else None
+        results_by_party_key = _results_by_party_key(valid_results)
+        fingerprint = build_poll_fingerprint(
+            publish_date=publish_date,
+            survey_date_start=survey_start,
+            survey_date_end=survey_end,
+            respondents=respondents_count,
+            institute_key=institute.key,
+            provider_name=provider.name,
+            source=raw_poll.source,
+            method_key=method_key,
+            election_key=election.key,
+            scope=canonical_scope,
+            results=results_by_party_key,
+        )
 
-        # Check for duplicate (include provider to distinguish between sources)
         existing = find_existing_poll(db, raw_poll.id)
 
         if existing:
@@ -247,6 +271,17 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool
             is_new = False
             logger.debug(f"Updating existing poll: {poll.id}")
         else:
+            duplicate = find_existing_poll_by_fingerprint(db, fingerprint)
+            if duplicate:
+                raw_poll.duplicate_of_poll_id = duplicate.id
+                db.flush()
+                logger.info(
+                    "Skipping raw poll %s: duplicate of cleaned poll %s by fingerprint",
+                    raw_poll.id,
+                    duplicate.public_id or duplicate.id,
+                )
+                return None, False
+
             poll = Poll()
             is_new = True
             logger.debug(f"Creating new poll from raw_id: {raw_poll.id}")
@@ -259,10 +294,11 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool
         poll.respondents = respondents_count
         poll.institute_key = institute.key
         poll.provider_id = provider.id
-        poll.method_key = method.key if method else None
+        poll.method_key = method_key
         poll.election_key = election.key
         poll.source = raw_poll.source
         poll.scope = canonical_scope
+        poll.fingerprint = fingerprint
 
         # Parse date downloaded
         if raw_poll.date_downloaded:
@@ -381,6 +417,7 @@ def run_cleaning_pipeline(
             db.query(RawPoll)
             .outerjoin(Poll, Poll.raw_id == RawPoll.id)
             .filter(Poll.id.is_(None))
+            .filter(RawPoll.duplicate_of_poll_id.is_(None))
             .order_by(RawPoll.id)
         )
 

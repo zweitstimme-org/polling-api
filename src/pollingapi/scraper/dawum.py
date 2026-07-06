@@ -12,7 +12,6 @@ from pollingapi.core import DATA_DIR
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
-from pollingapi.scraper.fingerprint import build_content_hash
 from pollingapi.scraper.schemas import filter_poll_payloads
 
 
@@ -186,34 +185,29 @@ class DawumScraper:
 
     def _raw_poll_from_payload(self, payload: dict[str, Any]) -> RawPoll:
         """Create a RawPoll row from a normalized DAWUM payload."""
-        parties = self._parties_json(payload.get("parties"))
-        raw_dict = {
-            "publish_date": payload.get("publish_date"),
-            "survey_date_start": payload.get("survey_date_start"),
-            "survey_date_end": payload.get("survey_date_end"),
-            "respondents": payload.get("respondents"),
-            "zeitraum": payload.get("zeitraum"),
-            "parties": parties,
-            "institute_id": payload.get("institute_id"),
-            "provider": payload.get("provider"),
-            "tasker": payload.get("tasker"),
-            "source": payload.get("source"),
-            "scope": payload.get("scope"),
-            "election_id": payload.get("election_id"),
-            "method_id": payload.get("method_id"),
-            "worker": payload.get("worker"),
-            "survey_type": payload.get("survey_type"),
-            "date_downloaded": payload.get("date_downloaded"),
-            "pipeline_run_id": payload.get("pipeline_run_id"),
-        }
-        raw_dict["content_hash"] = build_content_hash(raw_dict)
         return RawPoll(
-            **raw_dict,
+            publish_date=payload.get("publish_date"),
+            survey_date_start=payload.get("survey_date_start"),
+            survey_date_end=payload.get("survey_date_end"),
+            respondents=payload.get("respondents"),
+            zeitraum=payload.get("zeitraum"),
+            parties=self._parties_json(payload.get("parties")),
+            institute_id=payload.get("institute_id"),
+            provider=payload.get("provider"),
+            tasker=payload.get("tasker"),
+            source=payload.get("source"),
+            scope=payload.get("scope"),
+            election_id=payload.get("election_id"),
+            method_id=payload.get("method_id"),
+            worker=payload.get("worker"),
+            survey_type=payload.get("survey_type"),
+            date_downloaded=payload.get("date_downloaded"),
+            pipeline_run_id=payload.get("pipeline_run_id"),
         )
 
     def _check_duplicate(self, payload: dict[str, Any]) -> bool:
         """Check if a poll already exists in the database."""
-        raw_dict = {
+        dedup_values = {
             "publish_date": payload.get("publish_date"),
             "survey_date_start": payload.get("survey_date_start"),
             "survey_date_end": payload.get("survey_date_end"),
@@ -230,10 +224,15 @@ class DawumScraper:
             "worker": payload.get("worker"),
             "survey_type": payload.get("survey_type"),
         }
-        content_hash = build_content_hash(raw_dict)
-        return (
-            self.db.query(RawPoll).filter(RawPoll.content_hash == content_hash).first() is not None
-        )
+
+        query = self.db.query(RawPoll)
+        for key, value in dedup_values.items():
+            column = getattr(RawPoll, key)
+            query = (
+                query.filter(column.is_(None)) if value is None else query.filter(column == value)
+            )
+
+        return query.first() is not None
 
     def _new_payloads(self, payloads: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Return only payloads that are not already present in polls_raw."""

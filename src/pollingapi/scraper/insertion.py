@@ -9,9 +9,25 @@ from sqlalchemy.orm import Session
 
 from pollingapi.models import RawPoll
 from pollingapi.scraper.datamodel import BundElectionPoll, LandElectionPoll, SourcePartyResult
-from pollingapi.scraper.fingerprint import build_content_hash
 
 ScraperPoll = BundElectionPoll | LandElectionPoll
+_DEDUP_KEYS = (
+    "publish_date",
+    "survey_date_start",
+    "survey_date_end",
+    "respondents",
+    "zeitraum",
+    "parties",
+    "institute_id",
+    "provider",
+    "tasker",
+    "source",
+    "scope",
+    "election_id",
+    "method_id",
+    "worker",
+    "survey_type",
+)
 
 
 def _coerce_datetime(value: datetime | str) -> datetime:
@@ -72,7 +88,7 @@ def poll_to_raw_dict(
     """
     respondents, zeitraum = _normalize_respondents_zeitraum(poll.befragte, poll.zeitraum)
     parties_dict = {p.name: p.value for p in poll.results}
-    raw_dict = {
+    return {
         "publish_date": poll.datum,
         "survey_date_start": survey_date_start,
         "survey_date_end": survey_date_end,
@@ -91,15 +107,15 @@ def poll_to_raw_dict(
         "survey_type": survey_type or getattr(poll, "survey_type", None),
         "pipeline_run_id": pipeline_run_id,
     }
-    raw_dict["content_hash"] = build_content_hash(raw_dict)
-    return raw_dict
 
 
 def _raw_poll_exists(db: Session, raw_dict: dict[str, Any]) -> bool:
-    content_hash = raw_dict.get("content_hash")
-    if not content_hash:
-        content_hash = build_content_hash(raw_dict)
-    return db.query(RawPoll).filter(RawPoll.content_hash == content_hash).first() is not None
+    query = db.query(RawPoll)
+    for key in _DEDUP_KEYS:
+        column = getattr(RawPoll, key)
+        value = raw_dict.get(key)
+        query = query.filter(column.is_(None)) if value is None else query.filter(column == value)
+    return query.first() is not None
 
 
 def insert_new_polls(
