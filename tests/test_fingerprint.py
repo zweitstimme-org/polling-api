@@ -1,119 +1,108 @@
-"""Tests for raw poll content fingerprints."""
+"""Tests for cleaned poll fingerprints."""
 
-from datetime import datetime
+import json
+from datetime import date
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from pollingapi.cleaner.etl_pipeline import run_cleaning_pipeline
+from pollingapi.cleaner.fingerprint import build_poll_fingerprint
 from pollingapi.database import Base
-from pollingapi.models import RawPoll
-from pollingapi.scraper.datamodel import BundElectionPoll, SourcePartyResult
-from pollingapi.scraper.fingerprint import (
-    FINGERPRINT_FIELDS,
-    build_content_fingerprint,
-    build_content_hash,
-)
-from pollingapi.scraper.insertion import insert_new_polls
+from pollingapi.models import Poll, RawPoll
 
 
-def _raw_dict(**overrides):
-    data = {
-        "publish_date": "2024-01-10",
-        "scope": "federal",
-        "election_id": "BUND",
-        "institute_id": "INSA",
-        "survey_type": "poll",
-        "provider": "provider-a",
+def test_cleaned_fingerprint_includes_provider_and_source() -> None:
+    """Provider/source are part of exact cleaned-poll identity."""
+    base = {
+        "publish_date": date(2024, 1, 10),
+        "survey_date_start": date(2024, 1, 5),
+        "survey_date_end": date(2024, 1, 8),
+        "respondents": 1000,
+        "institute_key": "INSA",
+        "provider_name": "provider-a",
         "source": "html_scraper",
-        "worker": "insa",
-        "date_downloaded": "2024-01-11T10:00:00",
-        "parties": '{"CDU/CSU": "27", "SPD": "18"}',
+        "method_key": "ONLINE",
+        "election_key": "BUND",
+        "scope": "federal",
+        "results": {"CDU_CSU": 27.0, "SPD": 18.0},
     }
-    data.update(overrides)
-    return data
+
+    same = build_poll_fingerprint(**base)
+    different_provider = build_poll_fingerprint(**{**base, "provider_name": "provider-b"})
+    different_source = build_poll_fingerprint(**{**base, "source": "api"})
+
+    assert same != different_provider
+    assert same != different_source
 
 
-def test_fingerprint_documents_selected_columns() -> None:
-    assert FINGERPRINT_FIELDS == (
-        "scope",
-        "election_id",
-        "publish_year",
-        "publish_week",
-        "institute_id",
-        "survey_type",
-        "union_share",
-        "spd_share",
-    )
-
-
-def test_hash_ignores_provider_source_worker_and_download_time() -> None:
-    first = build_content_hash(_raw_dict())
-    second = build_content_hash(
-        _raw_dict(
-            provider="provider-b",
-            source="api",
-            worker="dawum",
-            date_downloaded="2024-01-12T10:00:00",
-        )
-    )
-
-    assert first == second
-
-
-def test_hash_changes_when_core_vote_share_changes() -> None:
-    first = build_content_hash(_raw_dict())
-    second = build_content_hash(_raw_dict(parties='{"CDU/CSU": "27", "SPD": "19"}'))
-
-    assert first != second
-
-
-def test_fingerprint_uses_year_and_iso_week_from_publish_date() -> None:
-    fingerprint = build_content_fingerprint(_raw_dict(publish_date="10.01.2024"))
-
-    assert "publish_year=2024" in fingerprint
-    assert "publish_week=02" in fingerprint
-
-
-def test_insert_new_polls_deduplicates_by_content_hash() -> None:
-    engine = create_engine("sqlite:///:memory:")
+def test_cleaning_pipeline_skips_duplicate_cleaned_poll(tmp_path) -> None:
+    """Raw rows with the same cleaned fingerprint create one cleaned poll."""
+    engine = create_engine(f"sqlite:///{tmp_path / 'polling.db'}")
     Base.metadata.create_all(bind=engine)
     session = sessionmaker(bind=engine)()
-    poll = BundElectionPoll(
-        scraped_at=datetime(2024, 1, 11, 10, 0),
-        data_source="provider-a",
-        worker="insa",
-        scope="BUND",
-        state="federal",
-        institut="INSA",
-        datum="2024-01-10",
-        befragte="1000",
-        zeitraum="",
-        results=[
-            SourcePartyResult(name="CDU/CSU", value="27"),
-            SourcePartyResult(name="SPD", value="18"),
-        ],
-    )
+    raw_values = {
+        "publish_date": "2024-01-10",
+        "survey_date_start": "2024-01-05",
+        "survey_date_end": "2024-01-08",
+        "respondents": "1000",
+        "zeitraum": None,
+        "parties": json.dumps({"CDU/CSU": "27", "SPD": "18"}),
+        "institute_id": "INSA",
+        "provider": "provider-a",
+        "source": "html_scraper",
+        "scope": "Bund",
+        "election_id": "Bundestagswahl",
+        "method_id": "Online",
+        "worker": "insa",
+        "date_downloaded": "2024-01-11T10:00:00",
+    }
+    session.add_all([RawPoll(**raw_values), RawPoll(**raw_values)])
+    session.commit()
 
-    inserted, skipped = insert_new_polls(
-        session,
-        [poll],
-        provider="provider-a",
-        source="html_scraper",
-        election_id="BUND",
-        method_id="UNBEKANNT",
-        pipeline_run_id=None,
-    )
-    inserted_again, skipped_again = insert_new_polls(
-        session,
-        [poll],
-        provider="provider-b",
-        source="api",
-        election_id="BUND",
-        method_id="UNBEKANNT",
-        pipeline_run_id=None,
-    )
+    stats = run_cleaning_pipeline(session)
 
-    assert (inserted, skipped) == (1, 0)
-    assert (inserted_again, skipped_again) == (0, 1)
-    assert session.query(RawPoll).count() == 1
-    assert session.query(RawPoll).one().content_hash is not None
+    assert stats["processed"] == 2
+    assert stats["created"] == 1
+    assert stats["skipped"] == 1
+    assert session.query(Poll).count() == 1
+    poll = session.query(Poll).one()
+    assert poll.fingerprint is not None
+    duplicate_raw = session.query(RawPoll).filter(RawPoll.duplicate_of_poll_id.isnot(None)).one()
+    assert duplicate_raw.duplicate_of_poll_id == poll.id
+
+
+def test_cleaning_pipeline_keeps_same_poll_from_different_provider(tmp_path) -> None:
+    """Provider is included, so otherwise identical cleaned polls can coexist."""
+    engine = create_engine(f"sqlite:///{tmp_path / 'polling.db'}")
+    Base.metadata.create_all(bind=engine)
+    session = sessionmaker(bind=engine)()
+    raw_values = {
+        "publish_date": "2024-01-10",
+        "survey_date_start": "2024-01-05",
+        "survey_date_end": "2024-01-08",
+        "respondents": "1000",
+        "zeitraum": None,
+        "parties": json.dumps({"CDU/CSU": "27", "SPD": "18"}),
+        "institute_id": "INSA",
+        "source": "html_scraper",
+        "scope": "Bund",
+        "election_id": "Bundestagswahl",
+        "method_id": "Online",
+        "worker": "insa",
+        "date_downloaded": "2024-01-11T10:00:00",
+    }
+    session.add_all(
+        [
+            RawPoll(**{**raw_values, "provider": "provider-a"}),
+            RawPoll(**{**raw_values, "provider": "provider-b"}),
+        ]
+    )
+    session.commit()
+
+    stats = run_cleaning_pipeline(session)
+
+    assert stats["created"] == 2
+    assert stats["skipped"] == 0
+    assert session.query(Poll).count() == 2
+    assert len({poll.fingerprint for poll in session.query(Poll).all()}) == 2
