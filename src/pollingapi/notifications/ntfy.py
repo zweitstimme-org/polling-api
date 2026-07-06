@@ -36,7 +36,10 @@ _PRIORITY_URGENT = "urgent"
 
 def _format_message(result: PipelineRunResult, title_prefix: str) -> str:
     """Build the plain-text notification body."""
+    scraper_alert = bool(result.zero_poll_workers)
     status = "SUCCESS" if result.success else "FAILURE"
+    if result.success and scraper_alert:
+        status = "WARNING"
     lines: list[str] = [
         f"{'=' * 40}",
         f"  {title_prefix} — {status}",
@@ -67,6 +70,14 @@ def _format_message(result: PipelineRunResult, title_prefix: str) -> str:
         lines.append("  Failed workers:")
         for worker, err in result.scraper_errors.items():
             lines.append(f"    • {worker}: {err}")
+
+    if result.zero_poll_workers:
+        lines += [
+            "  Zero-poll warning:",
+            "    Previously working workers found no polls:",
+        ]
+        for worker in result.zero_poll_workers:
+            lines.append(f"    • {worker}")
 
     # ------------------------------------------------------------------ ETL
     lines += [
@@ -151,19 +162,26 @@ class NtfyNotifier(BaseNotifier):
             logger.debug("NtfyNotifier: no URL configured, skipping")
             return
 
+        scraper_alert = bool(result.zero_poll_workers)
         status = "SUCCESS" if result.success else "FAILURE"
+        if result.success and scraper_alert:
+            status = "WARNING"
         title = f"[{self._title_prefix}] Pipeline {status}"
         body = _format_message(result, self._title_prefix)
         validation_alert = result.validation_status in {"warn", "fail"}
         if not result.success:
             priority = _PRIORITY_URGENT
-        elif validation_alert:
+        elif validation_alert or scraper_alert:
             priority = _PRIORITY_HIGH
         else:
             priority = _PRIORITY_DEFAULT
 
         # Tags: white_check_mark on success, rotating_light on failure
-        tags = "warning" if validation_alert and result.success else "white_check_mark"
+        tags = (
+            "warning"
+            if (validation_alert or scraper_alert) and result.success
+            else "white_check_mark"
+        )
         if not result.success:
             tags = "rotating_light,skull"
 
