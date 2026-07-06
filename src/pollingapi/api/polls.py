@@ -74,6 +74,7 @@ class PollItem(BaseModel):
     election_type: str | None = None
     method_key: str | None = None
     method_name: str | None = None
+    fingerprint: str | None = None
     date_downloaded: str | None = None
     results: list[PollResultItem] = Field(default_factory=list)
 
@@ -168,6 +169,7 @@ class RawPollItem(BaseModel):
     method_id: str | None = None
     worker: str | None = None
     survey_type: str | None = None
+    duplicate_of_poll_id: int | None = None
     pipeline_run_id: str | None = None
     date_downloaded: str | None = None
 

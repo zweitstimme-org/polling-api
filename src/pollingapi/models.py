@@ -45,6 +45,7 @@ class RawPoll(Base):
     method_id: Mapped[str | None] = mapped_column(String(100))
     worker: Mapped[str | None] = mapped_column(String(100))
     survey_type: Mapped[str | None] = mapped_column(String(100))
+    duplicate_of_poll_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     date_downloaded: Mapped[str | None] = mapped_column(String(50))
 
     # Run traceability — links this row to the pipeline_runs record that ingested it.
@@ -155,6 +156,7 @@ class Poll(Base):
     method_key: Mapped[str | None] = mapped_column(ForeignKey("methods.key"))
     source: Mapped[str | None] = mapped_column(String(100))
     scope: Mapped[str | None] = mapped_column(String(100))
+    fingerprint: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
     date_downloaded: Mapped[datetime | None] = mapped_column(DateTime)
 
     # Relationships
