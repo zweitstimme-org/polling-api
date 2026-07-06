@@ -7,6 +7,7 @@ import typer
 from sqlalchemy.orm import Session
 
 from pollingapi.logging_config import get_logger
+from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
 from pollingapi.scraper.dawum import DawumScraper
 
@@ -32,6 +33,7 @@ class ScraperRunner:
         self.dry_run = dry_run
         self.logger = get_logger("runner")
         self.workers_dir = Path(__file__).parent / "workers"
+        self.zero_poll_workers: list[str] = []
 
     def _discover_worker_modules(self) -> list[str]:
         """Discover worker modules in bund + land only."""
@@ -94,6 +96,38 @@ class ScraperRunner:
             return scraper_class(db=self.db, context=self.context, dry_run=self.dry_run)
         return scraper_class(db=self.db, context=self.context)
 
+    def _has_existing_raw_polls(self, worker_name: str) -> bool:
+        """Return True if this worker has ever inserted raw polls before."""
+        return self.db.query(RawPoll.id).filter(RawPoll.worker == worker_name).first() is not None
+
+    def _record_zero_poll_warning(self, worker_name: str, polls_found: int | None) -> None:
+        if polls_found != 0 or not self._has_existing_raw_polls(worker_name):
+            return
+        if worker_name not in self.zero_poll_workers:
+            self.zero_poll_workers.append(worker_name)
+        self.logger.warning(
+            f"Worker {worker_name} found no polls, but previous raw polls exist for this worker"
+        )
+
+    def _run_scraper(self, worker_name: str, scraper) -> int:
+        """Run a scraper and record whether it found zero polls.
+
+        HTML workers share fetch/save_snapshot/parse/insert methods, so running
+        that flow here lets the runner observe parsed poll count without changing
+        every worker class.
+        """
+        if all(hasattr(scraper, attr) for attr in ("fetch", "save_snapshot", "parse", "insert")):
+            html = scraper.fetch()
+            scraper.save_snapshot(html)
+            polls = scraper.parse(html)
+            polls_found = len(polls)
+            self._record_zero_poll_warning(worker_name, polls_found)
+            return scraper.insert(polls)
+
+        count = scraper.run()
+        self._record_zero_poll_warning(worker_name, getattr(scraper, "last_polls_found", None))
+        return count
+
     @staticmethod
     def _is_current_worker(entry: WorkerEntry) -> bool:
         """Return True when worker class name contains 'current'."""
@@ -106,6 +140,7 @@ class ScraperRunner:
     ) -> dict[str, int | str]:
         """Run discovered workers and optional DAWUM."""
         results: dict[str, int | str] = {}
+        self.zero_poll_workers = []
         workers = self._discover_html_workers()
         if current_only:
             workers = [entry for entry in workers if self._is_current_worker(entry)]
@@ -114,7 +149,7 @@ class ScraperRunner:
             try:
                 typer.echo(f"Running {entry.worker_name}...")
                 scraper = self._instantiate_worker(entry.scraper_class)
-                count = scraper.run()
+                count = self._run_scraper(entry.worker_name, scraper)
                 results[entry.worker_name] = count
                 typer.echo(f"  ✓ {entry.worker_name}: {count} polls")
             except Exception as exc:
@@ -125,7 +160,7 @@ class ScraperRunner:
             try:
                 typer.echo("Running DAWUM API scraper...")
                 dawum = DawumScraper(self.db, context=self.context, dry_run=self.dry_run)
-                count = dawum.run()
+                count = self._run_scraper("dawum", dawum)
                 results["dawum"] = count
                 typer.echo(f"  ✓ dawum: {count} polls")
             except Exception as exc:
@@ -138,12 +173,14 @@ class ScraperRunner:
         """Run a specific worker by WORKER name."""
         if worker_name.lower() == "dawum":
             dawum = DawumScraper(self.db, context=self.context, dry_run=self.dry_run)
-            return dawum.run()
+            self.zero_poll_workers = []
+            return self._run_scraper("dawum", dawum)
         workers = self._discover_html_workers()
         for entry in workers:
             if entry.worker_name == worker_name:
                 scraper = self._instantiate_worker(entry.scraper_class)
-                return scraper.run()
+                self.zero_poll_workers = []
+                return self._run_scraper(entry.worker_name, scraper)
         raise ValueError(f"Worker '{worker_name}' not found")
 
     def list_workers(self, include_dawum: bool = True) -> list[str]:
