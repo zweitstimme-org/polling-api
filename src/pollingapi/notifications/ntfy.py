@@ -36,7 +36,10 @@ _PRIORITY_URGENT = "urgent"
 
 def _format_message(result: PipelineRunResult, title_prefix: str) -> str:
     """Build the plain-text notification body."""
+    scraper_alert = bool(result.zero_poll_workers)
     status = "SUCCESS" if result.success else "FAILURE"
+    if result.success and scraper_alert:
+        status = "WARNING"
     lines: list[str] = [
         f"{'=' * 40}",
         f"  {title_prefix} — {status}",
@@ -68,6 +71,14 @@ def _format_message(result: PipelineRunResult, title_prefix: str) -> str:
         for worker, err in result.scraper_errors.items():
             lines.append(f"    • {worker}: {err}")
 
+    if result.zero_poll_workers:
+        lines += [
+            "  Zero-poll warning:",
+            "    Previously working workers found no polls:",
+        ]
+        for worker in result.zero_poll_workers:
+            lines.append(f"    • {worker}")
+
     # ------------------------------------------------------------------ ETL
     lines += [
         "",
@@ -76,6 +87,27 @@ def _format_message(result: PipelineRunResult, title_prefix: str) -> str:
         f"  Created  : {result.etl_created}  |  Updated: {result.etl_updated}",
         f"  Skipped  : {result.etl_skipped}  |  Errors : {result.etl_errors}",
     ]
+
+    # ------------------------------------------------------------------ validation
+    if result.validation_status:
+        valid_share = (
+            f"{result.validation_valid_share:.1%}"
+            if result.validation_valid_share is not None
+            else "n/a"
+        )
+        lines += [
+            "",
+            "--- Validation ---",
+            f"  Status   : {result.validation_status.upper()}",
+            f"  Valid    : {result.validation_valid_polls}/{result.validation_total_polls}"
+            f" ({valid_share})",
+            f"  Invalid  : {result.validation_invalid_polls}",
+            f"  Warnings : {result.validation_warning_polls}",
+        ]
+        if result.validation_top_failures:
+            lines.append("  Top failures:")
+            for item in result.validation_top_failures:
+                lines.append(f"    • {item['check']}: {item['failed']}")
 
     # ------------------------------------------------------------------ export
     lines += [
@@ -130,13 +162,28 @@ class NtfyNotifier(BaseNotifier):
             logger.debug("NtfyNotifier: no URL configured, skipping")
             return
 
+        scraper_alert = bool(result.zero_poll_workers)
         status = "SUCCESS" if result.success else "FAILURE"
+        if result.success and scraper_alert:
+            status = "WARNING"
         title = f"[{self._title_prefix}] Pipeline {status}"
         body = _format_message(result, self._title_prefix)
-        priority = _PRIORITY_URGENT if not result.success else _PRIORITY_DEFAULT
+        validation_alert = result.validation_status in {"warn", "fail"}
+        if not result.success:
+            priority = _PRIORITY_URGENT
+        elif validation_alert or scraper_alert:
+            priority = _PRIORITY_HIGH
+        else:
+            priority = _PRIORITY_DEFAULT
 
         # Tags: white_check_mark on success, rotating_light on failure
-        tags = "white_check_mark" if result.success else "rotating_light,skull"
+        tags = (
+            "warning"
+            if (validation_alert or scraper_alert) and result.success
+            else "white_check_mark"
+        )
+        if not result.success:
+            tags = "rotating_light,skull"
 
         try:
             data = body.encode("utf-8")

@@ -303,6 +303,7 @@ class DawumScraper:
             # Prepare and insert
             payloads = self.prepare_db_payload(df)
             payloads = filter_poll_payloads(payloads)
+            self.last_polls_found = len(payloads)
             self.logger.info(f"Prepared {len(payloads)} payloads for insertion")
 
             new_count = self.post_polls(payloads)

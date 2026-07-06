@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from pollingapi.cleaner import run_cleaning_pipeline
 from pollingapi.core import PROJECT_ROOT, settings
+from pollingapi.data_validation import DataValidationService, ValidationReportService
 from pollingapi.database import SessionLocal, init_db, seed_all_from_json
 from pollingapi.logging_config import get_logger, setup_logging
 from pollingapi.notifications import PipelineRunResult, create_notification_manager
@@ -118,6 +119,115 @@ def db_export():
     typer.echo(f"  poll_results: {counts['results']}")
     typer.echo(f"  observations: {counts['observations']}")
     typer.echo(f"  raw_polls: {counts['raw']}")
+
+
+@app.command(name="validation:run")
+def validation_run(
+    limit: int | None = typer.Option(None, "--limit", "-l", help="Limit polls to validate"),
+    show: int = typer.Option(20, "--show", help="Number of invalid/warning polls to print"),
+    persist: bool = typer.Option(False, "--persist", help="Write results to poll_validations"),
+):
+    """Run data validation on cleaned polls."""
+    if persist:
+        init_db()
+    db = get_db()
+    service = DataValidationService(db)
+    report = service.run(limit=limit, persist=persist)
+    summary = report.summary
+
+    typer.echo("Data validation complete:")
+    typer.echo(f"  Total polls   : {summary.total_polls}")
+    typer.echo(f"  Valid polls   : {summary.valid_polls}")
+    typer.echo(f"  Invalid polls : {summary.invalid_polls}")
+    typer.echo(f"  Warning polls : {summary.warning_polls}")
+    if persist:
+        typer.echo("  Persisted to  : poll_validations")
+
+    flagged = [
+        item
+        for item in report.items
+        if not item.valid
+        or not item.qc_institute_result_jump.passed
+        or not item.qc_scope_result_jump.passed
+    ][:show]
+    if flagged:
+        typer.echo("")
+        typer.echo(f"First {len(flagged)} invalid/warning polls:")
+        for item in flagged:
+            status = "invalid" if not item.valid else "warning"
+            typer.echo(f"  {item.public_id or item.poll_id}: {status}")
+
+
+@app.command(name="validation:inspect")
+def validation_inspect(
+    poll_identifier: str = typer.Argument(..., help="Poll id or public id, e.g. 1 or C00000001"),
+):
+    """Inspect persisted validation for one poll."""
+    db = get_db()
+    service = DataValidationService(db)
+    item = service.get_persisted(poll_identifier)
+    if item is None:
+        typer.echo(
+            "✗ Validation not found. Run: pollingapi validation:run --persist",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    typer.echo(f"Validation for {item.public_id or item.poll_id}")
+    typer.echo(f"  Poll id      : {item.poll_id}")
+    typer.echo(f"  Valid        : {item.valid}")
+    typer.echo(f"  Validated at : {item.validated_at}")
+    typer.echo("")
+    typer.echo("Checks:")
+    for name in (
+        "qc_party_percentage_range",
+        "qc_result_sum_check",
+        "qc_date_consistency",
+        "qc_respondents_plausible",
+        "qc_core_parties_present",
+        "qc_institute_result_jump",
+        "qc_scope_result_jump",
+    ):
+        check = getattr(item, name)
+        status = "pass" if check.passed else check.severity
+        typer.echo(f"  {name}: {status}")
+        if not check.passed and check.message:
+            typer.echo(f"    {check.message}")
+        if not check.passed and check.observed is not None:
+            typer.echo(f"    observed: {check.observed}")
+        if not check.passed and check.affected_parties:
+            typer.echo(f"    parties : {', '.join(check.affected_parties)}")
+
+
+@app.command(name="validation:report")
+def validation_report(
+    top: int = typer.Option(5, "--top", help="Number of top failure checks to print"),
+):
+    """Show aggregate report for persisted validation results."""
+    db = get_db()
+    report = ValidationReportService(db).build_report(top_n=top)
+
+    typer.echo("Validation report:")
+    typer.echo(f"  Status        : {report.status}")
+    typer.echo(f"  Total polls   : {report.total_polls}")
+    typer.echo(f"  Valid polls   : {report.valid_polls} ({report.valid_share:.1%})")
+    typer.echo(f"  Invalid polls : {report.invalid_polls} ({report.invalid_share:.1%})")
+    typer.echo(f"  Warning polls : {report.warning_polls} ({report.warning_share:.1%})")
+    typer.echo(f"  Latest run    : {report.latest_validated_at}")
+
+    typer.echo("")
+    typer.echo("Checks:")
+    for check in report.checks:
+        typer.echo(
+            f"  {check.check}: {check.pass_share:.1%} passed "
+            f"({check.passed}/{check.passed + check.failed})"
+        )
+
+    if report.top_failure_checks:
+        typer.echo("")
+        typer.echo("Top failures:")
+        for item in report.top_failure_checks:
+            typer.echo(f"  {item.check}: {item.failed}")
 
 
 @app.command(name="db:reset")
@@ -284,6 +394,7 @@ def pipeline_run(
             else:
                 run_result.scrapers_failed += 1
                 run_result.scraper_errors[name] = str(value)
+        run_result.zero_poll_workers = runner.zero_poll_workers
 
         typer.echo(f"✓ Total scraped: {run_result.total_scraped_polls} polls")
         typer.echo(
@@ -292,6 +403,10 @@ def pipeline_run(
         if run_result.scraper_errors:
             for name, err in run_result.scraper_errors.items():
                 typer.echo(f"  ✗ {name}: {err}")
+        if run_result.zero_poll_workers:
+            typer.echo("  ⚠ Zero-poll warnings:")
+            for name in run_result.zero_poll_workers:
+                typer.echo(f"    {name}: found no polls, but previous raw polls exist")
         typer.echo("")
 
         # -------------------------------------------------------------- cleaner
@@ -309,6 +424,39 @@ def pipeline_run(
         typer.echo(f"✓ Updated   : {run_result.etl_updated}")
         typer.echo(f"✓ Skipped   : {run_result.etl_skipped}")
         typer.echo(f"✓ Errors    : {run_result.etl_errors}")
+        typer.echo("")
+
+        # -------------------------------------------------------------- validation
+        typer.echo("=== Running Validation ===")
+        typer.echo("")
+        validation_service = DataValidationService(db)
+        validation_service.run(persist=True)
+        validation_report = ValidationReportService(db).build_report(top_n=3)
+        run_result.validation_status = validation_report.status
+        run_result.validation_total_polls = validation_report.total_polls
+        run_result.validation_valid_polls = validation_report.valid_polls
+        run_result.validation_invalid_polls = validation_report.invalid_polls
+        run_result.validation_warning_polls = validation_report.warning_polls
+        run_result.validation_valid_share = validation_report.valid_share
+        run_result.validation_top_failures = [
+            item.model_dump(mode="json") for item in validation_report.top_failure_checks
+        ]
+
+        typer.echo(f"✓ Status    : {run_result.validation_status}")
+        typer.echo(
+            f"✓ Valid     : {run_result.validation_valid_polls}/"
+            f"{run_result.validation_total_polls}"
+            f" ({run_result.validation_valid_share:.1%})"
+            if run_result.validation_valid_share is not None
+            else f"✓ Valid     : {run_result.validation_valid_polls}/"
+            f"{run_result.validation_total_polls}"
+        )
+        typer.echo(f"✓ Invalid   : {run_result.validation_invalid_polls}")
+        typer.echo(f"✓ Warnings  : {run_result.validation_warning_polls}")
+        if run_result.validation_top_failures:
+            typer.echo("  Top failures:")
+            for item in run_result.validation_top_failures:
+                typer.echo(f"    {item['check']}: {item['failed']}")
         typer.echo("")
 
         # -------------------------------------------------------------- export
@@ -411,6 +559,12 @@ def pipeline_run(
                 export_polls=run_result.export_polls,
                 export_poll_results=run_result.export_poll_results,
                 export_raw_polls=run_result.export_raw_polls,
+                validation_status=run_result.validation_status,
+                validation_total_polls=run_result.validation_total_polls,
+                validation_valid_polls=run_result.validation_valid_polls,
+                validation_invalid_polls=run_result.validation_invalid_polls,
+                validation_warning_polls=run_result.validation_warning_polls,
+                validation_valid_share=run_result.validation_valid_share,
                 archive_created=run_result.archive_created,
                 archive_size_mb=run_result.archive_size_mb,
             )
@@ -434,8 +588,17 @@ def pipeline_run(
             f"    Created : {run_result.etl_created} | Updated: {run_result.etl_updated}"
             f" | Errors: {run_result.etl_errors}"
         )
+        if run_result.validation_status:
+            valid_share = (
+                f"{run_result.validation_valid_share:.1%}"
+                if run_result.validation_valid_share is not None
+                else "n/a"
+            )
+            typer.echo(f"    QC      : {run_result.validation_status} | Valid: {valid_share}")
         if notifier.notifier_count > 0:
             typer.echo(f"    Notified: {notifier.notifier_count} backend(s)")
+        if run_result.zero_poll_workers:
+            typer.echo(f"    Warning : {len(run_result.zero_poll_workers)} zero-poll worker(s)")
         typer.echo("")
 
         if not run_result.success:

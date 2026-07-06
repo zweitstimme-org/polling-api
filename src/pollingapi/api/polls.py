@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session, joinedload
 
 from pollingapi.cleaner.transforms.references import normalized_scope
 from pollingapi.database import get_db
-from pollingapi.models import Poll, PollResult, Provider, RawPoll
+from pollingapi.models import Poll, PollResult, PollValidation, Provider, RawPoll
+from pollingapi.schemas import DataValidation
 
 DBSession = Annotated[Session, Depends(get_db)]
 
@@ -445,6 +446,36 @@ def get_poll(
 def get_poll_results(poll_identifier: str, db: DBSession):
     """Get party results for a single cleaned poll."""
     return get_poll(poll_identifier, db).results
+
+
+@polls_router.get("/{poll_identifier}/validation", response_model=DataValidation)
+def get_poll_validation(poll_identifier: str, db: DBSession):
+    """Get persisted validation report for a single cleaned poll."""
+    query = db.query(Poll).options(joinedload(Poll.validation))
+    if poll_identifier.upper().startswith("C"):
+        query = query.filter(Poll.public_id == poll_identifier.upper())
+    elif poll_identifier.isdigit():
+        query = query.filter(Poll.id == int(poll_identifier))
+    else:
+        raise HTTPException(status_code=400, detail="poll_identifier must be an integer id or C id")
+
+    poll = query.first()
+    if not poll:
+        raise HTTPException(status_code=404, detail=f"Poll {poll_identifier} not found")
+    if not poll.validation:
+        raise HTTPException(
+            status_code=404,
+            detail="Validation not found. Run: pollingapi validation:run --persist",
+        )
+    return _serialize_validation(poll.validation)
+
+
+def _serialize_validation(validation: PollValidation) -> DataValidation:
+    details = dict(validation.details)
+    details["id"] = validation.id
+    details["poll_id"] = validation.poll_id
+    details["validated_at"] = validation.validated_at
+    return DataValidation.model_validate(details)
 
 
 @observations_router.get("", response_model=ObservationListResponse)
