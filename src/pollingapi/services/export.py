@@ -1,7 +1,12 @@
-"""Export service for polling data."""
+"""Export service for self-contained polling datasets."""
+
+from __future__ import annotations
 
 import json
-from datetime import datetime
+import shutil
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from sqlalchemy import func
@@ -9,51 +14,78 @@ from sqlalchemy.orm import Session, joinedload
 
 from pollingapi.core import settings
 from pollingapi.logging_config import get_logger
-from pollingapi.models import Poll, PollResult, RawPoll
+from pollingapi.models import (
+    Election,
+    Institute,
+    Method,
+    Party,
+    Poll,
+    PollResult,
+    Provider,
+    RawPoll,
+    Tasker,
+)
 
 logger = get_logger(__name__)
 
 
-def _dt_to_str(value: datetime | None) -> str | None:
-    """Serialize datetime to ISO string."""
+def _dt_to_str(value: date | datetime | None) -> str | None:
+    """Serialize date/datetime values to ISO strings."""
     return value.isoformat() if value else None
 
 
+def _write_json(path: Path, data: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+
+
+def _write_table(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(path, index=False)
+
+
+def _write_parquet(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_parquet(path, index=False)
+
+
 class ExportService:
-    """Service for exporting polling data to JSON, CSV, and Parquet files."""
+    """Service for exporting public polling datasets and lookup dictionaries."""
 
     def __init__(self, db: Session):
         """Initialize export service with database session."""
         self.db = db
+        self.export_dir = settings.export_dir
+        self.dictionary_dir = self.export_dir / "dictionaries"
 
     def export_all(self) -> dict[str, int]:
         """Run all exports.
 
         Returns:
-            Dictionary with counts of exported records per file.
+            Dictionary with counts of exported records per dataset.
         """
         polls_count = self.export_polls()
-        results_count = self.export_results()
         observations_count = self.export_observations()
+        wide_count = self.export_polls_wide()
         raw_count = self.export_raw()
-        self.export_metadata()
+        dictionary_counts = self.export_dictionaries()
+        self.export_metadata(dictionary_counts=dictionary_counts)
 
         return {
             "polls": polls_count,
-            "results": results_count,
+            "results": observations_count,
             "observations": observations_count,
+            "wide": wide_count,
             "raw": raw_count,
+            "dictionaries": sum(dictionary_counts.values()),
         }
 
-    def export_polls(self) -> int:
-        """Export cleaned polls to JSON, CSV, and Parquet.
-
-        Returns:
-            Number of polls exported.
-        """
-        polls = (
+    def _poll_query(self) -> list[Poll]:
+        return (
             self.db.query(Poll)
             .options(
+                joinedload(Poll.raw_poll),
                 joinedload(Poll.institute),
                 joinedload(Poll.provider),
                 joinedload(Poll.election),
@@ -61,140 +93,157 @@ class ExportService:
                 joinedload(Poll.matching_poll),
                 joinedload(Poll.results).joinedload(PollResult.party),
             )
+            .order_by(Poll.publish_date.desc(), Poll.id.desc())
             .all()
         )
 
-        polls_data = []
-        for poll in polls:
-            polls_data.append(
-                {
-                    "id": poll.id,
-                    "public_id": poll.public_id,
-                    "raw_id": poll.raw_id,
-                    "raw_public_id": poll.raw_poll.public_id if poll.raw_poll else None,
-                    "publish_date": _dt_to_str(poll.publish_date),
-                    "survey_date_start": _dt_to_str(poll.survey_date_start),
-                    "survey_date_end": _dt_to_str(poll.survey_date_end),
-                    "respondents": poll.respondents,
-                    "institute_key": poll.institute_key,
-                    "institute_name": poll.institute.name if poll.institute else None,
-                    "provider_id": poll.provider_id,
-                    "provider_name": poll.provider.name if poll.provider else None,
-                    "election_key": poll.election_key,
-                    "election_type": poll.election.election_type if poll.election else None,
-                    "method_key": poll.method_key,
-                    "method_name": poll.method.name if poll.method else None,
-                    "matching_poll_id": poll.matching_poll_id,
-                    "matching_poll_public_id": (
-                        poll.matching_poll.public_id if poll.matching_poll else None
-                    ),
-                    "matching_status": poll.matching_status,
-                    "scope": poll.scope,
-                    "source": poll.source,
-                    "fingerprint": poll.fingerprint,
-                }
-            )
-
-        # JSON (keeps nested results as separate export)
-        file_path = settings.export_dir / "polls.json"
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(polls_data, f, indent=2, ensure_ascii=False)
-        logger.info(f"Exported {len(polls_data)} polls to JSON")
-
-        # CSV (flat, no nested results)
-        df = pd.DataFrame(polls_data)
-        file_path = settings.export_dir / "polls.csv"
-        df.to_csv(file_path, index=False)
-        logger.info(f"Exported {len(polls_data)} polls to CSV")
-
-        # Parquet
-        file_path = settings.export_dir / "polls.parquet"
-        df.to_parquet(file_path, index=False)
-        logger.info(f"Exported {len(polls_data)} polls to Parquet")
-
-        return len(polls_data)
-
-    def export_results(self) -> int:
-        """Export poll-party results to JSON, CSV, and Parquet.
-
-        Returns:
-            Number of poll results exported.
-        """
-        results = (
+    def _result_query(self) -> list[PollResult]:
+        return (
             self.db.query(PollResult)
             .options(
-                joinedload(PollResult.poll),
                 joinedload(PollResult.party),
+                joinedload(PollResult.poll).joinedload(Poll.raw_poll),
+                joinedload(PollResult.poll).joinedload(Poll.institute),
+                joinedload(PollResult.poll).joinedload(Poll.provider),
+                joinedload(PollResult.poll).joinedload(Poll.election),
+                joinedload(PollResult.poll).joinedload(Poll.method),
+                joinedload(PollResult.poll).joinedload(Poll.matching_poll),
             )
+            .join(Poll)
+            .order_by(Poll.publish_date.desc(), Poll.id.desc(), PollResult.party_key.asc())
             .all()
         )
 
-        results_data = [
-            {
-                "poll_id": r.poll_id,
-                "poll_public_id": r.poll.public_id if r.poll else None,
-                "poll_raw_id": r.poll.raw_id if r.poll else None,
-                "poll_raw_public_id": r.poll.raw_poll.public_id
-                if r.poll and r.poll.raw_poll
+    @staticmethod
+    def _poll_base_row(poll: Poll) -> dict[str, Any]:
+        return {
+            "poll_public_id": poll.public_id,
+            "raw_public_id": poll.raw_poll.public_id if poll.raw_poll else None,
+            "publish_date": _dt_to_str(poll.publish_date),
+            "survey_date_start": _dt_to_str(poll.survey_date_start),
+            "survey_date_end": _dt_to_str(poll.survey_date_end),
+            "respondents": poll.respondents,
+            "scope": poll.scope,
+            "source": poll.source,
+            "institute_key": poll.institute_key,
+            "institute_name": poll.institute.name if poll.institute else None,
+            "provider_name": poll.provider.name if poll.provider else None,
+            "election_key": poll.election_key,
+            "election_type": poll.election.election_type if poll.election else None,
+            "method_key": poll.method_key,
+            "method_name": poll.method.name if poll.method else None,
+            "matching_status": poll.matching_status,
+            "matching_poll_public_id": poll.matching_poll.public_id if poll.matching_poll else None,
+            "fingerprint": poll.fingerprint,
+        }
+
+    @staticmethod
+    def _poll_json_row(poll: Poll) -> dict[str, Any]:
+        return {
+            **ExportService._poll_base_row(poll),
+            "provider": {
+                "id": poll.provider_id,
+                "name": poll.provider.name if poll.provider else None,
+            },
+            "institute": {
+                "key": poll.institute_key,
+                "name": poll.institute.name if poll.institute else None,
+            },
+            "method": {
+                "key": poll.method_key,
+                "name": poll.method.name if poll.method else None,
+            },
+            "election": {
+                "key": poll.election_key,
+                "type": poll.election.election_type if poll.election else None,
+                "scope": poll.election.scope if poll.election else None,
+                "year": poll.election.year if poll.election else None,
+                "date": _dt_to_str(poll.election.date) if poll.election else None,
+            },
+            "matching": {
+                "status": poll.matching_status,
+                "matching_poll_public_id": poll.matching_poll.public_id
+                if poll.matching_poll
                 else None,
-                "publish_date": _dt_to_str(r.poll.publish_date) if r.poll else None,
-                "survey_date_start": _dt_to_str(r.poll.survey_date_start) if r.poll else None,
-                "survey_date_end": _dt_to_str(r.poll.survey_date_end) if r.poll else None,
-                "respondents": r.poll.respondents if r.poll else None,
-                "institute_key": r.poll.institute_key if r.poll else None,
-                "institute_name": r.poll.institute.name if r.poll and r.poll.institute else None,
-                "election_key": r.poll.election_key if r.poll else None,
-                "scope": r.poll.scope if r.poll else None,
-                "party_key": r.party_key,
-                "party_short_name": r.party.short_name if r.party else None,
-                "party_name": r.party.name if r.party else None,
-                "percentage": r.percentage,
-            }
-            for r in results
-        ]
+            },
+            "results": [
+                {
+                    "party_key": result.party_key,
+                    "party_short_name": result.party.short_name if result.party else None,
+                    "party_name": result.party.name if result.party else None,
+                    "percentage": result.percentage,
+                }
+                for result in sorted(poll.results, key=lambda item: item.party_key)
+            ],
+        }
 
-        # JSON
-        file_path = settings.export_dir / "poll_results.json"
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(results_data, f, indent=2, ensure_ascii=False)
-        logger.info(f"Exported {len(results_data)} poll results to JSON")
+    def export_polls(self) -> int:
+        """Export cleaned polls as nested JSON plus flat CSV/Parquet."""
+        polls = self._poll_query()
+        nested_rows = [self._poll_json_row(poll) for poll in polls]
+        flat_rows = [self._poll_base_row(poll) for poll in polls]
 
-        # CSV
-        df = pd.DataFrame(results_data)
-        file_path = settings.export_dir / "poll_results.csv"
-        df.to_csv(file_path, index=False)
-        logger.info(f"Exported {len(results_data)} poll results to CSV")
+        _write_json(self.export_dir / "polls.json", nested_rows)
+        _write_table(self.export_dir / "polls.csv", flat_rows)
+        _write_parquet(self.export_dir / "polls.parquet", flat_rows)
 
-        # Parquet
-        file_path = settings.export_dir / "poll_results.parquet"
-        df.to_parquet(file_path, index=False)
-        logger.info(f"Exported {len(results_data)} poll results to Parquet")
+        logger.info(f"Exported {len(nested_rows)} cleaned polls")
+        return len(nested_rows)
 
-        return len(results_data)
+    def _observation_row(self, result: PollResult) -> dict[str, Any]:
+        poll = result.poll
+        party = result.party
+        return {
+            **self._poll_base_row(poll),
+            "party_key": result.party_key,
+            "party_short_name": party.short_name if party else None,
+            "party_name": party.name if party else None,
+            "percentage": result.percentage,
+        }
 
     def export_observations(self) -> int:
-        """Export long-format observations for statistical analysis.
+        """Export long-format observations, one row per poll-party result."""
+        rows = [self._observation_row(result) for result in self._result_query()]
 
-        This is the researcher-facing flat dataset (one row per poll-party combination).
-        Alias for export_results() in long format.
+        _write_json(self.export_dir / "observations.json", rows)
+        _write_table(self.export_dir / "observations.csv", rows)
+        _write_parquet(self.export_dir / "observations.parquet", rows)
 
-        Returns:
-            Number of observations exported.
-        """
-        return self.export_results()
+        # Backward-compatible aliases for older consumers.
+        for suffix in ("json", "csv", "parquet"):
+            source = self.export_dir / f"observations.{suffix}"
+            target = self.export_dir / f"poll_results.{suffix}"
+            shutil.copyfile(source, target)
+
+        logger.info(f"Exported {len(rows)} observations")
+        return len(rows)
+
+    def export_results(self) -> int:
+        """Backward-compatible alias for the long-format observations export."""
+        return self.export_observations()
+
+    def export_polls_wide(self) -> int:
+        """Export wide poll rows with party keys as columns."""
+        rows = []
+        for poll in self._poll_query():
+            row = self._poll_base_row(poll)
+            for result in sorted(poll.results, key=lambda item: item.party_key):
+                row[result.party_key] = result.percentage
+            rows.append(row)
+
+        _write_json(self.export_dir / "polls_wide.json", rows)
+        _write_table(self.export_dir / "polls_wide.csv", rows)
+        _write_parquet(self.export_dir / "polls_wide.parquet", rows)
+
+        logger.info(f"Exported {len(rows)} wide poll rows")
+        return len(rows)
 
     def export_raw(self) -> int:
-        """Export raw polls to JSON, CSV, and Parquet.
-
-        Returns:
-            Number of raw polls exported.
-        """
+        """Export immutable raw polls for traceability."""
         raw_polls = self.db.query(RawPoll).order_by(RawPoll.id).all()
-
         raw_data = [
             {
-                "id": r.id,
-                "public_id": r.public_id,
+                "raw_public_id": r.public_id,
                 "publish_date": r.publish_date,
                 "survey_date_start": r.survey_date_start,
                 "survey_date_end": r.survey_date_end,
@@ -217,69 +266,136 @@ class ExportService:
             for r in raw_polls
         ]
 
-        # JSON
-        file_path = settings.export_dir / "polls_raw.json"
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(raw_data, f, indent=2, ensure_ascii=False, default=str)
-        logger.info(f"Exported {len(raw_data)} raw polls to JSON")
+        _write_json(self.export_dir / "polls_raw.json", raw_data)
+        _write_table(self.export_dir / "polls_raw.csv", raw_data)
+        _write_parquet(self.export_dir / "polls_raw.parquet", raw_data)
 
-        # CSV
-        df = pd.DataFrame(raw_data)
-        file_path = settings.export_dir / "polls_raw.csv"
-        df.to_csv(file_path, index=False)
-        logger.info(f"Exported {len(raw_data)} raw polls to CSV")
-
-        # Parquet
-        file_path = settings.export_dir / "polls_raw.parquet"
-        df.to_parquet(file_path, index=False)
-        logger.info(f"Exported {len(raw_data)} raw polls to Parquet")
-
+        logger.info(f"Exported {len(raw_data)} raw polls")
         return len(raw_data)
 
-    def export_metadata(self) -> dict:
-        """Export metadata file with export timestamp and record counts.
+    def export_dictionaries(self) -> dict[str, int]:
+        """Export lookup dictionaries from the database."""
+        dictionaries = {
+            "parties": [
+                {
+                    "key": party.key,
+                    "name": party.name,
+                    "short_name": party.short_name,
+                    "color": party.color,
+                }
+                for party in self.db.query(Party).order_by(Party.key).all()
+            ],
+            "institutes": [
+                {
+                    "key": institute.key,
+                    "name": institute.name,
+                    "description": institute.description,
+                }
+                for institute in self.db.query(Institute).order_by(Institute.key).all()
+            ],
+            "providers": [
+                {
+                    "id": provider.id,
+                    "name": provider.name,
+                    "description": provider.description,
+                }
+                for provider in self.db.query(Provider).order_by(Provider.name).all()
+            ],
+            "methods": [
+                {
+                    "key": method.key,
+                    "name": method.name,
+                    "description": method.description,
+                }
+                for method in self.db.query(Method).order_by(Method.key).all()
+            ],
+            "elections": [
+                {
+                    "key": election.key,
+                    "election_type": election.election_type,
+                    "year": election.year,
+                    "scope": election.scope,
+                    "date": _dt_to_str(election.date),
+                }
+                for election in self.db.query(Election).order_by(Election.key).all()
+            ],
+            "taskers": [
+                {
+                    "id": tasker.id,
+                    "name": tasker.name,
+                    "description": tasker.description,
+                }
+                for tasker in self.db.query(Tasker).order_by(Tasker.name).all()
+            ],
+        }
 
-        Returns:
-            Metadata dictionary.
-        """
+        counts = {}
+        for name, rows in dictionaries.items():
+            _write_json(self.dictionary_dir / f"{name}.json", rows)
+            counts[name] = len(rows)
+
+        logger.info(f"Exported {len(dictionaries)} dictionaries")
+        return counts
+
+    def export_metadata(self, dictionary_counts: dict[str, int] | None = None) -> dict:
+        """Export a machine-readable manifest for the export bundle."""
         poll_count = self.db.query(func.count(Poll.id)).scalar() or 0
         raw_count = self.db.query(func.count(RawPoll.id)).scalar() or 0
-        result_count = self.db.query(func.count(PollResult.id)).scalar() or 0
+        observation_count = self.db.query(func.count(PollResult.id)).scalar() or 0
+        dictionary_counts = dictionary_counts or self.export_dictionaries()
 
         metadata = {
-            "exported_at": datetime.now().isoformat(),
+            "generated_at": datetime.now().isoformat(),
+            "api_version": settings.api_version,
             "counts": {
                 "polls": poll_count,
-                "poll_results": result_count,
+                "observations": observation_count,
                 "raw_polls": raw_count,
+                "dictionaries": dictionary_counts,
             },
-            "formats": [
-                "json",
-                "csv",
-                "parquet",
-            ],
-            "files": {
+            "datasets": {
                 "polls": {
-                    "json": "polls.json",
-                    "csv": "polls.csv",
-                    "parquet": "polls.parquet",
+                    "description": "One row per cleaned poll; JSON includes nested party results.",
+                    "files": ["polls.json", "polls.csv", "polls.parquet"],
                 },
-                "poll_results": {
-                    "json": "poll_results.json",
-                    "csv": "poll_results.csv",
-                    "parquet": "poll_results.parquet",
+                "observations": {
+                    "description": "Long format, one row per poll-party result.",
+                    "files": [
+                        "observations.json",
+                        "observations.csv",
+                        "observations.parquet",
+                    ],
+                    "aliases": [
+                        "poll_results.json",
+                        "poll_results.csv",
+                        "poll_results.parquet",
+                    ],
+                },
+                "polls_wide": {
+                    "description": "One row per cleaned poll with party keys as columns.",
+                    "files": ["polls_wide.json", "polls_wide.csv", "polls_wide.parquet"],
                 },
                 "raw_polls": {
-                    "json": "polls_raw.json",
-                    "csv": "polls_raw.csv",
-                    "parquet": "polls_raw.parquet",
+                    "description": "Immutable raw scraper/API rows for traceability.",
+                    "files": ["polls_raw.json", "polls_raw.csv", "polls_raw.parquet"],
                 },
+                "dictionaries": {
+                    "description": "Lookup tables exported from the database.",
+                    "files": [f"dictionaries/{name}.json" for name in sorted(dictionary_counts)],
+                },
+            },
+            "identifier_policy": {
+                "primary_poll_id": "poll_public_id",
+                "primary_raw_id": "raw_public_id",
+                "stable_lookup_keys": [
+                    "party_key",
+                    "institute_key",
+                    "method_key",
+                    "election_key",
+                ],
             },
         }
 
-        file_path = settings.export_dir / "metadata.json"
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, indent=2, ensure_ascii=False)
-
+        _write_json(self.export_dir / "metadata.json", metadata)
         logger.info("Exported metadata")
         return metadata

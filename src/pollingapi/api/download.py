@@ -12,8 +12,11 @@ DATA_DIR = settings.data_dir
 
 AVAILABLE_FORMATS = {
     "polls": ["json", "csv", "parquet"],
+    "observations": ["json", "csv", "parquet"],
+    "polls_wide": ["json", "csv", "parquet"],
     "poll_results": ["json", "csv", "parquet"],
     "raw_polls": ["json", "csv", "parquet"],
+    "dictionaries": ["json"],
     "metadata": ["json"],
     "sqlite": ["db"],
 }
@@ -68,6 +71,106 @@ def download_results_json():
         )
     return FileResponse(
         path=file_path, filename="german_election_poll_results.json", media_type="application/json"
+    )
+
+
+@router.get("/observations")
+def download_observations_json():
+    """Download long-format observations as JSON."""
+    file_path = EXPORT_DIR / "observations.json"
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404, detail="Export file not found. Run: pollingapi export:all"
+        )
+    return FileResponse(
+        path=file_path, filename="german_election_observations.json", media_type="application/json"
+    )
+
+
+@router.get("/observations/csv")
+def download_observations_csv():
+    """Download long-format observations as CSV."""
+    file_path = EXPORT_DIR / "observations.csv"
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404, detail="Export file not found. Run: pollingapi export:all"
+        )
+    return FileResponse(
+        path=file_path, filename="german_election_observations.csv", media_type="text/csv"
+    )
+
+
+@router.get("/observations/parquet")
+def download_observations_parquet():
+    """Download long-format observations as Parquet."""
+    file_path = EXPORT_DIR / "observations.parquet"
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404, detail="Export file not found. Run: pollingapi export:all"
+        )
+    return FileResponse(
+        path=file_path,
+        filename="german_election_observations.parquet",
+        media_type="application/octet-stream",
+    )
+
+
+@router.get("/wide")
+def download_wide_json():
+    """Download wide poll rows as JSON."""
+    file_path = EXPORT_DIR / "polls_wide.json"
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404, detail="Export file not found. Run: pollingapi export:all"
+        )
+    return FileResponse(
+        path=file_path, filename="german_election_polls_wide.json", media_type="application/json"
+    )
+
+
+@router.get("/wide/csv")
+def download_wide_csv():
+    """Download wide poll rows as CSV."""
+    file_path = EXPORT_DIR / "polls_wide.csv"
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404, detail="Export file not found. Run: pollingapi export:all"
+        )
+    return FileResponse(
+        path=file_path, filename="german_election_polls_wide.csv", media_type="text/csv"
+    )
+
+
+@router.get("/wide/parquet")
+def download_wide_parquet():
+    """Download wide poll rows as Parquet."""
+    file_path = EXPORT_DIR / "polls_wide.parquet"
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404, detail="Export file not found. Run: pollingapi export:all"
+        )
+    return FileResponse(
+        path=file_path,
+        filename="german_election_polls_wide.parquet",
+        media_type="application/octet-stream",
+    )
+
+
+@router.get("/dictionaries/{dictionary_name}")
+def download_dictionary(dictionary_name: str):
+    """Download an exported lookup dictionary."""
+    allowed = {"parties", "institutes", "providers", "methods", "elections", "taskers"}
+    if dictionary_name not in allowed:
+        raise HTTPException(status_code=404, detail=f"Dictionary {dictionary_name} not found")
+    file_path = EXPORT_DIR / "dictionaries" / f"{dictionary_name}.json"
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404, detail="Export file not found. Run: pollingapi export:all"
+        )
+    return FileResponse(
+        path=file_path,
+        filename=f"german_election_{dictionary_name}.json",
+        media_type="application/json",
     )
 
 
@@ -180,10 +283,28 @@ def list_download_assets():
             "csv": "/v1/download/results/csv",
             "parquet": "/v1/download/results/parquet",
         },
+        "observations": {
+            "json": "/v1/download/observations",
+            "csv": "/v1/download/observations/csv",
+            "parquet": "/v1/download/observations/parquet",
+        },
+        "polls_wide": {
+            "json": "/v1/download/wide",
+            "csv": "/v1/download/wide/csv",
+            "parquet": "/v1/download/wide/parquet",
+        },
         "raw_polls": {
             "json": "/v1/download/raw",
             "csv": "/v1/download/raw/csv",
             "parquet": "/v1/download/raw/parquet",
+        },
+        "dictionaries": {
+            "parties": "/v1/download/dictionaries/parties",
+            "institutes": "/v1/download/dictionaries/institutes",
+            "providers": "/v1/download/dictionaries/providers",
+            "methods": "/v1/download/dictionaries/methods",
+            "elections": "/v1/download/dictionaries/elections",
+            "taskers": "/v1/download/dictionaries/taskers",
         },
         "sqlite": "/v1/download/sqlite",
         "metadata": "/v1/download/metadata",
