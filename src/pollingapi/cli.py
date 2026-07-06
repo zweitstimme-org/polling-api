@@ -396,6 +396,7 @@ def pipeline_run(
             else:
                 run_result.scrapers_failed += 1
                 run_result.scraper_errors[name] = str(value)
+        run_result.zero_poll_workers = runner.zero_poll_workers
 
         typer.echo(f"✓ Total scraped: {run_result.total_scraped_polls} polls")
         typer.echo(
@@ -404,6 +405,10 @@ def pipeline_run(
         if run_result.scraper_errors:
             for name, err in run_result.scraper_errors.items():
                 typer.echo(f"  ✗ {name}: {err}")
+        if run_result.zero_poll_workers:
+            typer.echo("  ⚠ Zero-poll warnings:")
+            for name in run_result.zero_poll_workers:
+                typer.echo(f"    {name}: found no polls, but previous raw polls exist")
         typer.echo("")
 
         # -------------------------------------------------------------- cleaner
@@ -596,6 +601,8 @@ def pipeline_run(
             typer.echo(f"    QC      : {run_result.validation_status} | Valid: {valid_share}")
         if notifier.notifier_count > 0:
             typer.echo(f"    Notified: {notifier.notifier_count} backend(s)")
+        if run_result.zero_poll_workers:
+            typer.echo(f"    Warning : {len(run_result.zero_poll_workers)} zero-poll worker(s)")
         typer.echo("")
 
         if not run_result.success:

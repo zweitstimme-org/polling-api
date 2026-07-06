@@ -77,6 +77,7 @@ class PollBase(BaseModel):
     respondents: int | None = None
     source: str | None = None
     scope: str | None = None
+    fingerprint: str | None = None
 
 
 class PollCreate(PollBase):

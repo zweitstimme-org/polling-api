@@ -44,6 +44,7 @@ class PipelineRunResult:
     scrapers_failed: int = 0
     total_scraped_polls: int = 0
     scraper_errors: dict[str, str] = field(default_factory=dict)  # worker → error
+    zero_poll_workers: list[str] = field(default_factory=list)
 
     # ------------------------------------------------------------------ ETL cleaner
     etl_processed: int = 0
