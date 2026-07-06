@@ -85,6 +85,7 @@ class ExportService:
                     "method_name": poll.method.name if poll.method else None,
                     "scope": poll.scope,
                     "source": poll.source,
+                    "fingerprint": poll.fingerprint,
                 }
             )
 
@@ -203,7 +204,7 @@ class ExportService:
                 "method_id": r.method_id,
                 "worker": r.worker,
                 "survey_type": r.survey_type,
-                "content_hash": r.content_hash,
+                "duplicate_of_poll_id": r.duplicate_of_poll_id,
                 "pipeline_run_id": r.pipeline_run_id,
                 "date_downloaded": r.date_downloaded,
             }

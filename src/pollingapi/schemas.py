@@ -25,7 +25,6 @@ class RawPollBase(BaseModel):
     scope: str | None = None
     election_id: str | None = None
     method_id: str | None = None
-    content_hash: str | None = None
     date_downloaded: str | None = None
 
 
@@ -78,6 +77,7 @@ class PollBase(BaseModel):
     respondents: int | None = None
     source: str | None = None
     scope: str | None = None
+    fingerprint: str | None = None
 
 
 class PollCreate(PollBase):
