@@ -21,3 +21,14 @@ fdp_until_year = 2021
 min_valid_share = 0.90
 max_warning_share = 0.10
 max_invalid_share = 0.05
+
+[poll_matching]
+date_window_days = 7
+primary_provider = "wahlrecht.de"
+secondary_provider = "DAWUM"
+result_parties = ["SPD", "AFD"]
+max_party_delta = 1.0
+max_total_delta = 1.5
+survey_date_tolerance_days = 0
+respondent_tolerance = 0
+min_score_gap = 0.01

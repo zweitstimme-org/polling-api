@@ -158,6 +158,10 @@ class Poll(Base):
     scope: Mapped[str | None] = mapped_column(String(100))
     fingerprint: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
     date_downloaded: Mapped[datetime | None] = mapped_column(DateTime)
+    matching_poll_id: Mapped[int | None] = mapped_column(
+        ForeignKey("polls.id"), nullable=True, index=True
+    )
+    matching_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Relationships
     raw_poll: Mapped[RawPoll | None] = relationship("RawPoll", back_populates="cleaned_poll")
@@ -170,6 +174,9 @@ class Poll(Base):
     )
     validation: Mapped[PollValidation | None] = relationship(
         "PollValidation", back_populates="poll", cascade="all, delete-orphan"
+    )
+    matching_poll: Mapped[Poll | None] = relationship(
+        "Poll", remote_side=[id], foreign_keys=[matching_poll_id], post_update=True
     )
 
 

@@ -52,6 +52,10 @@ def _apply_schema_migrations():
         "validation_warning_polls": "INTEGER DEFAULT 0",
         "validation_valid_share": "FLOAT",
     }
+    poll_columns = {
+        "matching_poll_id": "INTEGER",
+        "matching_status": "TEXT",
+    }
 
     with engine.connect() as conn:
         # --- polls_raw incremental columns -----------------------------------
@@ -103,6 +107,21 @@ def _apply_schema_migrations():
                     text(
                         "CREATE UNIQUE INDEX IF NOT EXISTS ix_polls_fingerprint"
                         " ON polls (fingerprint)"
+                    )
+                )
+
+            if "polls" in tables:
+                rows = conn.execute(text("PRAGMA table_info(polls)")).fetchall()
+                polls_columns = {row[1] for row in rows}
+                for column_name, column_type in poll_columns.items():
+                    if column_name not in polls_columns:
+                        conn.execute(
+                            text(f"ALTER TABLE polls ADD COLUMN {column_name} {column_type}")
+                        )
+                conn.execute(
+                    text(
+                        "CREATE INDEX IF NOT EXISTS ix_polls_matching_poll_id"
+                        " ON polls (matching_poll_id)"
                     )
                 )
 
@@ -206,6 +225,32 @@ def _apply_schema_migrations():
                     text(
                         "CREATE UNIQUE INDEX IF NOT EXISTS ix_polls_fingerprint"
                         " ON polls (fingerprint)"
+                    )
+                )
+
+            polls_exists = conn.execute(
+                text("SELECT 1 FROM information_schema.tables WHERE table_name = 'polls' LIMIT 1")
+            ).fetchone()
+            if polls_exists:
+                for column_name, column_type in {
+                    "matching_poll_id": "INTEGER",
+                    "matching_status": "VARCHAR(50)",
+                }.items():
+                    column = conn.execute(
+                        text(
+                            "SELECT column_name FROM information_schema.columns"
+                            " WHERE table_name = 'polls' AND column_name = :column_name"
+                        ),
+                        {"column_name": column_name},
+                    ).fetchone()
+                    if column is None:
+                        conn.execute(
+                            text(f"ALTER TABLE polls ADD COLUMN {column_name} {column_type}")
+                        )
+                conn.execute(
+                    text(
+                        "CREATE INDEX IF NOT EXISTS ix_polls_matching_poll_id"
+                        " ON polls (matching_poll_id)"
                     )
                 )
 

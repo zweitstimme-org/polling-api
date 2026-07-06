@@ -121,6 +121,9 @@ class TestPollsEndpoints:
         assert item["results"]
         assert "party_key" in item["results"][0]
         assert "party_short_name" in item["results"][0]
+        assert "matching_poll_id" in item
+        assert "matching_poll_public_id" in item
+        assert "matching_status" in item
 
     def test_list_polls_rejects_invalid_date_range(self, client):
         """Test list polls validates date ranges."""
