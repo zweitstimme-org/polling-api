@@ -106,3 +106,42 @@ def test_cleaning_pipeline_keeps_same_poll_from_different_provider(tmp_path) -> 
     assert stats["skipped"] == 0
     assert session.query(Poll).count() == 2
     assert len({poll.fingerprint for poll in session.query(Poll).all()}) == 2
+
+
+def test_cleaning_pipeline_backfills_existing_poll_fingerprint(tmp_path) -> None:
+    """Existing cleaned polls get fingerprints before new raw rows are checked."""
+    engine = create_engine(f"sqlite:///{tmp_path / 'polling.db'}")
+    Base.metadata.create_all(bind=engine)
+    session = sessionmaker(bind=engine)()
+    raw_values = {
+        "publish_date": "2024-01-10",
+        "survey_date_start": "2024-01-05",
+        "survey_date_end": "2024-01-08",
+        "respondents": "1000",
+        "zeitraum": None,
+        "parties": json.dumps({"CDU/CSU": "27", "SPD": "18"}),
+        "institute_id": "INSA",
+        "provider": "provider-a",
+        "source": "html_scraper",
+        "scope": "Bund",
+        "election_id": "Bundestagswahl",
+        "method_id": "Online",
+        "worker": "insa",
+        "date_downloaded": "2024-01-11T10:00:00",
+    }
+    session.add(RawPoll(**raw_values))
+    session.commit()
+    run_cleaning_pipeline(session)
+
+    poll = session.query(Poll).one()
+    poll.fingerprint = None
+    session.add(RawPoll(**raw_values))
+    session.commit()
+
+    stats = run_cleaning_pipeline(session)
+
+    assert stats["processed"] == 1
+    assert stats["created"] == 0
+    assert stats["skipped"] == 1
+    assert session.query(Poll).count() == 1
+    assert session.query(Poll).one().fingerprint is not None

@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from pollingapi.cleaner.fingerprint import build_poll_fingerprint
 from pollingapi.cleaner.transforms.dates import normalize_publish_date, normalize_survey_dates
@@ -177,6 +177,57 @@ def find_existing_poll_by_fingerprint(db: Session, fingerprint: str) -> Poll | N
 
 def _results_by_party_key(results: list[DomainPartyResult]) -> dict[str, float]:
     return {enum_key(result.party): result.value for result in results}
+
+
+def _poll_results_by_party_key(poll: Poll) -> dict[str, float]:
+    return {result.party_key: result.percentage for result in poll.results}
+
+
+def _build_existing_poll_fingerprint(poll: Poll) -> str | None:
+    results = _poll_results_by_party_key(poll)
+    if not results:
+        return None
+    return build_poll_fingerprint(
+        publish_date=poll.publish_date,
+        survey_date_start=poll.survey_date_start,
+        survey_date_end=poll.survey_date_end,
+        respondents=poll.respondents,
+        institute_key=poll.institute_key,
+        provider_name=poll.provider.name if poll.provider else None,
+        source=poll.source,
+        method_key=poll.method_key,
+        election_key=poll.election_key,
+        scope=poll.scope,
+        results=results,
+    )
+
+
+def backfill_missing_poll_fingerprints(db: Session) -> int:
+    """Populate missing cleaned poll fingerprints without collapsing existing rows."""
+    polls = (
+        db.query(Poll)
+        .options(joinedload(Poll.provider), joinedload(Poll.results))
+        .filter(Poll.fingerprint.is_(None))
+        .order_by(Poll.id)
+        .all()
+    )
+    existing_fingerprints = {
+        value for (value,) in db.query(Poll.fingerprint).filter(Poll.fingerprint.is_not(None)).all()
+    }
+    updated = 0
+
+    for poll in polls:
+        fingerprint = _build_existing_poll_fingerprint(poll)
+        if not fingerprint or fingerprint in existing_fingerprints:
+            continue
+        poll.fingerprint = fingerprint
+        existing_fingerprints.add(fingerprint)
+        updated += 1
+
+    if updated:
+        db.flush()
+        logger.info(f"Backfilled fingerprints for {updated} cleaned polls")
+    return updated
 
 
 def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool]:
@@ -408,6 +459,8 @@ def run_cleaning_pipeline(
         db.query(Method).delete(synchronize_session=False)
         db.query(Party).delete(synchronize_session=False)
         db.flush()
+    elif not dry_run:
+        backfill_missing_poll_fingerprints(db)
 
     # Get unprocessed raw polls (not yet linked to a cleaned poll)
     if reprocess or rebuild:
