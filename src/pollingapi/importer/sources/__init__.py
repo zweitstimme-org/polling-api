@@ -2,9 +2,11 @@
 
 from pollingapi.importer.sources.base import ImportSource
 from pollingapi.importer.sources.csv import CsvImportSource
+from pollingapi.importer.sources.kayser_rehmert import KayserRehmertImportSource
 
 SOURCES: dict[str, type[ImportSource]] = {
     CsvImportSource.name: CsvImportSource,
+    KayserRehmertImportSource.name: KayserRehmertImportSource,
     "manual_csv": CsvImportSource,
 }
 
