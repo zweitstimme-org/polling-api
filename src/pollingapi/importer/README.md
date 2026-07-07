@@ -19,6 +19,7 @@ Importer code lives in `src/pollingapi/importer`.
 src/pollingapi/importer/
 ├── formats/          # Low-level file readers
 ├── sources/          # Source-specific adapters
+├── download.py        # Downloads files declared in import_urls.txt
 ├── insertion.py      # RawPoll insert and dedupe logic
 ├── runner.py         # Top-level import orchestration
 └── schemas.py        # Import models and result types
@@ -33,6 +34,57 @@ imports/
 
 When a CLI command receives a relative file path, it resolves that path relative
 to `imports/`. Absolute file paths are also supported.
+
+## Downloading Source Files
+
+Importer downloads are configured in the project root file `import_urls.txt`.
+This file is intentionally simple. Blank lines and comments are ignored.
+
+Use an explicit destination filename:
+
+```text
+source_name/raw.xlsx https://example.com/data.xlsx
+```
+
+Or provide only a URL and let the importer infer the filename:
+
+```text
+https://example.com/data.xlsx
+```
+
+All relative destinations are written below the top-level `imports/` directory.
+For example, this manifest line:
+
+```text
+polls/raw.xlsx https://example.com/data.xlsx
+```
+
+writes the downloaded file to:
+
+```text
+imports/polls/raw.xlsx
+```
+
+Download configured files with:
+
+```bash
+uv run pollingapi import:download
+```
+
+By default, existing files are skipped. Use `--force` to redownload:
+
+```bash
+uv run pollingapi import:download --force
+```
+
+Use a different manifest file if needed:
+
+```bash
+uv run pollingapi import:download --manifest path/to/import_urls.txt
+```
+
+The download step only places files in `imports/`. Parsing and database insertion
+are still handled by `import:preview` and `import:run`.
 
 ## Import Sources
 

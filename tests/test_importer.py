@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from pollingapi.database import Base
+from pollingapi.importer.download import download_from_manifest, read_download_manifest
 from pollingapi.importer.runner import ImportRunner
 from pollingapi.importer.sources import get_source, list_sources
 from pollingapi.models import Poll, PollResult, RawPoll
@@ -90,3 +91,67 @@ def test_import_runner_can_clean_imported_rows(tmp_path):
 
 def test_import_sources_are_listed():
     assert list_sources() == ["csv", "manual_csv"]
+
+
+def test_download_manifest_supports_explicit_and_inferred_filenames(tmp_path):
+    manifest = tmp_path / "import_urls.txt"
+    manifest.write_text(
+        "# comment\n"
+        "source/raw.xlsx https://example.com/data.xlsx\n"
+        "https://example.com/other.xlsx\n",
+        encoding="utf-8",
+    )
+
+    specs = read_download_manifest(manifest)
+
+    assert [spec.destination.as_posix() for spec in specs] == ["source/raw.xlsx", "other.xlsx"]
+    assert [spec.url for spec in specs] == [
+        "https://example.com/data.xlsx",
+        "https://example.com/other.xlsx",
+    ]
+
+
+def test_download_from_manifest_writes_below_imports_dir(tmp_path):
+    manifest = tmp_path / "import_urls.txt"
+    imports_dir = tmp_path / "imports"
+    manifest.write_text("source/raw.xlsx https://example.com/data.xlsx\n", encoding="utf-8")
+
+    def fake_downloader(url: str, destination, timeout: float) -> int:
+        assert url == "https://example.com/data.xlsx"
+        assert timeout == 12.0
+        destination.write_bytes(b"xlsx")
+        return 4
+
+    results = download_from_manifest(
+        manifest_path=manifest,
+        imports_dir=imports_dir,
+        timeout=12.0,
+        downloader=fake_downloader,
+    )
+
+    assert len(results) == 1
+    assert results[0].downloaded is True
+    assert results[0].destination == imports_dir / "source/raw.xlsx"
+    assert results[0].bytes_written == 4
+    assert (imports_dir / "source/raw.xlsx").read_bytes() == b"xlsx"
+
+
+def test_download_from_manifest_skips_existing_files(tmp_path):
+    manifest = tmp_path / "import_urls.txt"
+    imports_dir = tmp_path / "imports"
+    existing = imports_dir / "raw.xlsx"
+    imports_dir.mkdir()
+    existing.write_bytes(b"existing")
+    manifest.write_text("raw.xlsx https://example.com/data.xlsx\n", encoding="utf-8")
+
+    def failing_downloader(_url: str, _destination, _timeout: float) -> int:
+        raise AssertionError("downloader should not be called")
+
+    results = download_from_manifest(
+        manifest_path=manifest,
+        imports_dir=imports_dir,
+        downloader=failing_downloader,
+    )
+
+    assert results[0].downloaded is False
+    assert results[0].bytes_written == len(b"existing")

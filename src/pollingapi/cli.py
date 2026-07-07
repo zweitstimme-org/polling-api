@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from httpx import HTTPError
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -11,7 +12,7 @@ from pollingapi.cleaner import run_cleaning_pipeline
 from pollingapi.core import PROJECT_ROOT, settings
 from pollingapi.data_validation import DataValidationService, ValidationReportService
 from pollingapi.database import SessionLocal, init_db, seed_all_from_json
-from pollingapi.importer import IMPORTS_DIR, ImportRunner
+from pollingapi.importer import DEFAULT_MANIFEST, IMPORTS_DIR, ImportRunner, download_from_manifest
 from pollingapi.logging_config import get_logger, setup_logging
 from pollingapi.notifications import PipelineRunResult, create_notification_manager
 from pollingapi.scraper.context import RunContext
@@ -35,6 +36,10 @@ ImportSourceOption = Annotated[str, typer.Option("--source", "-s", help="Import 
 ImportPreviewLimitOption = Annotated[
     int,
     typer.Option("--limit", "-l", help="Number of rows to preview"),
+]
+ImportManifestOption = Annotated[
+    Path,
+    typer.Option("--manifest", "-m", help="Download manifest path"),
 ]
 
 
@@ -362,6 +367,29 @@ def import_list():
         typer.echo(f"  • {name}")
     typer.echo("")
     typer.echo(f"Import directory: {IMPORTS_DIR}")
+
+
+@app.command(name="import:download")
+def import_download(
+    manifest: ImportManifestOption = DEFAULT_MANIFEST,
+    force: bool = typer.Option(False, "--force", "-f", help="Redownload existing files"),
+    timeout: float = typer.Option(60.0, "--timeout", help="HTTP timeout in seconds"),
+):
+    """Download import files declared in the project root manifest."""
+    try:
+        results = download_from_manifest(manifest_path=manifest, force=force, timeout=timeout)
+    except (FileNotFoundError, HTTPError, ValueError) as exc:
+        typer.echo(f"✗ {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    typer.echo(f"Import downloads from {manifest}:")
+    if not results:
+        typer.echo("  No URLs configured")
+        return
+
+    for result in results:
+        status = "downloaded" if result.downloaded else "skipped"
+        typer.echo(f"  {status}: {result.destination} ({result.bytes_written} bytes)")
 
 
 @app.command(name="import:preview")
