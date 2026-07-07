@@ -1,5 +1,8 @@
 """Tests for file imports into raw polls."""
 
+import json
+
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -90,7 +93,55 @@ def test_import_runner_can_clean_imported_rows(tmp_path):
 
 
 def test_import_sources_are_listed():
-    assert list_sources() == ["csv", "manual_csv"]
+    assert list_sources() == ["csv", "kayser_rehmert", "manual_csv"]
+
+
+def test_kayser_rehmert_source_filters_germany_original_polls_and_maps_columns(tmp_path):
+    path = tmp_path / "kayser.xlsx"
+    pd.DataFrame(
+        [
+            _kayser_row("Germany", "DEU", "Forsa", "2024-01-10", "1", "CDU/CSU", "30"),
+            _kayser_row("Germany", "DEU", "Forsa", "2024-01-10", "1", "Greens", "13,5"),
+            _kayser_row("Germany", "DEU", "Forsa", "2024-01-10", "1", "PDS/Linke", "4"),
+            _kayser_row("Germany", "DEU", "Forsa", "2024-01-10", "0", "SPD", "17"),
+            _kayser_row("Austria", "AUT", "Forsa", "2024-01-10", "1", "SPD", "20"),
+            _kayser_row("Germany", "DEU", "Wahlkreisprognose", "11.01.2024", "1", "SPD", "16"),
+        ]
+    ).to_excel(path, sheet_name="Table1", index=False)
+
+    rows = get_source("kayser_rehmert").load(path)
+
+    assert len(rows) == 2
+    first = rows[0].to_raw_dict()
+    assert first["publish_date"] == "2024-01-10"
+    assert first["institute_id"] == "Forsa"
+    assert first["provider"] == "Kayser/Rehmert"
+    assert first["source"] == "xlsx_import:kayser_rehmert"
+    assert first["scope"] == "Bund"
+    assert first["election_id"] == "Bundestagswahl"
+    assert json.loads(first["parties"]) == {
+        "CDU/CSU": "30",
+        "Grüne": "13.5",
+        "Linke": "4",
+    }
+    assert rows[1].publish_date == "2024-01-11"
+    assert rows[1].institute_id == "Institut Wahlkreisprognose"
+
+
+def test_kayser_rehmert_source_skips_conflicting_poll_groups(tmp_path):
+    path = tmp_path / "kayser.xlsx"
+    pd.DataFrame(
+        [
+            _kayser_row("Germany", "DEU", "INSA", "12.01.2024", "1", "CDU/CSU", "30"),
+            _kayser_row("Germany", "DEU", "INSA", "12.01.2024", "1", "CDU/CSU", "27"),
+            _kayser_row("Germany", "DEU", "INSA", "13.01.2024", "1", "SPD", "15"),
+        ]
+    ).to_excel(path, sheet_name="Table1", index=False)
+
+    rows = get_source("kayser_rehmert").load(path)
+
+    assert len(rows) == 1
+    assert rows[0].publish_date == "2024-01-13"
 
 
 def test_download_manifest_supports_explicit_and_inferred_filenames(tmp_path):
@@ -155,3 +206,28 @@ def test_download_from_manifest_skips_existing_files(tmp_path):
 
     assert results[0].downloaded is False
     assert results[0].bytes_written == len(b"existing")
+
+
+def _kayser_row(
+    country: str,
+    country_iso3c: str,
+    institute: str,
+    survey_date: str,
+    original_date: str,
+    party_name_short: str,
+    poll: str,
+) -> dict[str, str | int]:
+    return {
+        "country": country,
+        "country_iso3c": country_iso3c,
+        "year": 2024,
+        "institute": institute,
+        "survey_date": survey_date,
+        "month": 1,
+        "original_date": original_date,
+        "party_id": "",
+        "party_name_english": "",
+        "party_name_short": party_name_short,
+        "poll": poll,
+        "source": "fixture",
+    }
