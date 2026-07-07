@@ -89,7 +89,8 @@ are still handled by `import:preview` and `import:run`.
 ## Import Sources
 
 An import source converts one input file into rows that match the `polls_raw`
-schema. The built-in source is `csv`, also available as `manual_csv`.
+schema. The built-in generic source is `csv`, also available as `manual_csv`.
+Source-specific importers can be registered for files that need custom parsing.
 
 List available sources with:
 
@@ -174,6 +175,74 @@ Use a dry run to parse and dedupe without committing:
 ```bash
 uv run pollingapi import:run forsa_manual.csv --dry-run
 ```
+
+## Kayser/Rehmert XLSX Workflow
+
+The Kayser/Rehmert data source is an XLSX file in long format. Each row contains
+one party result, not one complete poll. The importer source
+`kayser_rehmert` groups those rows into raw poll records.
+
+The expected file location is:
+
+```text
+imports/KAYSER_REHMERT.xlsx
+```
+
+Preview the parsed rows:
+
+```bash
+uv run pollingapi import:preview KAYSER_REHMERT.xlsx --source kayser_rehmert --limit 5
+```
+
+Run a dry import without committing:
+
+```bash
+uv run pollingapi import:run KAYSER_REHMERT.xlsx --source kayser_rehmert --dry-run
+```
+
+Import into `polls_raw` and immediately run the cleaner:
+
+```bash
+uv run pollingapi import:run KAYSER_REHMERT.xlsx --source kayser_rehmert --clean
+```
+
+The Kayser/Rehmert importer applies these source-specific rules:
+
+```text
+country_iso3c = DEU                 keep only Germany
+original_date = 1                   keep only original poll observations
+survey_date + institute             group long rows into one poll
+survey_date                         mapped to publish_date
+scope                               Bund
+election_id                         Bundestagswahl
+provider                            Kayser/Rehmert
+source                              xlsx_import:kayser_rehmert
+worker                              import:kayser_rehmert
+method_id                           99
+```
+
+The workbook does not provide a separate publication date, survey start/end,
+respondent count, commissioner, or survey method. Those fields are therefore
+left empty or unknown and handled by the normal cleaner defaults.
+
+Party labels are mapped to names the cleaner already understands:
+
+```text
+CDU/CSU     -> CDU/CSU
+SPD         -> SPD
+FDP         -> FDP
+Greens      -> Grüne
+PDS/Linke   -> Linke
+AfD         -> AfD
+BSW         -> BSW
+FW          -> FW
+Other       -> Sonstige
+```
+
+Some source rows have multiple values for the same party on the same
+`survey_date + institute` group. Those groups are ambiguous because the workbook
+does not provide a poll-level identifier to split them safely. The importer
+skips those conflicting groups instead of guessing.
 
 ## What Gets Written
 
