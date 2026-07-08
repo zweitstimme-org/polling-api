@@ -1,0 +1,10 @@
+# Import downloads.
+#
+# Each non-comment line is either:
+#   local_filename.xlsx https://example.com/data.xlsx
+# or:
+#   https://example.com/data.xlsx
+#
+# Relative destinations are written below the top-level imports/ directory.
+
+KAYSER_REHMERT.xlsx https://media.githubusercontent.com/media/coalition-leverage/cip-webpage/main/data/polling_data.xlsx

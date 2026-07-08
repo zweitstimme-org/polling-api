@@ -1,8 +1,10 @@
 """CLI entry points for zweitstimme."""
 
 from pathlib import Path
+from typing import Annotated
 
 import typer
+from httpx import HTTPError
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -10,6 +12,7 @@ from pollingapi.cleaner import run_cleaning_pipeline
 from pollingapi.core import PROJECT_ROOT, settings
 from pollingapi.data_validation import DataValidationService, ValidationReportService
 from pollingapi.database import SessionLocal, init_db, seed_all_from_json
+from pollingapi.importer import DEFAULT_MANIFEST, IMPORTS_DIR, ImportRunner, download_from_manifest
 from pollingapi.logging_config import get_logger, setup_logging
 from pollingapi.notifications import PipelineRunResult, create_notification_manager
 from pollingapi.scraper.context import RunContext
@@ -24,6 +27,20 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 logger = get_logger(__name__)
+
+ImportFileArg = Annotated[
+    Path,
+    typer.Argument(help="Import file path, relative to ./imports if not absolute"),
+]
+ImportSourceOption = Annotated[str, typer.Option("--source", "-s", help="Import source name")]
+ImportPreviewLimitOption = Annotated[
+    int,
+    typer.Option("--limit", "-l", help="Number of rows to preview"),
+]
+ImportManifestOption = Annotated[
+    Path,
+    typer.Option("--manifest", "-m", help="Download manifest path"),
+]
 
 
 def get_db() -> Session:
@@ -336,6 +353,106 @@ def scraper_status():
             typer.echo(f"  ✓ {worker}: Historic data processed")
         else:
             typer.echo(f"  ○ {worker}: Awaiting initial run")
+
+
+@app.command(name="import:list")
+def import_list():
+    """List available data import sources."""
+    db = get_db()
+    runner = ImportRunner(db)
+
+    typer.echo("Available import sources:")
+    typer.echo("-" * 50)
+    for name in runner.list_sources():
+        typer.echo(f"  • {name}")
+    typer.echo("")
+    typer.echo(f"Import directory: {IMPORTS_DIR}")
+
+
+@app.command(name="import:download")
+def import_download(
+    manifest: ImportManifestOption = DEFAULT_MANIFEST,
+    force: bool = typer.Option(False, "--force", "-f", help="Redownload existing files"),
+    timeout: float = typer.Option(60.0, "--timeout", help="HTTP timeout in seconds"),
+):
+    """Download import files declared in the project root manifest."""
+    try:
+        results = download_from_manifest(manifest_path=manifest, force=force, timeout=timeout)
+    except (FileNotFoundError, HTTPError, ValueError) as exc:
+        typer.echo(f"✗ {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    typer.echo(f"Import downloads from {manifest}:")
+    if not results:
+        typer.echo("  No URLs configured")
+        return
+
+    for result in results:
+        status = "downloaded" if result.downloaded else "skipped"
+        typer.echo(f"  {status}: {result.destination} ({result.bytes_written} bytes)")
+
+
+@app.command(name="import:preview")
+def import_preview(
+    file: ImportFileArg,
+    source: ImportSourceOption = "csv",
+    limit: ImportPreviewLimitOption = 10,
+):
+    """Preview parsed import rows without writing to the database."""
+    db = get_db()
+    runner = ImportRunner(db)
+
+    try:
+        rows = runner.preview(source, file, limit=limit)
+    except (FileNotFoundError, ValueError) as exc:
+        typer.echo(f"✗ {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    typer.echo(f"Previewing {len(rows)} row(s):")
+    for index, row in enumerate(rows, start=1):
+        data = row.to_raw_dict()
+        typer.echo(f"  {index}. {data['publish_date']} | {data['institute_id']} | {data['scope']}")
+        typer.echo(f"     parties: {data['parties']}")
+
+
+@app.command(name="import:run")
+def import_run(
+    file: ImportFileArg,
+    source: ImportSourceOption = "csv",
+    clean: bool = typer.Option(False, "--clean", help="Run cleaner after importing"),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", "-n", help="Parse and dedupe without committing"
+    ),
+):
+    """Import file data into polls_raw."""
+    db = get_db()
+    runner = ImportRunner(db)
+
+    try:
+        result = runner.run(source, file, clean=clean, dry_run=dry_run)
+    except (FileNotFoundError, ValueError) as exc:
+        typer.echo(f"✗ {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    if result.stats.errors:
+        typer.echo("✗ Import failed:", err=True)
+        for message in result.stats.error_messages:
+            typer.echo(f"  {message}", err=True)
+        raise typer.Exit(1)
+
+    action = "Would import" if dry_run else "Imported"
+    typer.echo(f"✓ {action} data from {result.path}:")
+    typer.echo(f"  Parsed: {result.stats.parsed}")
+    typer.echo(f"  Inserted: {result.stats.inserted}")
+    typer.echo(f"  Skipped: {result.stats.skipped}")
+
+    if result.cleaning_stats:
+        typer.echo("  Cleaner:")
+        typer.echo(f"    Processed: {result.cleaning_stats['processed']}")
+        typer.echo(f"    Created: {result.cleaning_stats['created']}")
+        typer.echo(f"    Updated: {result.cleaning_stats['updated']}")
+        typer.echo(f"    Skipped: {result.cleaning_stats['skipped']}")
+        typer.echo(f"    Errors: {result.cleaning_stats['errors']}")
 
 
 @app.command(name="pipeline:clean")
