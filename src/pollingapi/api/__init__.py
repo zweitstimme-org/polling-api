@@ -5,6 +5,7 @@ from pollingapi.api import (
     download,
     elections,
     polls,
+    v2,
 )
 
-__all__ = ["dictionaries", "download", "elections", "polls"]
+__all__ = ["dictionaries", "download", "elections", "polls", "v2"]

@@ -15,6 +15,7 @@ from pollingapi.api import (
     download,
     elections,
     polls,
+    v2,
     validation,
 )
 from pollingapi.core import settings
@@ -42,17 +43,21 @@ app = FastAPI(
     description=settings.api_description,
     lifespan=lifespan,
     openapi_tags=[
-        {"name": "polls", "description": "Cleaned, normalized polling data"},
+        {"name": "polls", "description": "Default public poll records"},
+        {"name": "poll-results", "description": "Long-format poll-party result rows"},
+        {"name": "datasets", "description": "Named polling datasets and dataset-specific views"},
         {
-            "name": "observations",
-            "description": "Long-format poll-party observations for analysis",
+            "name": "raw-polls",
+            "description": "Raw scraped/imported rows for audit and traceability",
         },
-        {"name": "raw-polls", "description": "Raw scraped rows (immutable source data)"},
-        {"name": "reference", "description": "Reference/dictionary tables"},
+        {
+            "name": "reference-data",
+            "description": "Parties, institutes, methods, scopes, and other lookup data",
+        },
         {"name": "elections", "description": "Election summaries and metadata"},
-        {"name": "downloads", "description": "File exports (JSON/CSV/SQLite)"},
-        {"name": "validation", "description": "Persisted data quality validation reports"},
-        {"name": "archive", "description": "Data archive downloads (S3)"},
+        {"name": "validation-reports", "description": "Persisted data quality validation reports"},
+        {"name": "downloads", "description": "Downloadable file exports"},
+        {"name": "archives", "description": "Archive snapshot metadata and downloads"},
         {"name": "health", "description": "Service heartbeat and dependency checks"},
     ],
 )
@@ -66,16 +71,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include v1 routers
-app.include_router(polls.router, prefix="/v1")
-app.include_router(polls.observations_router, prefix="/v1")
-app.include_router(polls.raw_router, prefix="/v1")
-app.include_router(polls.results_router, prefix="/v1")
-app.include_router(download.router, prefix="/v1", tags=["downloads"])
-app.include_router(elections.router, prefix="/v1")
-app.include_router(dictionaries.router, prefix="/v1")
-app.include_router(data.router, prefix="/v1")
-app.include_router(validation.router, prefix="/v1")
+# Include legacy v1 routers. They stay callable for compatibility but are hidden
+# from the public OpenAPI schema so new integrations see the v2 API surface.
+app.include_router(polls.router, prefix="/v1", include_in_schema=False)
+app.include_router(polls.observations_router, prefix="/v1", include_in_schema=False)
+app.include_router(polls.raw_router, prefix="/v1", include_in_schema=False)
+app.include_router(polls.results_router, prefix="/v1", include_in_schema=False)
+app.include_router(download.router, prefix="/v1", tags=["downloads"], include_in_schema=False)
+app.include_router(elections.router, prefix="/v1", include_in_schema=False)
+app.include_router(dictionaries.router, prefix="/v1", include_in_schema=False)
+app.include_router(data.router, prefix="/v1", include_in_schema=False)
+app.include_router(validation.router, prefix="/v1", include_in_schema=False)
+app.include_router(v2.router)
 
 
 @app.get("/")
@@ -86,15 +93,18 @@ async def root():
         "version": settings.api_version,
         "documentation": "/docs",
         "openapi": "/openapi.json",
-        "api_base": "/v1",
+        "api_base": "/v2",
+        "legacy_api_base": "/v1",
         "endpoints": [
+            "/v2/polls",
+            "/v2/poll-results",
+            "/v2/datasets",
+            "/v2/raw-polls",
+            "/v2/reference-data",
+            "/v2/elections",
+            "/v2/validation-reports/summary",
+            "/v2/downloads",
             "/v1/polls",
-            "/v1/observations",
-            "/v1/raw-polls",
-            "/v1/reference/all",
-            "/v1/elections",
-            "/v1/validation/report",
-            "/v1/download",
         ],
     }
 

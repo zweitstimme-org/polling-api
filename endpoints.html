@@ -1,0 +1,366 @@
+<h1 id="api-endpoints">API Endpoints</h1>
+<p>This API has two versions:</p>
+<ul>
+<li><code>/v2</code> is the public API for new integrations.</li>
+<li><code>/v1</code> is still available for compatibility, but it is
+hidden from the public OpenAPI docs.</li>
+</ul>
+<p>The docs at <code>/docs</code> describe the v2 API only. The old v1
+routes still respond, but new clients should use v2.</p>
+<h2 id="how-to-think-about-the-api">How To Think About The API</h2>
+<p>The API separates four different kinds of data:</p>
+<ol type="1">
+<li><strong>Polls</strong> are cleaned poll-level records.</li>
+<li><strong>Poll results</strong> are party-level percentages inside
+polls, usually one row per poll and party.</li>
+<li><strong>Datasets</strong> are named views over the polling data. The
+default dataset will later become the quality-controlled research
+dataset.</li>
+<li><strong>Raw polls</strong> are the original scraper/import rows kept
+for traceability.</li>
+</ol>
+<p>The most important endpoints for normal use are:</p>
+<pre class="text"><code>GET /v2/polls
+GET /v2/poll-results
+GET /v2/datasets
+GET /v2/datasets/{dataset_key}/polls
+GET /v2/datasets/{dataset_key}/poll-results</code></pre>
+<h2 id="response-shape">Response Shape</h2>
+<p>List endpoints use the same response envelope:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;data&quot;</span><span class="fu">:</span> <span class="ot">[]</span><span class="fu">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;pagination&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;limit&quot;</span><span class="fu">:</span> <span class="dv">100</span><span class="fu">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;offset&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;total&quot;</span><span class="fu">:</span> <span class="dv">19725</span><span class="fu">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;has_next&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;links&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;self&quot;</span><span class="fu">:</span> <span class="st">&quot;http://localhost:8000/v2/polls?limit=100&amp;offset=0&quot;</span><span class="fu">,</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;next&quot;</span><span class="fu">:</span> <span class="st">&quot;http://localhost:8000/v2/polls?limit=100&amp;offset=100&quot;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>This keeps pagination predictable across polls, poll results, raw
+polls, and validation reports.</p>
+<h2 id="common-query-parameters">Common Query Parameters</h2>
+<p>Most list endpoints support some combination of these parameters:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Meaning</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>limit</code></td>
+<td>Maximum number of rows to return</td>
+<td><code>limit=100</code></td>
+</tr>
+<tr>
+<td><code>offset</code></td>
+<td>Number of rows to skip</td>
+<td><code>offset=200</code></td>
+</tr>
+<tr>
+<td><code>sort</code></td>
+<td>Sort order</td>
+<td><code>sort=-published_date</code></td>
+</tr>
+<tr>
+<td><code>published_from</code></td>
+<td>Poll publish date lower bound</td>
+<td><code>published_from=2024-01-01</code></td>
+</tr>
+<tr>
+<td><code>published_to</code></td>
+<td>Poll publish date upper bound</td>
+<td><code>published_to=2024-12-31</code></td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>Canonical scope code</td>
+<td><code>scope=federal</code></td>
+</tr>
+<tr>
+<td><code>election_key</code></td>
+<td>Election key</td>
+<td><code>election_key=BUND</code></td>
+</tr>
+<tr>
+<td><code>institute_key</code></td>
+<td>Institute key</td>
+<td><code>institute_key=INSA</code></td>
+</tr>
+<tr>
+<td><code>provider_id</code></td>
+<td>Provider ID</td>
+<td><code>provider_id=2</code></td>
+</tr>
+<tr>
+<td><code>provider_name</code></td>
+<td>Provider name</td>
+<td><code>provider_name=DAWUM</code></td>
+</tr>
+<tr>
+<td><code>survey_method_key</code></td>
+<td>Survey method key</td>
+<td><code>survey_method_key=ONLINE</code></td>
+</tr>
+<tr>
+<td><code>party_key</code></td>
+<td>Party key, for result endpoints</td>
+<td><code>party_key=CDU_CSU</code></td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>Source type</td>
+<td><code>source=api</code></td>
+</tr>
+</tbody>
+</table>
+<p>For filters that accept multiple values, repeat the parameter:</p>
+<pre class="text"><code>GET /v2/polls?scope=federal&amp;scope=nrw&amp;institute_key=INSA&amp;institute_key=FORSA</code></pre>
+<h2 id="polls">Polls</h2>
+<h3 id="get-v2polls"><code>GET /v2/polls</code></h3>
+<p>Returns the default public poll dataset.</p>
+<p>Right now, the default dataset is the cleaned poll table. Later, this
+endpoint is where the official quality-control filtering should be
+applied. That means researchers can use <code>/v2/polls</code> as the
+normal entry point without needing to remember a quality flag.</p>
+<p>Useful examples:</p>
+<pre class="text"><code>GET /v2/polls?limit=100
+GET /v2/polls?scope=federal&amp;limit=50
+GET /v2/polls?published_from=2024-01-01&amp;published_to=2024-12-31
+GET /v2/polls?institute_key=INSA&amp;sort=-published_date</code></pre>
+<p>By default, poll records include nested party results. Use
+<code>include_results=false</code> when only poll metadata is
+needed:</p>
+<pre class="text"><code>GET /v2/polls?include_results=false</code></pre>
+<h3 id="get-v2pollspoll_id"><code>GET /v2/polls/{poll_id}</code></h3>
+<p>Returns one cleaned poll.</p>
+<p>The preferred identifier is the public poll ID, for example:</p>
+<pre class="text"><code>GET /v2/polls/C00014337</code></pre>
+<p>Numeric database IDs also work, but public IDs are better for
+external users because they are easier to recognize.</p>
+<h3
+id="get-v2pollspoll_idresults"><code>GET /v2/polls/{poll_id}/results</code></h3>
+<p>Returns only the party results for one poll:</p>
+<pre class="text"><code>GET /v2/polls/C00014337/results</code></pre>
+<h3
+id="get-v2pollspoll_idvalidation-report"><code>GET /v2/polls/{poll_id}/validation-report</code></h3>
+<p>Returns the persisted validation report for one poll, if
+available:</p>
+<pre class="text"><code>GET /v2/polls/C00014337/validation-report</code></pre>
+<h2 id="poll-results">Poll Results</h2>
+<h3 id="get-v2poll-results"><code>GET /v2/poll-results</code></h3>
+<p>Returns long-format poll result rows. Each row is one party result in
+one poll.</p>
+<p>This is the best endpoint for researchers using R, Python, Stata,
+spreadsheets, or other analysis tools.</p>
+<p>Examples:</p>
+<pre class="text"><code>GET /v2/poll-results?limit=1000
+GET /v2/poll-results?party_key=CDU_CSU
+GET /v2/poll-results?scope=federal&amp;party_key=SPD
+GET /v2/poll-results?published_from=2024-01-01</code></pre>
+<p>Use this endpoint when the question is about party vote shares across
+many polls.</p>
+<h2 id="datasets">Datasets</h2>
+<p>Datasets are named views over the same polling data.</p>
+<h3 id="get-v2datasets"><code>GET /v2/datasets</code></h3>
+<p>Lists available datasets.</p>
+<p>Current datasets:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default</code></td>
+<td>Main public dataset. This will later become the quality-controlled
+research dataset.</td>
+</tr>
+<tr>
+<td><code>all-cleaned</code></td>
+<td>All cleaned polls before future quality-control subsetting.</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="get-v2datasetsdataset_key"><code>GET /v2/datasets/{dataset_key}</code></h3>
+<p>Returns metadata for one dataset:</p>
+<pre class="text"><code>GET /v2/datasets/default
+GET /v2/datasets/all-cleaned</code></pre>
+<h3
+id="get-v2datasetsdataset_keypolls"><code>GET /v2/datasets/{dataset_key}/polls</code></h3>
+<p>Returns poll records from a specific dataset:</p>
+<pre class="text"><code>GET /v2/datasets/default/polls
+GET /v2/datasets/all-cleaned/polls</code></pre>
+<p>This endpoint also supports wide output:</p>
+<pre class="text"><code>GET /v2/datasets/default/polls?format=wide</code></pre>
+<p>Wide output returns one row per poll, with party percentages
+collected in a results dictionary.</p>
+<h3
+id="get-v2datasetsdataset_keypoll-results"><code>GET /v2/datasets/{dataset_key}/poll-results</code></h3>
+<p>Returns long-format poll results from a specific dataset:</p>
+<pre class="text"><code>GET /v2/datasets/default/poll-results
+GET /v2/datasets/all-cleaned/poll-results</code></pre>
+<p>This is the most explicit research endpoint because it makes the
+chosen dataset visible in the URL.</p>
+<h2 id="raw-polls">Raw Polls</h2>
+<p>Raw polls are source rows before cleaning and normalization. They are
+useful for audits, debugging, and tracing a cleaned poll back to its
+origin.</p>
+<p>They are not the recommended endpoint for normal research
+analysis.</p>
+<h3 id="get-v2raw-polls"><code>GET /v2/raw-polls</code></h3>
+<p>Lists raw scraper/import rows:</p>
+<pre class="text"><code>GET /v2/raw-polls?limit=100
+GET /v2/raw-polls?source=api
+GET /v2/raw-polls?worker=forsa</code></pre>
+<h3
+id="get-v2raw-pollsraw_poll_id"><code>GET /v2/raw-polls/{raw_poll_id}</code></h3>
+<p>Returns one raw poll row:</p>
+<pre class="text"><code>GET /v2/raw-polls/R00014382</code></pre>
+<h2 id="reference-data">Reference Data</h2>
+<p>Reference endpoints expose the canonical keys and labels used in poll
+data.</p>
+<p>Use these endpoints to understand values such as
+<code>party_key</code>, <code>institute_key</code>,
+<code>survey_method_key</code>, and <code>scope</code>.</p>
+<pre class="text"><code>GET /v2/parties
+GET /v2/institutes
+GET /v2/providers
+GET /v2/survey-methods
+GET /v2/scopes
+GET /v2/commissioners
+GET /v2/reference-data</code></pre>
+<h3 id="parties">Parties</h3>
+<pre class="text"><code>GET /v2/parties</code></pre>
+<p>Returns canonical party keys, names, short names, and colors where
+available.</p>
+<p>Example keys:</p>
+<pre class="text"><code>CDU_CSU
+SPD
+GRUENE
+FDP
+AFD
+LINKE
+BSW
+SONSTIGE</code></pre>
+<h3 id="institutes">Institutes</h3>
+<pre class="text"><code>GET /v2/institutes</code></pre>
+<p>Returns canonical polling institute keys and names.</p>
+<p>Example keys:</p>
+<pre class="text"><code>INSA
+FORSA
+VERIAN
+FORSCHUNGSGRUPPE_WAHLEN
+INFRATEST</code></pre>
+<h3 id="survey-methods">Survey Methods</h3>
+<pre class="text"><code>GET /v2/survey-methods</code></pre>
+<p>Returns canonical survey method keys.</p>
+<p>Example keys:</p>
+<pre class="text"><code>ONLINE
+TELEFONISCH
+TELEFON_ONLINE
+PERSOENLICH
+UNBEKANNT</code></pre>
+<h3 id="scopes">Scopes</h3>
+<pre class="text"><code>GET /v2/scopes</code></pre>
+<p>Returns canonical scope codes and their election keys.</p>
+<p>Examples:</p>
+<pre class="text"><code>federal
+nrw
+by
+be
+ost
+west</code></pre>
+<h3 id="reference-data-bundle">Reference Data Bundle</h3>
+<pre class="text"><code>GET /v2/reference-data</code></pre>
+<p>Returns the main reference tables in one response. This is useful for
+clients that want to cache lookup data at startup.</p>
+<h2 id="elections">Elections</h2>
+<h3 id="get-v2elections"><code>GET /v2/elections</code></h3>
+<p>Lists elections with poll counts and latest publish dates:</p>
+<pre class="text"><code>GET /v2/elections</code></pre>
+<h3
+id="get-v2electionselection_key"><code>GET /v2/elections/{election_key}</code></h3>
+<p>Returns one election summary:</p>
+<pre class="text"><code>GET /v2/elections/BUND
+GET /v2/elections/NW</code></pre>
+<h2 id="validation-reports">Validation Reports</h2>
+<p>Validation reports describe data quality checks. They are separate
+from the poll data itself.</p>
+<h3
+id="get-v2validation-reportssummary"><code>GET /v2/validation-reports/summary</code></h3>
+<p>Returns aggregate validation quality information:</p>
+<pre class="text"><code>GET /v2/validation-reports/summary
+GET /v2/validation-reports/summary?top=10</code></pre>
+<h3
+id="get-v2validation-reports"><code>GET /v2/validation-reports</code></h3>
+<p>Lists persisted per-poll validation reports:</p>
+<pre class="text"><code>GET /v2/validation-reports?limit=100
+GET /v2/validation-reports?valid=true
+GET /v2/validation-reports?valid=false</code></pre>
+<p>Later, these validation results should drive the quality-controlled
+default dataset.</p>
+<h2 id="downloads">Downloads</h2>
+<p>Downloads expose prebuilt files for bulk use.</p>
+<h3 id="get-v2downloads"><code>GET /v2/downloads</code></h3>
+<p>Lists available downloadable assets:</p>
+<pre class="text"><code>GET /v2/downloads</code></pre>
+<h3
+id="get-v2downloadsfilename"><code>GET /v2/downloads/{filename}</code></h3>
+<p>Downloads one exported file.</p>
+<p>Examples:</p>
+<pre class="text"><code>GET /v2/downloads/polls.json
+GET /v2/downloads/polls.csv
+GET /v2/downloads/polls.parquet
+GET /v2/downloads/poll-results.csv
+GET /v2/downloads/raw-polls.parquet
+GET /v2/downloads/database.sqlite
+GET /v2/downloads/metadata.json</code></pre>
+<h2 id="archives">Archives</h2>
+<p>Archive endpoints expose snapshot metadata and download links for
+archived database exports.</p>
+<p>These endpoints require archive storage to be configured.</p>
+<pre class="text"><code>GET /v2/archives
+GET /v2/archives/latest
+GET /v2/archives/{filename}
+GET /v2/archives/{filename}/download</code></pre>
+<h2 id="health-and-metadata">Health And Metadata</h2>
+<h3 id="get"><code>GET /</code></h3>
+<p>Returns basic API metadata, including the current API base and legacy
+API base.</p>
+<h3 id="get-health"><code>GET /health</code></h3>
+<p>Returns service health, data freshness, database status, and
+validation quality status.</p>
+<h3 id="get-heartbeat"><code>GET /heartbeat</code></h3>
+<p>Alias for <code>/health</code>.</p>
+<h2 id="legacy-v1-api">Legacy v1 API</h2>
+<p>The old <code>/v1</code> endpoints still work for compatibility:</p>
+<pre class="text"><code>GET /v1/polls
+GET /v1/observations
+GET /v1/results
+GET /v1/raw-polls
+GET /v1/reference/all
+GET /v1/download
+GET /v1/validation/report</code></pre>
+<p>They are hidden from <code>/docs</code> and
+<code>/openapi.json</code> so new users see only the v2 API.</p>
+<p>New integrations should use <code>/v2</code>.</p>

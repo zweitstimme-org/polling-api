@@ -156,6 +156,83 @@ class TestPollsEndpoints:
         assert item["results"]
 
 
+class TestV2Endpoints:
+    """Tests for the v2 API surface."""
+
+    def test_v2_polls_uses_standard_list_envelope(self, client):
+        """Test v2 polls return data with pagination and links."""
+        response = client.get("/v2/polls?limit=2")
+        assert response.status_code == 200
+        data = response.json()
+        assert {"data", "pagination", "links"} <= data.keys()
+        assert data["pagination"]["limit"] == 2
+        assert data["pagination"]["total"] > 0
+        assert data["data"]
+
+    def test_v2_poll_results_primary_name(self, client):
+        """Test v2 exposes long-format results under poll-results."""
+        response = client.get("/v2/poll-results?limit=2")
+        assert response.status_code == 200
+        data = response.json()
+        assert {"data", "pagination", "links"} <= data.keys()
+        assert data["data"]
+        assert {"poll_public_id", "party_key", "percentage"} <= data["data"][0].keys()
+
+    def test_v2_datasets(self, client):
+        """Test v2 dataset registry and explicit dataset poll endpoint."""
+        response = client.get("/v2/datasets")
+        assert response.status_code == 200
+        datasets = response.json()
+        assert {item["key"] for item in datasets} >= {"default", "all-cleaned"}
+
+        response = client.get("/v2/datasets/default/polls?limit=1")
+        assert response.status_code == 200
+        assert response.json()["data"]
+
+    def test_v2_reference_resource_names(self, client):
+        """Test v2 promotes reference tables to English resource names."""
+        for path in [
+            "/v2/parties",
+            "/v2/institutes",
+            "/v2/providers",
+            "/v2/survey-methods",
+            "/v2/scopes",
+            "/v2/commissioners",
+            "/v2/reference-data",
+        ]:
+            response = client.get(path)
+            assert response.status_code == 200
+
+    def test_v2_downloads_index(self, client):
+        """Test v2 downloads use plural resource naming."""
+        response = client.get("/v2/downloads")
+        assert response.status_code == 200
+        filenames = {item["filename"] for item in response.json()}
+        assert {"polls.json", "poll-results.csv", "raw-polls.parquet"} <= filenames
+
+    def test_v2_archive_routes_are_well_formed(self, client):
+        """Test v2 archive paths use slash-separated resource names."""
+        route_paths = {route.path for route in client.app.routes}
+        assert "/v2/archives/latest" in route_paths
+        assert "/v2/archives/{filename}" in route_paths
+        assert "/v2/archives/{filename}/download" in route_paths
+
+    def test_openapi_shows_v2_but_hides_v1(self, client):
+        """Test public OpenAPI docs show v2 while keeping v1 hidden."""
+        response = client.get("/openapi.json")
+        assert response.status_code == 200
+        paths = response.json()["paths"]
+        assert "/v2/polls" in paths
+        assert "/v2/poll-results" in paths
+        assert "/v1/polls" not in paths
+        tags = {tag["name"] for tag in response.json()["tags"]}
+        assert {"observations", "reference", "validation", "archive"}.isdisjoint(tags)
+        assert {"poll-results", "reference-data", "validation-reports", "archives"} <= tags
+
+        legacy_response = client.get("/v1/polls?limit=1")
+        assert legacy_response.status_code == 200
+
+
 class TestRawPollsEndpoints:
     """Tests for raw polls API endpoints."""
 
