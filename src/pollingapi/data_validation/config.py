@@ -32,6 +32,16 @@ class ReportingConfig:
 
 
 @dataclass(frozen=True)
+class PublicDatasetConfig:
+    """Validation policy for the public default API dataset."""
+
+    require_persisted_validation: bool = True
+    include_valid: bool = True
+    include_warnings: bool = True
+    exclude_failed_checks: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class PollMatchingConfig:
     """Thresholds for linking equivalent polls across providers."""
 
@@ -56,6 +66,7 @@ class ValidationConfig:
     respondent_default: tuple[int, int]
     core_parties: CorePartyConfig
     reporting: ReportingConfig
+    public_dataset: PublicDatasetConfig
     poll_matching: PollMatchingConfig
 
 
@@ -75,6 +86,7 @@ def get_validation_config(config_path: Path = CONFIG_PATH) -> ValidationConfig:
     respondents = data.get("respondents", {})
     core_parties = data.get("core_parties", {})
     reporting = data.get("reporting", {})
+    public_dataset = data.get("public_dataset", {})
     poll_matching = data.get("poll_matching", {})
 
     default_limit = _read_limit(respondents.get("default"), (500, 6000))
@@ -97,6 +109,14 @@ def get_validation_config(config_path: Path = CONFIG_PATH) -> ValidationConfig:
             min_valid_share=float(reporting.get("min_valid_share", 0.90)),
             max_warning_share=float(reporting.get("max_warning_share", 0.10)),
             max_invalid_share=float(reporting.get("max_invalid_share", 0.05)),
+        ),
+        public_dataset=PublicDatasetConfig(
+            require_persisted_validation=bool(
+                public_dataset.get("require_persisted_validation", True)
+            ),
+            include_valid=bool(public_dataset.get("include_valid", True)),
+            include_warnings=bool(public_dataset.get("include_warnings", True)),
+            exclude_failed_checks=tuple(public_dataset.get("exclude_failed_checks", [])),
         ),
         poll_matching=PollMatchingConfig(
             date_window_days=int(poll_matching.get("date_window_days", 7)),

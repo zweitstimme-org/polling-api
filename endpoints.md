@@ -13,7 +13,7 @@ The API separates four different kinds of data:
 
 1. **Polls** are cleaned poll-level records.
 2. **Poll results** are party-level percentages inside polls, usually one row per poll and party.
-3. **Datasets** are named views over the polling data. The default dataset will later become the quality-controlled research dataset.
+3. **Datasets** are named views over the polling data. The default dataset is the validated public dataset.
 4. **Raw polls** are the original scraper/import rows kept for traceability.
 
 The most important endpoints for normal use are:
@@ -80,7 +80,7 @@ GET /v2/polls?scope=federal&scope=nrw&institute_key=INSA&institute_key=FORSA
 
 Returns the default public poll dataset.
 
-Right now, the default dataset is the cleaned poll table. Later, this endpoint is where the official quality-control filtering should be applied. That means researchers can use `/v2/polls` as the normal entry point without needing to remember a quality flag.
+The default dataset contains polls with persisted validation results that pass the public dataset policy. That policy is configured in `validation.toml` under `[public_dataset]`, so validation cutoffs and inclusion rules can change without changing endpoint code. Researchers can use `/v2/polls` as the normal entry point without needing to remember a quality flag.
 
 Useful examples:
 
@@ -97,9 +97,23 @@ By default, poll records include nested party results. Use `include_results=fals
 GET /v2/polls?include_results=false
 ```
 
+Poll records use English public field names, for example:
+
+```json
+{
+  "public_id": "C00014337",
+  "raw_poll_public_id": "R00014382",
+  "published_date": "2024-06-01",
+  "survey_start_date": "2024-05-25",
+  "survey_end_date": "2024-05-30",
+  "survey_method_key": "ONLINE",
+  "results": []
+}
+```
+
 ### `GET /v2/polls/{poll_id}`
 
-Returns one cleaned poll.
+Returns one poll from the validated public dataset.
 
 The preferred identifier is the public poll ID, for example:
 
@@ -129,7 +143,7 @@ GET /v2/polls/C00014337/validation-report
 
 ### `GET /v2/poll-results`
 
-Returns long-format poll result rows. Each row is one party result in one poll.
+Returns long-format poll result rows from the validated public dataset. Each row is one party result in one poll.
 
 This is the best endpoint for researchers using R, Python, Stata, spreadsheets, or other analysis tools.
 
@@ -156,8 +170,8 @@ Current datasets:
 
 | Dataset | Meaning |
 |---|---|
-| `default` | Main public dataset. This will later become the quality-controlled research dataset. |
-| `all-cleaned` | All cleaned polls before future quality-control subsetting. |
+| `default` | Validated public polling dataset. Inclusion rules are configured in `validation.toml`. |
+| `all-cleaned` | All cleaned polls before public dataset validation filtering. |
 
 ### `GET /v2/datasets/{dataset_key}`
 
@@ -196,6 +210,32 @@ GET /v2/datasets/all-cleaned/poll-results
 
 This is the most explicit research endpoint because it makes the chosen dataset visible in the URL.
 
+## Public Dataset Configuration
+
+The default dataset is controlled by:
+
+```toml
+[public_dataset]
+require_persisted_validation = true
+include_valid = true
+include_warnings = true
+exclude_failed_checks = []
+```
+
+With the default settings, `/v2/polls` includes polls that have a persisted validation row and pass all error-severity validation checks. Warning rows are included. To exclude warning rows without changing endpoint code, set:
+
+```toml
+[public_dataset]
+include_warnings = false
+```
+
+To exclude rows that fail a specific validation check, add the check column name:
+
+```toml
+[public_dataset]
+exclude_failed_checks = ["qc_scope_result_jump"]
+```
+
 ## Raw Polls
 
 Raw polls are source rows before cleaning and normalization. They are useful for audits, debugging, and tracing a cleaned poll back to its origin.
@@ -211,6 +251,8 @@ GET /v2/raw-polls?limit=100
 GET /v2/raw-polls?source=api
 GET /v2/raw-polls?worker=forsa
 ```
+
+Raw poll responses keep source values intact but expose English field names such as `survey_period_raw`, `party_results_raw`, `commissioner_raw`, `election_raw`, and `survey_method_raw`.
 
 ### `GET /v2/raw-polls/{raw_poll_id}`
 
@@ -362,7 +404,7 @@ GET /v2/validation-reports?valid=true
 GET /v2/validation-reports?valid=false
 ```
 
-Later, these validation results should drive the quality-controlled default dataset.
+These persisted validation results drive the quality-controlled default dataset exposed by `/v2/polls` and `/v2/poll-results`.
 
 ## Downloads
 
