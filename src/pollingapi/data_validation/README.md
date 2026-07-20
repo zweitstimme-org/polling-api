@@ -89,6 +89,22 @@ max_warning_share = 0.10
 max_invalid_share = 0.05
 ```
 
+The public v2 dataset is also configured in `validation.toml`:
+
+```toml
+[public_dataset]
+require_persisted_validation = true
+include_valid = true
+include_warnings = true
+exclude_failed_checks = []
+```
+
+With these defaults, `/v2/polls` and `/v2/poll-results` include polls that have
+a persisted validation row and pass all error-severity checks. Warning rows are
+included. Set `include_warnings = false` to remove warning rows from the public
+dataset, or add validation check column names to `exclude_failed_checks` to
+exclude rows that fail specific checks.
+
 ## API
 
 Persisted validation can be inspected through:

@@ -7,7 +7,8 @@ from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from pollingapi.api import dictionaries, elections
@@ -16,23 +17,18 @@ from pollingapi.api.polls import (
     DateTo,
     Limit,
     Offset,
-    PollItem,
-    PollResultItem,
-    RawPollItem,
     SmallLimit,
     _apply_order,
     _apply_poll_filters,
     _base_poll_query,
     _normalize_keys,
-    _serialize_observation,
-    _serialize_poll,
     _serialize_validation,
-    _serialize_wide_poll,
     _validate_date_range,
 )
 from pollingapi.cleaner.transforms.references import normalized_scope
 from pollingapi.core import settings
 from pollingapi.data_validation import ValidationReportService
+from pollingapi.data_validation.config import PublicDatasetConfig, get_validation_config
 from pollingapi.database import get_db
 from pollingapi.models import (
     Election,
@@ -116,6 +112,124 @@ class DatasetItem(BaseModel):
     status: str
 
 
+class V2PollResultItem(BaseModel):
+    """One party result inside a v2 poll response."""
+
+    party_key: str
+    party_short_name: str | None = None
+    party_name: str | None = None
+    percentage: float
+
+
+class V2PollItem(BaseModel):
+    """Validated public poll row with English field names."""
+
+    id: int
+    public_id: str | None = None
+    raw_poll_id: int | None = None
+    raw_poll_public_id: str | None = None
+    published_date: date | None = None
+    survey_start_date: date | None = None
+    survey_end_date: date | None = None
+    respondents: int | None = None
+    scope: str | None = None
+    source: str | None = None
+    institute_key: str | None = None
+    institute_name: str | None = None
+    provider_id: int | None = None
+    provider_name: str | None = None
+    election_key: str | None = None
+    election_type: str | None = None
+    survey_method_key: str | None = None
+    survey_method_name: str | None = None
+    fingerprint: str | None = None
+    downloaded_at: str | None = None
+    matching_poll_id: int | None = None
+    matching_poll_public_id: str | None = None
+    matching_status: str | None = None
+    results: list[V2PollResultItem] = Field(default_factory=list)
+
+
+class V2WidePollItem(BaseModel):
+    """Validated public poll row with party percentages keyed by party key."""
+
+    id: int
+    public_id: str | None = None
+    raw_poll_public_id: str | None = None
+    published_date: date | None = None
+    survey_start_date: date | None = None
+    survey_end_date: date | None = None
+    respondents: int | None = None
+    scope: str | None = None
+    source: str | None = None
+    institute_key: str | None = None
+    institute_name: str | None = None
+    provider_name: str | None = None
+    election_key: str | None = None
+    election_type: str | None = None
+    survey_method_key: str | None = None
+    survey_method_name: str | None = None
+    matching_poll_id: int | None = None
+    matching_poll_public_id: str | None = None
+    matching_status: str | None = None
+    results: dict[str, float] = Field(default_factory=dict)
+
+
+class V2PollObservationItem(BaseModel):
+    """Long-format v2 row: one poll, one party, one percentage."""
+
+    poll_id: int
+    poll_public_id: str | None = None
+    raw_poll_id: int | None = None
+    raw_poll_public_id: str | None = None
+    published_date: date | None = None
+    survey_start_date: date | None = None
+    survey_end_date: date | None = None
+    respondents: int | None = None
+    scope: str | None = None
+    source: str | None = None
+    institute_key: str | None = None
+    institute_name: str | None = None
+    provider_id: int | None = None
+    provider_name: str | None = None
+    election_key: str | None = None
+    election_type: str | None = None
+    survey_method_key: str | None = None
+    survey_method_name: str | None = None
+    matching_poll_id: int | None = None
+    matching_poll_public_id: str | None = None
+    matching_status: str | None = None
+    party_key: str
+    party_short_name: str | None = None
+    party_name: str | None = None
+    percentage: float
+
+
+class V2RawPollItem(BaseModel):
+    """Raw scraper/import row with English public field names."""
+
+    id: int
+    public_id: str | None = None
+    published_date_raw: str | None = None
+    survey_start_date_raw: str | None = None
+    survey_end_date_raw: str | None = None
+    respondents_raw: str | None = None
+    survey_period_raw: str | None = None
+    party_results_raw: str | None = None
+    institute_raw: str | None = None
+    provider_raw: str | None = None
+    commissioner_raw: str | None = None
+    source: str | None = None
+    scope_raw: str | None = None
+    election_raw: str | None = None
+    survey_method_raw: str | None = None
+    worker: str | None = None
+    survey_type: str | None = None
+    duplicate_of_poll_id: int | None = None
+    pipeline_run_id: str | None = None
+    downloaded_at_raw: str | None = None
+
+
 class DownloadAsset(BaseModel):
     """Downloadable exported asset."""
 
@@ -157,12 +271,12 @@ DATASETS = [
         key="default",
         name="Default polling dataset",
         description=(
-            "Default public polling dataset. Quality-control filtering will be applied here "
-            "once the official inclusion rules are finalized."
+            "Validated public polling dataset. Inclusion rules are configured in "
+            "validation.toml under public_dataset."
         ),
         is_default=True,
-        quality_controlled=False,
-        status="planned_quality_filter",
+        quality_controlled=True,
+        status="validated",
     ),
     DatasetItem(
         key="all-cleaned",
@@ -233,6 +347,161 @@ def _list_response(
     )
 
 
+def _serialize_poll_result(result: PollResult) -> V2PollResultItem:
+    party = result.party
+    return V2PollResultItem(
+        party_key=result.party_key,
+        party_short_name=party.short_name if party else None,
+        party_name=party.name if party else None,
+        percentage=result.percentage,
+    )
+
+
+def _serialize_poll(poll: Poll, include_results: bool) -> V2PollItem:
+    return V2PollItem(
+        id=poll.id,
+        public_id=poll.public_id,
+        raw_poll_id=poll.raw_id,
+        raw_poll_public_id=poll.raw_poll.public_id if poll.raw_poll else None,
+        published_date=poll.publish_date,
+        survey_start_date=poll.survey_date_start,
+        survey_end_date=poll.survey_date_end,
+        respondents=poll.respondents,
+        scope=poll.scope,
+        source=poll.source,
+        institute_key=poll.institute_key,
+        institute_name=poll.institute.name if poll.institute else None,
+        provider_id=poll.provider_id,
+        provider_name=poll.provider.name if poll.provider else None,
+        election_key=poll.election_key,
+        election_type=poll.election.election_type if poll.election else None,
+        survey_method_key=poll.method_key,
+        survey_method_name=poll.method.name if poll.method else None,
+        fingerprint=poll.fingerprint,
+        downloaded_at=poll.date_downloaded.isoformat() if poll.date_downloaded else None,
+        matching_poll_id=poll.matching_poll_id,
+        matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
+        matching_status=poll.matching_status,
+        results=[_serialize_poll_result(row) for row in poll.results] if include_results else [],
+    )
+
+
+def _serialize_wide_poll(poll: Poll) -> V2WidePollItem:
+    return V2WidePollItem(
+        id=poll.id,
+        public_id=poll.public_id,
+        raw_poll_public_id=poll.raw_poll.public_id if poll.raw_poll else None,
+        published_date=poll.publish_date,
+        survey_start_date=poll.survey_date_start,
+        survey_end_date=poll.survey_date_end,
+        respondents=poll.respondents,
+        scope=poll.scope,
+        source=poll.source,
+        institute_key=poll.institute_key,
+        institute_name=poll.institute.name if poll.institute else None,
+        provider_name=poll.provider.name if poll.provider else None,
+        election_key=poll.election_key,
+        election_type=poll.election.election_type if poll.election else None,
+        survey_method_key=poll.method_key,
+        survey_method_name=poll.method.name if poll.method else None,
+        matching_poll_id=poll.matching_poll_id,
+        matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
+        matching_status=poll.matching_status,
+        results={row.party_key: row.percentage for row in poll.results},
+    )
+
+
+def _serialize_observation(result: PollResult) -> V2PollObservationItem:
+    poll = result.poll
+    party = result.party
+    return V2PollObservationItem(
+        poll_id=poll.id,
+        poll_public_id=poll.public_id,
+        raw_poll_id=poll.raw_id,
+        raw_poll_public_id=poll.raw_poll.public_id if poll.raw_poll else None,
+        published_date=poll.publish_date,
+        survey_start_date=poll.survey_date_start,
+        survey_end_date=poll.survey_date_end,
+        respondents=poll.respondents,
+        scope=poll.scope,
+        source=poll.source,
+        institute_key=poll.institute_key,
+        institute_name=poll.institute.name if poll.institute else None,
+        provider_id=poll.provider_id,
+        provider_name=poll.provider.name if poll.provider else None,
+        election_key=poll.election_key,
+        election_type=poll.election.election_type if poll.election else None,
+        survey_method_key=poll.method_key,
+        survey_method_name=poll.method.name if poll.method else None,
+        matching_poll_id=poll.matching_poll_id,
+        matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
+        matching_status=poll.matching_status,
+        party_key=result.party_key,
+        party_short_name=party.short_name if party else None,
+        party_name=party.name if party else None,
+        percentage=result.percentage,
+    )
+
+
+def _serialize_raw_poll(row: RawPoll) -> V2RawPollItem:
+    return V2RawPollItem(
+        id=row.id,
+        public_id=row.public_id,
+        published_date_raw=row.publish_date,
+        survey_start_date_raw=row.survey_date_start,
+        survey_end_date_raw=row.survey_date_end,
+        respondents_raw=row.respondents,
+        survey_period_raw=row.zeitraum,
+        party_results_raw=row.parties,
+        institute_raw=row.institute_id,
+        provider_raw=row.provider,
+        commissioner_raw=row.tasker,
+        source=row.source,
+        scope_raw=row.scope,
+        election_raw=row.election_id,
+        survey_method_raw=row.method_id,
+        worker=row.worker,
+        survey_type=row.survey_type,
+        duplicate_of_poll_id=row.duplicate_of_poll_id,
+        pipeline_run_id=row.pipeline_run_id,
+        downloaded_at_raw=row.date_downloaded,
+    )
+
+
+def _apply_public_dataset_policy(query, policy: PublicDatasetConfig):
+    if policy.require_persisted_validation:
+        query = query.join(Poll.validation)
+    else:
+        query = query.outerjoin(Poll.validation)
+
+    if policy.include_valid:
+        if policy.require_persisted_validation:
+            query = query.filter(PollValidation.valid.is_(True))
+        else:
+            query = query.filter(or_(PollValidation.id.is_(None), PollValidation.valid.is_(True)))
+    else:
+        query = query.filter(PollValidation.valid.is_(False))
+
+    if not policy.include_warnings:
+        if policy.require_persisted_validation:
+            query = query.filter(PollValidation.warning_count == 0)
+        else:
+            query = query.filter(
+                or_(PollValidation.id.is_(None), PollValidation.warning_count == 0)
+            )
+
+    for check_name in policy.exclude_failed_checks:
+        column = getattr(PollValidation, check_name, None)
+        if column is None:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Unknown public dataset validation check: {check_name}",
+            )
+        query = query.filter(column.is_(True))
+
+    return query
+
+
 def _filtered_poll_query(
     db: Session,
     *,
@@ -276,9 +545,8 @@ def _polls_for_dataset(
     published_from: date | None,
     published_to: date | None,
 ):
-    _dataset_or_404(dataset_key)
-    # Future quality-control filtering belongs here for dataset_key == "default".
-    return _filtered_poll_query(
+    dataset = _dataset_or_404(dataset_key)
+    query = _filtered_poll_query(
         db,
         scope=scope,
         institute_key=institute_key,
@@ -290,6 +558,9 @@ def _polls_for_dataset(
         published_from=published_from,
         published_to=published_to,
     )
+    if dataset == "default":
+        query = _apply_public_dataset_policy(query, get_validation_config().public_dataset)
+    return query
 
 
 @router.get("/polls", response_model=ListResponse, tags=["polls"])
@@ -338,14 +609,16 @@ def list_polls(
     )
 
 
-@router.get("/polls/{poll_id}", response_model=PollItem, tags=["polls"])
+@router.get("/polls/{poll_id}", response_model=V2PollItem, tags=["polls"])
 def get_poll(
     poll_id: str,
     db: DBSession,
     include_results: Annotated[bool, Query(description="Include nested party results")] = True,
 ):
     """Get one poll by public id such as C00014337 or by numeric database id."""
-    query = _base_poll_query(db)
+    query = _apply_public_dataset_policy(
+        _base_poll_query(db), get_validation_config().public_dataset
+    )
     if poll_id.upper().startswith("C"):
         query = query.filter(Poll.public_id == poll_id.upper())
     elif poll_id.isdigit():
@@ -359,7 +632,7 @@ def get_poll(
     return _serialize_poll(poll, include_results=include_results)
 
 
-@router.get("/polls/{poll_id}/results", response_model=list[PollResultItem], tags=["polls"])
+@router.get("/polls/{poll_id}/results", response_model=list[V2PollResultItem], tags=["polls"])
 def get_poll_results(poll_id: str, db: DBSession):
     """Get party results for one poll."""
     return get_poll(poll_id, db).results
@@ -397,10 +670,13 @@ def list_poll_results(
     scope: Annotated[list[str] | None, Query(description="Scope code(s)")] = None,
     party_key: Annotated[list[str] | None, Query(description="Party key(s)")] = None,
     institute_key: Annotated[list[str] | None, Query(description="Institute key(s)")] = None,
+    provider_id: Annotated[int | None, Query(description="Provider numeric id")] = None,
+    provider_name: Annotated[str | None, Query(description="Provider name")] = None,
     election_key: Annotated[list[str] | None, Query(description="Election key(s)")] = None,
     survey_method_key: Annotated[
         list[str] | None, Query(description="Survey method key(s)")
     ] = None,
+    source: Annotated[str | None, Query(description="Source type")] = None,
     published_from: DateFrom = None,
     published_to: DateTo = None,
     sort: SortOrder = "-published_date",
@@ -415,8 +691,11 @@ def list_poll_results(
         scope=scope,
         party_key=party_key,
         institute_key=institute_key,
+        provider_id=provider_id,
+        provider_name=provider_name,
         election_key=election_key,
         survey_method_key=survey_method_key,
+        source=source,
         published_from=published_from,
         published_to=published_to,
         sort=sort,
@@ -499,17 +778,20 @@ def list_dataset_poll_results(
     scope: Annotated[list[str] | None, Query(description="Scope code(s)")] = None,
     party_key: Annotated[list[str] | None, Query(description="Party key(s)")] = None,
     institute_key: Annotated[list[str] | None, Query(description="Institute key(s)")] = None,
+    provider_id: Annotated[int | None, Query(description="Provider numeric id")] = None,
+    provider_name: Annotated[str | None, Query(description="Provider name")] = None,
     election_key: Annotated[list[str] | None, Query(description="Election key(s)")] = None,
     survey_method_key: Annotated[
         list[str] | None, Query(description="Survey method key(s)")
     ] = None,
+    source: Annotated[str | None, Query(description="Source type")] = None,
     published_from: DateFrom = None,
     published_to: DateTo = None,
     sort: SortOrder = "-published_date",
 ):
     """List long-format poll results from an explicit dataset."""
     _validate_date_range(published_from, published_to)
-    _dataset_or_404(dataset_key)
+    dataset = _dataset_or_404(dataset_key)
     query = (
         db.query(PollResult)
         .join(Poll)
@@ -528,11 +810,16 @@ def list_dataset_poll_results(
     query = _apply_poll_filters(
         query,
         institute_key=institute_key,
+        provider_id=provider_id,
+        provider_name=provider_name,
         election_key=election_key,
         method_key=survey_method_key,
+        source=source,
         date_from=published_from,
         date_to=published_to,
     )
+    if dataset == "default":
+        query = _apply_public_dataset_policy(query, get_validation_config().public_dataset)
     if party_key:
         query = query.filter(PollResult.party_key.in_(_normalize_keys(party_key)))
 
@@ -574,14 +861,11 @@ def list_raw_polls(
     total = query.count()
     order = RawPoll.id.asc() if sort == "id" else RawPoll.id.desc()
     rows = query.order_by(order).offset(offset).limit(limit).all()
-    data = [
-        RawPollItem.model_validate(row, from_attributes=True).model_dump(mode="json")
-        for row in rows
-    ]
+    data = [_serialize_raw_poll(row).model_dump(mode="json") for row in rows]
     return _list_response(request=request, data=data, total=total, limit=limit, offset=offset)
 
 
-@router.get("/raw-polls/{raw_poll_id}", response_model=RawPollItem, tags=["raw-polls"])
+@router.get("/raw-polls/{raw_poll_id}", response_model=V2RawPollItem, tags=["raw-polls"])
 def get_raw_poll(raw_poll_id: str, db: DBSession):
     """Get one raw row by public id such as R00014382 or by numeric database id."""
     query = db.query(RawPoll)
@@ -594,7 +878,7 @@ def get_raw_poll(raw_poll_id: str, db: DBSession):
     row = query.first()
     if not row:
         raise HTTPException(status_code=404, detail=f"Raw poll {raw_poll_id} not found")
-    return RawPollItem.model_validate(row, from_attributes=True)
+    return _serialize_raw_poll(row)
 
 
 @router.get("/parties", response_model=list[PartySchema], tags=["reference-data"])

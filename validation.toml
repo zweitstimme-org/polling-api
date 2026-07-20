@@ -22,6 +22,12 @@ min_valid_share = 0.90
 max_warning_share = 0.10
 max_invalid_share = 0.05
 
+[public_dataset]
+require_persisted_validation = true
+include_valid = true
+include_warnings = true
+exclude_failed_checks = []
+
 [poll_matching]
 date_window_days = 7
 primary_provider = "wahlrecht.de"
