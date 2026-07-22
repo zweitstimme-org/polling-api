@@ -2,7 +2,7 @@
 provider = "Wahlrecht.de"
 source = "html_scraper"
 
-[primary_sources.years."2024"]
+[primary_sources.years."2000"]
 provider = "Wahlrecht.de"
 source = "html_scraper"
 

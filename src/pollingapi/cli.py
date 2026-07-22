@@ -138,6 +138,23 @@ def db_export():
     typer.echo(f"  raw_polls: {counts['raw']}")
 
 
+@app.command(name="services:report")
+def services_report(
+    run_id: str | None = typer.Option(None, "--run-id", help="Pipeline run id to link"),
+):
+    """Generate the PDF data report."""
+    db = get_db()
+    report_service = ReportService(db)
+    try:
+        report_path = report_service.generate(run_id=run_id)
+    except Exception as exc:
+        typer.echo(f"✗ Report generation failed: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    typer.echo(f"✓ Report generated: {report_path}")
+    typer.echo(f"  Latest report : {report_service.latest_report_path()}")
+
+
 @app.command(name="validation:run")
 def validation_run(
     limit: int | None = typer.Option(None, "--limit", "-l", help="Limit polls to validate"),

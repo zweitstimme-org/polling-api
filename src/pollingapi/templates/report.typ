@@ -30,26 +30,41 @@ API version: #raw(report.api_version)
 == Pipeline Run
 
 #value-table(
-  [Run ID], [#raw(report.run.run_id)],
-  [Success], [#raw(report.run.success)],
-  [Started], [#raw(report.run.started_at)],
-  [Finished], [#raw(report.run.finished_at)],
-  [Duration], [#raw(report.run.duration)],
-  [Scraped polls], [#report.run.scraped],
-  [Created / updated], [#report.run.created / #report.run.updated],
-  [ETL errors], [#report.run.errors],
+  [Run ID],
+  [#raw(report.run.run_id)],
+  [Success],
+  [#raw(report.run.success)],
+  [Started],
+  [#raw(report.run.started_at)],
+  [Finished],
+  [#raw(report.run.finished_at)],
+  [Duration],
+  [#raw(report.run.duration)],
+  [Scraped polls],
+  [#report.run.scraped],
+  [Created / updated],
+  [#report.run.created / #report.run.updated],
+  [ETL errors],
+  [#report.run.errors],
 )
 
 == Data Quality Summary
 
 #value-table(
-  [Status], [#raw(report.totals.status)],
-  [Total polls], [#report.totals.polls],
-  [Validated polls], [#report.totals.validated_polls],
-  [Valid polls], [#report.totals.valid_polls (#raw(report.totals.valid_share))],
-  [Invalid polls], [#report.totals.invalid_polls],
-  [Warning polls], [#report.totals.warning_polls],
-  [Latest validation], [#raw(report.totals.latest_validated_at)],
+  [Status],
+  [#raw(report.totals.status)],
+  [Total polls],
+  [#report.totals.polls],
+  [Validated polls],
+  [#report.totals.validated_polls],
+  [Valid polls],
+  [#report.totals.valid_polls (#raw(report.totals.valid_share))],
+  [Invalid polls],
+  [#report.totals.invalid_polls],
+  [Warning polls],
+  [#report.totals.warning_polls],
+  [Latest validation],
+  [#raw(report.totals.latest_validated_at)],
 )
 
 == Primary Sources by Year
