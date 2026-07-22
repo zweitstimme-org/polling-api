@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from pollingapi.cleaner.fingerprint import build_poll_fingerprint
 from pollingapi.cleaner.steps.link_matching_polls import link_matching_polls
+from pollingapi.cleaner.steps.select_public_polls import select_public_polls
 from pollingapi.cleaner.transforms.dates import normalize_publish_date, normalize_survey_dates
 from pollingapi.cleaner.transforms.references import (
     normalized_scope,
@@ -79,6 +80,8 @@ class CleaningStats:
     errors: int = 0
     matched_pairs: int = 0
     multiple_matches: int = 0
+    public_polls: int = 0
+    excluded_polls: int = 0
 
 
 def get_or_create_institute(db: Session, name: str) -> Institute:
@@ -504,6 +507,9 @@ def run_cleaning_pipeline(
     match_stats = link_matching_polls(db)
     stats.matched_pairs = match_stats.matched_pairs
     stats.multiple_matches = match_stats.multiple_matches
+    public_stats = select_public_polls(db)
+    stats.public_polls = public_stats.public
+    stats.excluded_polls = public_stats.excluded
 
     if dry_run:
         logger.info("Dry run - rolling back changes")
@@ -516,7 +522,8 @@ def run_cleaning_pipeline(
         f"Pipeline complete: processed={stats.processed}, "
         f"created={stats.created}, updated={stats.updated}, "
         f"skipped={stats.skipped}, errors={stats.errors}, "
-        f"matched_pairs={stats.matched_pairs}, multiple_matches={stats.multiple_matches}"
+        f"matched_pairs={stats.matched_pairs}, multiple_matches={stats.multiple_matches}, "
+        f"public_polls={stats.public_polls}, excluded_polls={stats.excluded_polls}"
     )
 
     return {
@@ -527,4 +534,6 @@ def run_cleaning_pipeline(
         "errors": stats.errors,
         "matched_pairs": stats.matched_pairs,
         "multiple_matches": stats.multiple_matches,
+        "public_polls": stats.public_polls,
+        "excluded_polls": stats.excluded_polls,
     }
