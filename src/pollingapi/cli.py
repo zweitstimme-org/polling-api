@@ -17,7 +17,7 @@ from pollingapi.logging_config import get_logger, setup_logging
 from pollingapi.notifications import PipelineRunResult, create_notification_manager
 from pollingapi.scraper.context import RunContext
 from pollingapi.scraper.runner import ScraperRunner
-from pollingapi.services import ExportService, S3Service
+from pollingapi.services import ExportService, ReportService, S3Service
 
 # Initialize logging with default settings
 setup_logging()
@@ -136,6 +136,23 @@ def db_export():
     typer.echo(f"  poll_results: {counts['results']}")
     typer.echo(f"  observations: {counts['observations']}")
     typer.echo(f"  raw_polls: {counts['raw']}")
+
+
+@app.command(name="services:report")
+def services_report(
+    run_id: str | None = typer.Option(None, "--run-id", help="Pipeline run id to link"),
+):
+    """Generate the PDF data report."""
+    db = get_db()
+    report_service = ReportService(db)
+    try:
+        report_path = report_service.generate(run_id=run_id)
+    except Exception as exc:
+        typer.echo(f"✗ Report generation failed: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    typer.echo(f"✓ Report generated: {report_path}")
+    typer.echo(f"  Latest report : {report_service.latest_report_path()}")
 
 
 @app.command(name="validation:run")
@@ -694,6 +711,13 @@ def pipeline_run(
             logger.info(f"Pipeline run record saved: run_id={run_result.run_id}")
         except Exception as db_exc:
             logger.warning(f"Failed to persist pipeline run record: {db_exc}")
+
+        # ---------------------------------------------------------- generate report
+        try:
+            report_path = ReportService(db).generate(run_id=run_result.run_id)
+            logger.info(f"Pipeline report generated: {report_path}")
+        except Exception as report_exc:
+            logger.warning(f"Failed to generate pipeline report: {report_exc}")
 
         # ---------------------------------------------------------- notify
         notifier.notify(run_result)

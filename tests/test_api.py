@@ -73,6 +73,23 @@ class TestHealthEndpoint:
         assert data["status"] in {"pass", "warn", "fail"}
 
 
+class TestReportEndpoint:
+    """Tests for PDF report endpoint."""
+
+    def test_report_serves_latest_pdf(self, client, tmp_path, monkeypatch):
+        """Test report endpoint returns the latest generated PDF."""
+        report_dir = tmp_path / "reports"
+        report_dir.mkdir()
+        (report_dir / "pollingapi-report-latest.pdf").write_bytes(b"%PDF-1.7\n")
+        monkeypatch.setattr("pollingapi.core.settings.report_dir", report_dir)
+
+        response = client.get("/report")
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/pdf"
+        assert response.content.startswith(b"%PDF")
+
+
 class TestPollsEndpoints:
     """Tests for polls API endpoints."""
 

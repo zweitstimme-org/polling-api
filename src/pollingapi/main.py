@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -23,6 +23,7 @@ from pollingapi.data_validation import ValidationReportService
 from pollingapi.database import get_db, init_db_async
 from pollingapi.models import PipelineRun, Poll
 from pollingapi.schemas import HealthCheck
+from pollingapi.services import ReportService
 
 ICON_PATH = Path(__file__).resolve().parent / "api" / "favicon.ico"
 DB_SESSION_DEP = Depends(get_db)
@@ -58,6 +59,7 @@ app = FastAPI(
         {"name": "validation-reports", "description": "Persisted data quality validation reports"},
         {"name": "downloads", "description": "Downloadable file exports"},
         {"name": "archives", "description": "Archive snapshot metadata and downloads"},
+        {"name": "reports", "description": "Generated PDF data reports"},
         {"name": "health", "description": "Service heartbeat and dependency checks"},
     ],
 )
@@ -104,6 +106,7 @@ async def root():
             "/v2/elections",
             "/v2/validation-reports/summary",
             "/v2/downloads",
+            "/report",
             "/v1/polls",
         ],
     }
@@ -192,6 +195,23 @@ async def health_check(db: Session = DB_SESSION_DEP):
 async def favicon() -> FileResponse:
     """Serve favicon for browser tabs."""
     return FileResponse(ICON_PATH)
+
+
+@app.get("/report", tags=["reports"])
+async def report(db: Session = DB_SESSION_DEP) -> FileResponse:
+    """Serve the latest generated PDF report."""
+    service = ReportService(db)
+    report_path = service.latest_report_path()
+    if not report_path.exists():
+        try:
+            report_path = service.generate()
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Report generation failed: {exc}") from exc
+    return FileResponse(
+        report_path,
+        filename="pollingapi-report.pdf",
+        media_type="application/pdf",
+    )
 
 
 def run_server():
