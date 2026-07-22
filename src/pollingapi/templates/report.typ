@@ -4,6 +4,7 @@
 #set page(paper: "a4", margin: 18mm)
 #set text(font: "Libertinus Serif", size: 10pt)
 #show heading: set text(font: "Libertinus Serif")
+#import "./flowchart.typ": polling-api-flowchart
 
 #let value-table(..items) = table(
   columns: (42%, 58%),
@@ -109,3 +110,8 @@ API version: #raw(report.api_version)
 == Top Failures
 
 #empty-or-list(report.top_failures)
+
+== Data Flowchart
+
+
+#polling-api-flowchart()
