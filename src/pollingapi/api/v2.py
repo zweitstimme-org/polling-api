@@ -567,7 +567,7 @@ def _polls_for_dataset(
 def list_polls(
     request: Request,
     db: DBSession,
-    limit: Limit = 1000,
+    limit: Limit = 100,
     offset: Offset = 0,
     scope: Annotated[list[str] | None, Query(description="Scope code(s)")] = None,
     institute_key: Annotated[list[str] | None, Query(description="Institute key(s)")] = None,
@@ -665,7 +665,7 @@ def get_poll_validation_report(poll_id: str, db: DBSession):
 def list_poll_results(
     request: Request,
     db: DBSession,
-    limit: Limit = 1000,
+    limit: Limit = 100,
     offset: Offset = 0,
     scope: Annotated[list[str] | None, Query(description="Scope code(s)")] = None,
     party_key: Annotated[list[str] | None, Query(description="Party key(s)")] = None,
@@ -720,7 +720,7 @@ def list_dataset_polls(
     dataset_key: str,
     request: Request,
     db: DBSession,
-    limit: Limit = 1000,
+    limit: Limit = 100,
     offset: Offset = 0,
     scope: Annotated[list[str] | None, Query(description="Scope code(s)")] = None,
     institute_key: Annotated[list[str] | None, Query(description="Institute key(s)")] = None,
@@ -773,7 +773,7 @@ def list_dataset_poll_results(
     dataset_key: str,
     request: Request,
     db: DBSession,
-    limit: Limit = 1000,
+    limit: Limit = 100,
     offset: Offset = 0,
     scope: Annotated[list[str] | None, Query(description="Scope code(s)")] = None,
     party_key: Annotated[list[str] | None, Query(description="Party key(s)")] = None,
@@ -961,7 +961,7 @@ def get_validation_report_summary(
 def list_validation_reports(
     request: Request,
     db: DBSession,
-    limit: Limit = 1000,
+    limit: Limit = 100,
     offset: Offset = 0,
     valid: Annotated[bool | None, Query(description="Filter by overall validity")] = None,
 ):

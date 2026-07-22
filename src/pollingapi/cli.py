@@ -1,12 +1,13 @@
 """CLI entry points for zweitstimme."""
 
+from datetime import date
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from httpx import HTTPError
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from pollingapi.cleaner import run_cleaning_pipeline
 from pollingapi.core import PROJECT_ROOT, settings
@@ -18,6 +19,9 @@ from pollingapi.notifications import PipelineRunResult, create_notification_mana
 from pollingapi.scraper.context import RunContext
 from pollingapi.scraper.runner import ScraperRunner
 from pollingapi.services import ExportService, S3Service
+
+if TYPE_CHECKING:
+    from pollingapi.models import Poll
 
 # Initialize logging with default settings
 setup_logging()
@@ -41,11 +45,37 @@ ImportManifestOption = Annotated[
     Path,
     typer.Option("--manifest", "-m", help="Download manifest path"),
 ]
+DateYearArg = Annotated[int, typer.Argument(help="Year, e.g. 2024")]
+DateMonthArg = Annotated[int, typer.Argument(help="Month, e.g. 6 or 06")]
+DateDayArg = Annotated[int, typer.Argument(help="Day, e.g. 1 or 01")]
 
 
 def get_db() -> Session:
     """Get database session."""
     return SessionLocal()
+
+
+def _parse_cli_date(year: int, month: int, day: int) -> date:
+    try:
+        return date(year, month, day)
+    except ValueError as exc:
+        raise typer.BadParameter(
+            f"Invalid date: {year:04d} {month:02d} {day:02d}. Expected yyyy mm dd."
+        ) from exc
+
+
+def _format_percentage(value: float) -> str:
+    return f"{value:g}"
+
+
+def _format_poll_results(poll: "Poll") -> str:
+    if not poll.results:
+        return "no results"
+
+    return ", ".join(
+        f"{result.party_key} {_format_percentage(result.percentage)}"
+        for result in sorted(poll.results, key=lambda item: item.party_key)
+    )
 
 
 @app.command(name="db:ping")
@@ -123,6 +153,54 @@ def db_tables():
     for name, model in tables:
         count = db.query(model).count()
         typer.echo(f"  {name}: {count}")
+
+
+@app.command(name="polls:date")
+def polls_by_date(
+    year: DateYearArg,
+    month: DateMonthArg,
+    day: DateDayArg,
+):
+    """Find cleaned polls published on a date supplied as yyyy mm dd."""
+    from pollingapi.models import Poll, PollResult
+
+    publish_date = _parse_cli_date(year, month, day)
+    db = get_db()
+    polls = (
+        db.query(Poll)
+        .options(
+            joinedload(Poll.raw_poll),
+            joinedload(Poll.institute),
+            joinedload(Poll.provider),
+            joinedload(Poll.election),
+            joinedload(Poll.method),
+            joinedload(Poll.results).joinedload(PollResult.party),
+        )
+        .filter(Poll.publish_date == publish_date)
+        .order_by(Poll.id.asc())
+        .all()
+    )
+
+    if not polls:
+        typer.echo(f"No polls found for {publish_date.isoformat()}")
+        return
+
+    typer.echo(f"Found {len(polls)} poll(s) for {publish_date.isoformat()}:")
+    for poll in polls:
+        public_id = poll.public_id or f"id={poll.id}"
+        institute = poll.institute.name if poll.institute else poll.institute_key or "-"
+        provider = poll.provider.name if poll.provider else "-"
+        election = poll.election_key or "-"
+        scope = poll.scope or "-"
+        respondents = poll.respondents if poll.respondents is not None else "-"
+        raw_public_id = poll.raw_poll.public_id if poll.raw_poll else "-"
+
+        typer.echo(
+            f"{public_id} | raw={raw_public_id} | institute={institute} | "
+            f"provider={provider} | scope={scope} | election={election} | "
+            f"respondents={respondents}"
+        )
+        typer.echo(f"  results: {_format_poll_results(poll)}")
 
 
 @app.command(name="export:all")
