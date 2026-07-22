@@ -147,6 +147,8 @@ class V2PollItem(BaseModel):
     matching_poll_id: int | None = None
     matching_poll_public_id: str | None = None
     matching_status: str | None = None
+    is_public: bool = False
+    public_exclusion_reason: str | None = None
     results: list[V2PollResultItem] = Field(default_factory=list)
 
 
@@ -172,6 +174,8 @@ class V2WidePollItem(BaseModel):
     matching_poll_id: int | None = None
     matching_poll_public_id: str | None = None
     matching_status: str | None = None
+    is_public: bool = False
+    public_exclusion_reason: str | None = None
     results: dict[str, float] = Field(default_factory=dict)
 
 
@@ -199,6 +203,8 @@ class V2PollObservationItem(BaseModel):
     matching_poll_id: int | None = None
     matching_poll_public_id: str | None = None
     matching_status: str | None = None
+    is_public: bool = False
+    public_exclusion_reason: str | None = None
     party_key: str
     party_short_name: str | None = None
     party_name: str | None = None
@@ -271,8 +277,8 @@ DATASETS = [
         key="default",
         name="Default polling dataset",
         description=(
-            "Validated public polling dataset. Inclusion rules are configured in "
-            "validation.toml under public_dataset."
+            "Validated public polling dataset. Source selection and validation rules are "
+            "configured in validation.toml under public_dataset."
         ),
         is_default=True,
         quality_controlled=True,
@@ -382,6 +388,8 @@ def _serialize_poll(poll: Poll, include_results: bool) -> V2PollItem:
         matching_poll_id=poll.matching_poll_id,
         matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
         matching_status=poll.matching_status,
+        is_public=poll.is_public,
+        public_exclusion_reason=poll.public_exclusion_reason,
         results=[_serialize_poll_result(row) for row in poll.results] if include_results else [],
     )
 
@@ -407,6 +415,8 @@ def _serialize_wide_poll(poll: Poll) -> V2WidePollItem:
         matching_poll_id=poll.matching_poll_id,
         matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
         matching_status=poll.matching_status,
+        is_public=poll.is_public,
+        public_exclusion_reason=poll.public_exclusion_reason,
         results={row.party_key: row.percentage for row in poll.results},
     )
 
@@ -436,6 +446,8 @@ def _serialize_observation(result: PollResult) -> V2PollObservationItem:
         matching_poll_id=poll.matching_poll_id,
         matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
         matching_status=poll.matching_status,
+        is_public=poll.is_public,
+        public_exclusion_reason=poll.public_exclusion_reason,
         party_key=result.party_key,
         party_short_name=party.short_name if party else None,
         party_name=party.name if party else None,
@@ -469,6 +481,8 @@ def _serialize_raw_poll(row: RawPoll) -> V2RawPollItem:
 
 
 def _apply_public_dataset_policy(query, policy: PublicDatasetConfig):
+    query = query.filter(Poll.is_public.is_(True))
+
     if policy.require_persisted_validation:
         query = query.join(Poll.validation)
     else:
@@ -585,8 +599,7 @@ def list_polls(
 ):
     """List default public polls.
 
-    The v2 default dataset is currently all cleaned polls. Future quality-control
-    filtering will be applied here once the inclusion rules are finalized.
+    The v2 default dataset applies source selection and quality-control rules.
     """
     return list_dataset_polls(
         dataset_key="default",

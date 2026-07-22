@@ -28,6 +28,14 @@ include_valid = true
 include_warnings = true
 exclude_failed_checks = []
 
+[public_dataset.selection]
+cutoff_year = 2005
+pre_cutoff_provider = "Kayser/Rehmert"
+post_cutoff_provider = "wahlrecht.de"
+secondary_provider = "DAWUM"
+include_unmatched_secondary_after_cutoff = true
+exclude_ambiguous_secondary = true
+
 [poll_matching]
 date_window_days = 7
 primary_provider = "wahlrecht.de"

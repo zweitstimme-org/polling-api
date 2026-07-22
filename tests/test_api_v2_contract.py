@@ -76,12 +76,13 @@ def test_v2_all_cleaned_dataset_keeps_unvalidated_and_invalid_polls(
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["pagination"]["total"] == 4
+    assert payload["pagination"]["total"] == 5
     assert [item["public_id"] for item in payload["data"]] == [
         "C00000001",
         "C00000002",
         "C00000003",
         "C00000004",
+        "C00000005",
     ]
 
 
@@ -120,6 +121,14 @@ def test_v2_can_exclude_warning_polls_from_public_dataset(
     payload = response.json()
     assert payload["pagination"]["total"] == 1
     assert payload["data"][0]["public_id"] == "C00000001"
+
+
+def test_v2_default_polls_excludes_non_public_polls(v2_client: TestClient) -> None:
+    response = v2_client.get("/v2/polls?sort=id&include_results=false")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert "C00000005" not in [item["public_id"] for item in payload["data"]]
 
 
 def test_v2_poll_payload_uses_english_public_field_names(v2_client: TestClient) -> None:
@@ -187,6 +196,7 @@ def _seed_v2_contract_data(session: Session) -> None:
             method_key="ONLINE",
             scope="federal",
             source="html_scraper",
+            is_public=True,
         ),
         Poll(
             id=2,
@@ -198,6 +208,7 @@ def _seed_v2_contract_data(session: Session) -> None:
             method_key="ONLINE",
             scope="federal",
             source="html_scraper",
+            is_public=True,
         ),
         Poll(
             id=3,
@@ -209,6 +220,7 @@ def _seed_v2_contract_data(session: Session) -> None:
             method_key="ONLINE",
             scope="federal",
             source="html_scraper",
+            is_public=True,
         ),
         Poll(
             id=4,
@@ -220,6 +232,20 @@ def _seed_v2_contract_data(session: Session) -> None:
             method_key="ONLINE",
             scope="federal",
             source="html_scraper",
+            is_public=True,
+        ),
+        Poll(
+            id=5,
+            public_id="C00000005",
+            publish_date=dt.date(2024, 1, 5),
+            survey_date_start=dt.date(2023, 12, 24),
+            survey_date_end=dt.date(2023, 12, 26),
+            respondents=1400,
+            method_key="ONLINE",
+            scope="federal",
+            source="html_scraper",
+            is_public=False,
+            public_exclusion_reason="matched_secondary_provider",
         ),
     ]
     session.add_all(polls)
@@ -232,6 +258,7 @@ def _seed_v2_contract_data(session: Session) -> None:
             _validation(poll_id=1, valid=True, warning_count=0),
             _validation(poll_id=2, valid=True, warning_count=1),
             _validation(poll_id=3, valid=False, warning_count=0),
+            _validation(poll_id=5, valid=True, warning_count=0),
         ]
     )
     session.commit()

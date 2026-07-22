@@ -55,6 +55,8 @@ def _apply_schema_migrations():
     poll_columns = {
         "matching_poll_id": "INTEGER",
         "matching_status": "TEXT",
+        "is_public": "BOOLEAN DEFAULT FALSE",
+        "public_exclusion_reason": "TEXT",
     }
 
     with engine.connect() as conn:
@@ -123,6 +125,9 @@ def _apply_schema_migrations():
                         "CREATE INDEX IF NOT EXISTS ix_polls_matching_poll_id"
                         " ON polls (matching_poll_id)"
                     )
+                )
+                conn.execute(
+                    text("CREATE INDEX IF NOT EXISTS ix_polls_is_public ON polls (is_public)")
                 )
 
             if "poll_validations" in tables:
@@ -235,6 +240,8 @@ def _apply_schema_migrations():
                 for column_name, column_type in {
                     "matching_poll_id": "INTEGER",
                     "matching_status": "VARCHAR(50)",
+                    "is_public": "BOOLEAN DEFAULT FALSE",
+                    "public_exclusion_reason": "VARCHAR(100)",
                 }.items():
                     column = conn.execute(
                         text(
@@ -252,6 +259,9 @@ def _apply_schema_migrations():
                         "CREATE INDEX IF NOT EXISTS ix_polls_matching_poll_id"
                         " ON polls (matching_poll_id)"
                     )
+                )
+                conn.execute(
+                    text("CREATE INDEX IF NOT EXISTS ix_polls_is_public ON polls (is_public)")
                 )
 
             for old_name, new_name in validation_column_renames.items():

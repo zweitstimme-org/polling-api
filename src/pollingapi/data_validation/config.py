@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -32,6 +32,18 @@ class ReportingConfig:
 
 
 @dataclass(frozen=True)
+class PublicDatasetSelectionConfig:
+    """Source-selection policy for the public default API dataset."""
+
+    cutoff_year: int = 2005
+    pre_cutoff_provider: str = "Kayser/Rehmert"
+    post_cutoff_provider: str = "wahlrecht.de"
+    secondary_provider: str = "DAWUM"
+    include_unmatched_secondary_after_cutoff: bool = True
+    exclude_ambiguous_secondary: bool = True
+
+
+@dataclass(frozen=True)
 class PublicDatasetConfig:
     """Validation policy for the public default API dataset."""
 
@@ -39,6 +51,7 @@ class PublicDatasetConfig:
     include_valid: bool = True
     include_warnings: bool = True
     exclude_failed_checks: tuple[str, ...] = ()
+    selection: PublicDatasetSelectionConfig = field(default_factory=PublicDatasetSelectionConfig)
 
 
 @dataclass(frozen=True)
@@ -87,6 +100,7 @@ def get_validation_config(config_path: Path = CONFIG_PATH) -> ValidationConfig:
     core_parties = data.get("core_parties", {})
     reporting = data.get("reporting", {})
     public_dataset = data.get("public_dataset", {})
+    public_selection = public_dataset.get("selection", {})
     poll_matching = data.get("poll_matching", {})
 
     default_limit = _read_limit(respondents.get("default"), (500, 6000))
@@ -117,6 +131,22 @@ def get_validation_config(config_path: Path = CONFIG_PATH) -> ValidationConfig:
             include_valid=bool(public_dataset.get("include_valid", True)),
             include_warnings=bool(public_dataset.get("include_warnings", True)),
             exclude_failed_checks=tuple(public_dataset.get("exclude_failed_checks", [])),
+            selection=PublicDatasetSelectionConfig(
+                cutoff_year=int(public_selection.get("cutoff_year", 2005)),
+                pre_cutoff_provider=str(
+                    public_selection.get("pre_cutoff_provider", "Kayser/Rehmert")
+                ),
+                post_cutoff_provider=str(
+                    public_selection.get("post_cutoff_provider", "wahlrecht.de")
+                ),
+                secondary_provider=str(public_selection.get("secondary_provider", "DAWUM")),
+                include_unmatched_secondary_after_cutoff=bool(
+                    public_selection.get("include_unmatched_secondary_after_cutoff", True)
+                ),
+                exclude_ambiguous_secondary=bool(
+                    public_selection.get("exclude_ambiguous_secondary", True)
+                ),
+            ),
         ),
         poll_matching=PollMatchingConfig(
             date_window_days=int(poll_matching.get("date_window_days", 7)),

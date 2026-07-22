@@ -162,6 +162,8 @@ class Poll(Base):
         ForeignKey("polls.id"), nullable=True, index=True
     )
     matching_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    public_exclusion_reason: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     # Relationships
     raw_poll: Mapped[RawPoll | None] = relationship("RawPoll", back_populates="cleaned_poll")
