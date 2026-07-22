@@ -64,6 +64,7 @@ class Settings(BaseSettings):
     # Data Paths
     data_dir: Path = DATA_DIR
     export_dir: Path = DATA_DIR / "export"
+    report_dir: Path = DATA_DIR / "reports"
 
     class Config:
         env_file = ".env"
@@ -77,6 +78,7 @@ settings.api_version = _load_api_version()
 
 # Ensure export directory exists
 settings.export_dir.mkdir(exist_ok=True)
+settings.report_dir.mkdir(exist_ok=True)
 
 
 __all__ = ["settings", "PROJECT_ROOT", "DATA_DIR"]
