@@ -61,9 +61,27 @@ def test_report_service_generates_run_linked_pdf(tmp_path) -> None:
     )
     session.add_all([poll, validation, run])
     session.commit()
+    config_path = tmp_path / "report.toml"
+    config_path.write_text(
+        """
+[primary_sources.default]
+provider = "Other"
+source = "api"
 
-    report_path = ReportService(session, tmp_path).generate(run_id="test-run-1")
+[primary_sources.years."2024"]
+provider = "Wahlrecht.de"
+source = "html_scraper"
+""".strip(),
+        encoding="utf-8",
+    )
 
+    service = ReportService(session, tmp_path, config_path=config_path)
+    payload = service._build_payload(run_id="test-run-1")
+    report_path = service.generate(run_id="test-run-1")
+
+    assert payload["years"][0]["primary_provider"] == "Wahlrecht.de"
+    assert payload["years"][0]["primary_source"] == "html_scraper"
+    assert payload["years"][0]["primary_polls"] == 1
     assert report_path.name == "pollingapi-report-test-run-1.pdf"
     assert report_path.read_bytes().startswith(b"%PDF")
     assert (tmp_path / "pollingapi-report-latest.pdf").read_bytes().startswith(b"%PDF")
