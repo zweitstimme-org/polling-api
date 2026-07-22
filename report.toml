@@ -1,0 +1,15 @@
+[primary_sources.default]
+provider = "Wahlrecht.de"
+source = "html_scraper"
+
+[primary_sources.years."2024"]
+provider = "Wahlrecht.de"
+source = "html_scraper"
+
+[primary_sources.years."2025"]
+provider = "Wahlrecht.de"
+source = "html_scraper"
+
+[primary_sources.years."2026"]
+provider = "Wahlrecht.de"
+source = "html_scraper"

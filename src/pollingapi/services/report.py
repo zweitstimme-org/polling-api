@@ -5,17 +5,20 @@ from __future__ import annotations
 import datetime as dt
 import json
 from dataclasses import dataclass
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
+import toml
 from sqlalchemy import desc, extract, func
 from sqlalchemy.orm import Session
 
-from pollingapi.core import settings
+from pollingapi.core import PROJECT_ROOT, settings
 from pollingapi.data_validation import ValidationReportService
 from pollingapi.models import PipelineRun, Poll, PollValidation, Provider
 
 LATEST_REPORT_NAME = "pollingapi-report-latest.pdf"
+REPORT_CONFIG_PATH = PROJECT_ROOT / "report.toml"
 
 
 class ReportGenerationError(RuntimeError):
@@ -30,18 +33,23 @@ class YearSourceSummary:
     total_polls: int
     validated_polls: int
     primary_provider: str
-    primary_provider_polls: int
     primary_source: str
-    primary_source_polls: int
+    primary_polls: int
 
 
 class ReportService:
     """Build a compact Typst PDF report from persisted polling data."""
 
-    def __init__(self, db: Session, report_dir: Path | None = None):
+    def __init__(
+        self,
+        db: Session,
+        report_dir: Path | None = None,
+        config_path: Path | None = None,
+    ):
         """Initialize the report service."""
         self.db = db
         self.report_dir = report_dir or settings.report_dir
+        self.config_path = config_path or REPORT_CONFIG_PATH
 
     def generate(self, run_id: str | None = None) -> Path:
         """Generate a PDF report and return the timestamped report path.
@@ -54,15 +62,18 @@ class ReportService:
         """
         self.report_dir.mkdir(parents=True, exist_ok=True)
         payload = self._build_payload(run_id=run_id)
-        source_path = self.report_dir / f"{payload['file_stem']}.typ"
         output_path = self.report_dir / f"{payload['file_stem']}.pdf"
         latest_path = self.latest_report_path()
 
-        source_path.write_text(_render_typst(payload), encoding="utf-8")
         try:
             import typst
 
-            typst.compile(source_path, output=output_path, root=self.report_dir)
+            typst.compile(
+                self._template_path(),
+                output=output_path,
+                root=PROJECT_ROOT,
+                sys_inputs={"report": json.dumps(payload)},
+            )
         except Exception as exc:
             raise ReportGenerationError(f"Failed to generate report PDF: {exc}") from exc
 
@@ -73,11 +84,15 @@ class ReportService:
         """Return the path of the latest report PDF."""
         return self.report_dir / LATEST_REPORT_NAME
 
+    def _template_path(self) -> Path:
+        return Path(str(files("pollingapi.templates").joinpath("report.typ")))
+
     def _build_payload(self, run_id: str | None) -> dict[str, Any]:
         generated_at = dt.datetime.now(dt.UTC)
         run = self._get_run(run_id)
         validation = ValidationReportService(self.db).build_report(top_n=5)
-        year_summaries = self._year_summaries()
+        config = self._load_config()
+        year_summaries = self._year_summaries(config)
 
         connected_run_id = run.run_id if run else run_id
         file_stem = (
@@ -121,9 +136,8 @@ class ReportService:
                     "total_polls": item.total_polls,
                     "validated_polls": item.validated_polls,
                     "primary_provider": item.primary_provider,
-                    "primary_provider_polls": item.primary_provider_polls,
                     "primary_source": item.primary_source,
-                    "primary_source_polls": item.primary_source_polls,
+                    "primary_polls": item.primary_polls,
                 }
                 for item in year_summaries
             ],
@@ -135,7 +149,12 @@ class ReportService:
             return query.filter(PipelineRun.run_id == run_id).first()
         return query.order_by(desc(PipelineRun.finished_at)).first()
 
-    def _year_summaries(self) -> list[YearSourceSummary]:
+    def _load_config(self) -> dict[str, Any]:
+        if not self.config_path.exists():
+            return {}
+        return toml.load(self.config_path)
+
+    def _year_summaries(self, config: dict[str, Any]) -> list[YearSourceSummary]:
         poll_counts = {
             int(year): count
             for year, count in (
@@ -157,51 +176,42 @@ class ReportService:
             )
             if year is not None
         }
-        providers = self._top_values_by_year(Provider.name, join_provider=True)
-        sources = self._top_values_by_year(Poll.source)
 
         summaries = []
         for year in sorted(poll_counts, reverse=True):
-            provider_name, provider_count = providers.get(year, ("unknown", 0))
-            source_name, source_count = sources.get(year, ("unknown", 0))
+            provider_name, source_name = self._configured_primary_source(config, year)
             summaries.append(
                 YearSourceSummary(
                     year=year,
                     total_polls=poll_counts[year],
                     validated_polls=validated_counts.get(year, 0),
                     primary_provider=provider_name,
-                    primary_provider_polls=provider_count,
                     primary_source=source_name,
-                    primary_source_polls=source_count,
+                    primary_polls=self._primary_poll_count(year, provider_name, source_name),
                 )
             )
         return summaries
 
-    def _top_values_by_year(
-        self,
-        value_column: Any,
-        join_provider: bool = False,
-    ) -> dict[int, tuple[str, int]]:
-        query = self.db.query(
-            extract("year", Poll.publish_date).label("year"),
-            value_column.label("value"),
-            func.count(Poll.id).label("count"),
-        ).filter(Poll.publish_date.is_not(None))
+    def _configured_primary_source(self, config: dict[str, Any], year: int) -> tuple[str, str]:
+        primary_sources = config.get("primary_sources", {})
+        defaults = primary_sources.get("default", {})
+        years = primary_sources.get("years", {})
+        year_config = years.get(str(year), {})
+        provider = year_config.get("provider") or defaults.get("provider") or "not configured"
+        source = year_config.get("source") or defaults.get("source") or "not configured"
+        return str(provider), str(source)
 
-        if join_provider:
-            query = query.outerjoin(Provider, Poll.provider_id == Provider.id)
-
-        rows = query.group_by("year", "value").all()
-        top_by_year: dict[int, tuple[str, int]] = {}
-        for year, value, count in rows:
-            if year is None:
-                continue
-            year_key = int(year)
-            label = str(value or "unknown")
-            current = top_by_year.get(year_key)
-            if current is None or count > current[1]:
-                top_by_year[year_key] = (label, count)
-        return top_by_year
+    def _primary_poll_count(self, year: int, provider_name: str, source: str) -> int:
+        query = (
+            self.db.query(func.count(Poll.id))
+            .outerjoin(Provider, Poll.provider_id == Provider.id)
+            .filter(extract("year", Poll.publish_date) == year)
+        )
+        if provider_name != "not configured":
+            query = query.filter(Provider.name == provider_name)
+        if source != "not configured":
+            query = query.filter(Poll.source == source)
+        return int(query.scalar() or 0)
 
 
 def _run_payload(run: PipelineRun | None, fallback_run_id: str | None) -> dict[str, Any]:
@@ -228,109 +238,6 @@ def _run_payload(run: PipelineRun | None, fallback_run_id: str | None) -> dict[s
         "updated": run.etl_updated,
         "errors": run.etl_errors,
     }
-
-
-def _render_typst(payload: dict[str, Any]) -> str:
-    rows = "\n".join(_year_row(item) for item in payload["years"])
-    check_rows = "\n".join(_check_row(item) for item in payload["checks"])
-    failure_rows = "\n".join(_failure_row(item) for item in payload["top_failures"])
-    if not failure_rows:
-        failure_rows = "No failed validation checks."
-
-    return f"""
-#set document(title: {_typst_string(payload["title"])})
-#set page(paper: "a4", margin: 18mm)
-#set text(font: "Libertinus Serif", size: 10pt)
-#show heading: set text(font: "Libertinus Serif")
-
-= {_typst_inline(payload["title"])}
-
-Generated: {_typst_inline(payload["generated_at"])} \
-API version: {_typst_inline(payload["api_version"])}
-
-== Pipeline Run
-
-#table(
-  columns: (35%, 65%),
-  inset: 6pt,
-  stroke: 0.5pt + gray,
-  [Run ID], [{_typst_inline(payload["run"]["run_id"])}],
-  [Success], [{_typst_inline(payload["run"]["success"])}],
-  [Started], [{_typst_inline(payload["run"]["started_at"])}],
-  [Finished], [{_typst_inline(payload["run"]["finished_at"])}],
-  [Duration], [{_typst_inline(payload["run"]["duration"])}],
-  [Scraped polls], [{payload["run"]["scraped"]}],
-  [Created / updated], [{payload["run"]["created"]} / {payload["run"]["updated"]}],
-  [ETL errors], [{payload["run"]["errors"]}],
-)
-
-== Data Quality Summary
-
-#table(
-  columns: (45%, 55%),
-  inset: 6pt,
-  stroke: 0.5pt + gray,
-  [Status], [{_typst_inline(payload["totals"]["status"])}],
-  [Total polls], [{payload["totals"]["polls"]}],
-  [Validated polls], [{payload["totals"]["validated_polls"]}],
-  [Valid polls], [{payload["totals"]["valid_polls"]} ({_typst_inline(payload["totals"]["valid_share"])})],
-  [Invalid polls], [{payload["totals"]["invalid_polls"]}],
-  [Warning polls], [{payload["totals"]["warning_polls"]}],
-  [Latest validation], [{_typst_inline(payload["totals"]["latest_validated_at"])}],
-)
-
-== Primary Sources by Year
-
-#table(
-  columns: (12%, 15%, 17%, 22%, 14%, 20%),
-  inset: 5pt,
-  stroke: 0.4pt + gray,
-  table.header([Year], [Polls], [Validated], [Primary provider], [Provider polls], [Primary source]),
-{rows}
-)
-
-== Validation Checks
-
-#table(
-  columns: (45%, 18%, 18%, 19%),
-  inset: 5pt,
-  stroke: 0.4pt + gray,
-  table.header([Check], [Passed], [Failed], [Pass share]),
-{check_rows}
-)
-
-== Top Failures
-
-{failure_rows}
-""".lstrip()
-
-
-def _year_row(item: dict[str, Any]) -> str:
-    source = f"{item['primary_source']} ({item['primary_source_polls']})"
-    return (
-        f"  [{item['year']}], [{item['total_polls']}], [{item['validated_polls']}], "
-        f"[{_typst_inline(item['primary_provider'])}], [{item['primary_provider_polls']}], "
-        f"[{_typst_inline(source)}],"
-    )
-
-
-def _check_row(item: dict[str, Any]) -> str:
-    return (
-        f"  [{_typst_inline(item['name'])}], [{item['passed']}], "
-        f"[{item['failed']}], [{_typst_inline(item['pass_share'])}],"
-    )
-
-
-def _failure_row(item: dict[str, Any]) -> str:
-    return f"- {_typst_inline(item['name'])}: {item['failed']}"
-
-
-def _typst_inline(value: object) -> str:
-    return f"#raw({_typst_string(str(value))})"
-
-
-def _typst_string(value: str) -> str:
-    return json.dumps(value)
 
 
 def _format_datetime(value: dt.datetime | None) -> str:
