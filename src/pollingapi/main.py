@@ -211,6 +211,7 @@ async def report(db: Session = DB_SESSION_DEP) -> FileResponse:
         report_path,
         filename="pollingapi-report.pdf",
         media_type="application/pdf",
+        content_disposition_type="inline",
     )
 
 

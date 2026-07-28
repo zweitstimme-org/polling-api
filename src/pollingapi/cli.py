@@ -80,6 +80,12 @@ def _stage_archive_bundle(target: Path) -> None:
         if source.exists():
             shutil.copy2(source, config_dir / filename)
 
+    if settings.report_dir.exists():
+        report_dir = target / "reports"
+        report_dir.mkdir(parents=True, exist_ok=True)
+        for report in settings.report_dir.glob("*.pdf"):
+            shutil.copy2(report, report_dir / report.name)
+
 
 ImportFileArg = Annotated[
     Path,

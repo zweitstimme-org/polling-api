@@ -83,3 +83,25 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
         "C00000001",
         "C00000002",
     }
+
+
+def test_archive_stage_includes_latest_report(tmp_path, monkeypatch):
+    from pollingapi.cli import _stage_archive_bundle
+
+    export_dir = tmp_path / "export"
+    report_dir = tmp_path / "reports"
+    project_dir = tmp_path / "project"
+    export_dir.mkdir()
+    report_dir.mkdir()
+    (project_dir / "json").mkdir(parents=True)
+    (export_dir / "metadata.json").write_text("{}", encoding="utf-8")
+    (report_dir / "pollingapi-report-latest.pdf").write_bytes(b"%PDF-1.7\n")
+    (project_dir / "validation.toml").write_text("", encoding="utf-8")
+    (project_dir / "pyproject.toml").write_text("", encoding="utf-8")
+    monkeypatch.setattr(settings, "export_dir", export_dir)
+    monkeypatch.setattr(settings, "report_dir", report_dir)
+    monkeypatch.setattr("pollingapi.cli.PROJECT_ROOT", project_dir)
+
+    _stage_archive_bundle(tmp_path / "archive")
+
+    assert (tmp_path / "archive" / "reports" / "pollingapi-report-latest.pdf").exists()

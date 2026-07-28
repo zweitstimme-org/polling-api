@@ -87,6 +87,7 @@ class TestReportEndpoint:
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/pdf"
+        assert response.headers["content-disposition"].startswith("inline;")
         assert response.content.startswith(b"%PDF")
 
 
