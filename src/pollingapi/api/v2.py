@@ -300,6 +300,28 @@ DOWNLOAD_FILES = {
     "poll-results.json": ("poll-results", "json", EXPORT_DIR / "poll_results.json"),
     "poll-results.csv": ("poll-results", "csv", EXPORT_DIR / "poll_results.csv"),
     "poll-results.parquet": ("poll-results", "parquet", EXPORT_DIR / "poll_results.parquet"),
+    "all-cleaned-polls.json": ("all-cleaned-polls", "json", EXPORT_DIR / "all_cleaned_polls.json"),
+    "all-cleaned-polls.csv": ("all-cleaned-polls", "csv", EXPORT_DIR / "all_cleaned_polls.csv"),
+    "all-cleaned-polls.parquet": (
+        "all-cleaned-polls",
+        "parquet",
+        EXPORT_DIR / "all_cleaned_polls.parquet",
+    ),
+    "all-cleaned-poll-results.json": (
+        "all-cleaned-poll-results",
+        "json",
+        EXPORT_DIR / "all_cleaned_poll_results.json",
+    ),
+    "all-cleaned-poll-results.csv": (
+        "all-cleaned-poll-results",
+        "csv",
+        EXPORT_DIR / "all_cleaned_poll_results.csv",
+    ),
+    "all-cleaned-poll-results.parquet": (
+        "all-cleaned-poll-results",
+        "parquet",
+        EXPORT_DIR / "all_cleaned_poll_results.parquet",
+    ),
     "raw-polls.json": ("raw-polls", "json", EXPORT_DIR / "polls_raw.json"),
     "raw-polls.csv": ("raw-polls", "csv", EXPORT_DIR / "polls_raw.csv"),
     "raw-polls.parquet": ("raw-polls", "parquet", EXPORT_DIR / "polls_raw.parquet"),

@@ -28,6 +28,65 @@ app = typer.Typer(
 )
 logger = get_logger(__name__)
 
+ARCHIVE_EXPORT_GROUPS = {
+    "public": [
+        "polls.json",
+        "polls.csv",
+        "polls.parquet",
+        "poll_results.json",
+        "poll_results.csv",
+        "poll_results.parquet",
+    ],
+    "cleaned": [
+        "all_cleaned_polls.json",
+        "all_cleaned_polls.csv",
+        "all_cleaned_polls.parquet",
+        "all_cleaned_poll_results.json",
+        "all_cleaned_poll_results.csv",
+        "all_cleaned_poll_results.parquet",
+    ],
+    "raw": [
+        "polls_raw.json",
+        "polls_raw.csv",
+        "polls_raw.parquet",
+    ],
+}
+
+
+def _stage_archive_bundle(target: Path) -> None:
+    """Stage the accountability archive layout."""
+    import shutil
+
+    export_dir = settings.export_dir
+    for group, filenames in ARCHIVE_EXPORT_GROUPS.items():
+        group_dir = target / group
+        group_dir.mkdir(parents=True, exist_ok=True)
+        for filename in filenames:
+            source = export_dir / filename
+            if source.exists():
+                shutil.copy2(source, group_dir / filename)
+
+    metadata = export_dir / "metadata.json"
+    if metadata.exists():
+        shutil.copy2(metadata, target / "manifest.json")
+
+    reference_dir = target / "reference"
+    shutil.copytree(PROJECT_ROOT / "json", reference_dir)
+
+    config_dir = target / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    for filename in ("validation.toml", "pyproject.toml"):
+        source = PROJECT_ROOT / filename
+        if source.exists():
+            shutil.copy2(source, config_dir / filename)
+
+    if settings.report_dir.exists():
+        report_dir = target / "reports"
+        report_dir.mkdir(parents=True, exist_ok=True)
+        for report in settings.report_dir.glob("*.pdf"):
+            shutil.copy2(report, report_dir / report.name)
+
+
 ImportFileArg = Annotated[
     Path,
     typer.Argument(help="Import file path, relative to ./imports if not absolute"),
@@ -132,9 +191,10 @@ def db_export():
     export_service = ExportService(db)
     counts = export_service.export_all()
     typer.echo(f"✓ Exported to {settings.export_dir}:")
-    typer.echo(f"  polls: {counts['polls']}")
-    typer.echo(f"  poll_results: {counts['results']}")
-    typer.echo(f"  observations: {counts['observations']}")
+    typer.echo(f"  public polls: {counts['polls']}")
+    typer.echo(f"  public poll_results: {counts['results']}")
+    typer.echo(f"  all_cleaned_polls: {counts['all_cleaned_polls']}")
+    typer.echo(f"  all_cleaned_poll_results: {counts['all_cleaned_results']}")
     typer.echo(f"  raw_polls: {counts['raw']}")
 
 
@@ -609,6 +669,7 @@ def pipeline_run(
         typer.echo(
             f"✓ Exported {run_result.export_polls} polls,"
             f" {run_result.export_poll_results} poll results,"
+            f" {export_counts['all_cleaned_polls']} all-cleaned polls,"
             f" and {run_result.export_raw_polls} raw polls"
         )
         typer.echo("")
@@ -618,18 +679,14 @@ def pipeline_run(
             typer.echo("=== Creating Archive ===")
             typer.echo("")
 
-            data_dir = settings.data_dir
-            json_dir = PROJECT_ROOT / "json"
             archive_name = f"pollingapi-archive-{datetime.now().strftime('%Y-%m-%d-%H-%M')}.zip"
             archive_path = settings.data_dir.parent / archive_name
 
-            import shutil as sh
             import tempfile
 
             with tempfile.TemporaryDirectory() as tmp_dir:
                 tmp_path = Path(tmp_dir)
-                sh.copytree(data_dir, tmp_path / "data")
-                sh.copytree(json_dir, tmp_path / "json")
+                _stage_archive_bundle(tmp_path)
 
                 shutil.make_archive(
                     base_name=str(archive_path.with_suffix("")),
@@ -1059,21 +1116,15 @@ def data_archive(
     export_service = ExportService(db)
     export_counts = export_service.export_all()
     typer.echo(
-        f"✓ Exported {export_counts['polls']} polls, {export_counts['results']} poll results, "
+        f"✓ Exported {export_counts['polls']} public polls, "
+        f"{export_counts['all_cleaned_polls']} all-cleaned polls, "
         f"and {export_counts['raw']} raw polls"
     )
 
     typer.echo("\nCreating data archive...")
 
-    data_dir = settings.data_dir
-    json_dir = PROJECT_ROOT / "json"
-
-    if not data_dir.exists():
-        typer.echo(f"✗ Data directory not found: {data_dir}", err=True)
-        raise typer.Exit(1)
-
-    if not json_dir.exists():
-        typer.echo(f"✗ JSON directory not found: {json_dir}", err=True)
+    if not settings.export_dir.exists():
+        typer.echo(f"✗ Export directory not found: {settings.export_dir}", err=True)
         raise typer.Exit(1)
 
     archive_name = f"pollingapi-archive-{datetime.now().strftime('%Y-%m-%d-%H-%M')}.zip"
@@ -1085,10 +1136,7 @@ def data_archive(
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
 
-            import shutil as sh
-
-            sh.copytree(data_dir, tmp_path / "data")
-            sh.copytree(json_dir, tmp_path / "json")
+            _stage_archive_bundle(tmp_path)
 
             shutil.make_archive(
                 base_name=str(archive_path.with_suffix("")),
