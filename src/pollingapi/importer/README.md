@@ -348,8 +348,7 @@ from pollingapi.importer.sources.base import ImportSource
 class ExampleImportSource(ImportSource):
     name = "example"
 
-    def load(self, path: Path) -> list[RawPollImport]:
-        ...
+    def load(self, path: Path) -> list[RawPollImport]: ...
 ```
 
 Then register it in `src/pollingapi/importer/sources/__init__.py`.
