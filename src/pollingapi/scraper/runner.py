@@ -36,9 +36,9 @@ class ScraperRunner:
         self.zero_poll_workers: list[str] = []
 
     def _discover_worker_modules(self) -> list[str]:
-        """Discover worker modules in bund + land only."""
+        """Discover worker modules."""
         module_names: list[str] = []
-        for scope in ("sites_bund", "sites_land"):
+        for scope in ("sites_bund", "sites_land", "sites_eu"):
             scope_dir = self.workers_dir / scope
             if not scope_dir.exists():
                 continue

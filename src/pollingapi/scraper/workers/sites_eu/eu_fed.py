@@ -1,176 +1,143 @@
-"""EU federal (Europawahl) scraper worker."""
+"""Wahlrecht.de Europawahl federal scraper."""
 
 import re
+import time
 from datetime import datetime
-from io import StringIO
-from typing import Any
 
-import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from sqlalchemy.orm import Session
 
-from pollingapi.scraper.config import ScraperConfig
-from pollingapi.scraper.snapshots import save_table_snapshot
-from pollingapi.scraper.wahlrecht import WahlrechtBundScraper
+from pollingapi.logging_config import get_logger
+from pollingapi.scraper.context import RunContext
+from pollingapi.scraper.datamodel import BundElectionPoll, GermanState, SourcePartyResult
+from pollingapi.scraper.insertion import insert_new_polls
+from pollingapi.scraper.snapshots import save_html_snapshot
 
 
-class EuFedScraper(WahlrechtBundScraper):
-    """Scraper for Wahlrecht.de Europawahl polling data."""
+class EuFedCurrentScraper:
+    URL = "https://www.wahlrecht.de/umfragen/europawahl.htm"
+    WORKER = "eu_fed"
+    STATE: str = GermanState.BUND
+    SCOPE = "Europawahl"
+    DATA_SOURCE = "wahlrecht.de"
+    TABLES = (0, 1)
+    REQUEST_DELAY = 1.0
 
-    def parse_url(self, url: str, url_config: dict[str, Any]) -> pd.DataFrame:
-        """Parse poll data from configured EU table index."""
-        html = self._fetch_html(url)
-        tables = pd.read_html(StringIO(html), encoding="utf-8")
-
-        table_index = int(url_config.get("table_index", 1) or 1)
-        if table_index >= len(tables):
-            self.logger.warning(
-                f"[{self.config.worker_name}] Table index {table_index} out of range for {url} (found {len(tables)} tables)"
-            )
-            return pd.DataFrame()
-
-        raw_df = tables[table_index].copy()
-        save_table_snapshot(
-            self.config.worker_name,
-            raw_df,
-            f"raw_table_{table_index}",
-            self.context.today_str,
+    def __init__(self, db: Session, context: RunContext | None = None):
+        self.db = db
+        self.context = context
+        self.logger = get_logger(self.WORKER)
+        self.session = requests.Session()
+        self.session.headers.update(
+            {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Scraper/1.0"}
         )
 
-        if raw_df.empty:
-            return pd.DataFrame()
+    def fetch(self) -> str:
+        self.logger.info(f"Fetching: {self.URL}")
+        time.sleep(self.REQUEST_DELAY)
+        response = self.session.get(self.URL, timeout=15)
+        response.raise_for_status()
+        return response.text
 
-        processed = self._normalize(raw_df, url_config)
-        if processed is None or processed.empty:
-            return pd.DataFrame()
+    def save_snapshot(self, html: str) -> None:
+        date_str = self.context.today_str if self.context else datetime.now().strftime("%Y-%m-%d")
+        save_html_snapshot(self.WORKER, self.URL, html, date_str)
 
-        return processed
+    @staticmethod
+    def _text(cell) -> str:
+        return re.sub(r"\s+", " ", cell.get_text(" ", strip=True).replace("\xa0", " ")).strip()
 
-    def _apply_metadata(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Apply metadata while preserving row-level institute values."""
-        df = df.copy()
-        df["scope"] = self.config.scope
-        df["election_id"] = self.config.election_id
-        df["method_id"] = self.config.method_id
-        df["provider"] = self.config.provider
-        df["source"] = self.config.source
+    def _party_headers(self, table) -> list[str]:
+        headers = [self._text(th) for th in table.select("thead th")]
+        return [header for header in headers[6:] if header]
 
-        if "institute_id" not in df.columns:
-            df["institute_id"] = self.config.institute_id
-        else:
-            df["institute_id"] = df["institute_id"].where(df["institute_id"].notna(), None)
-            df.loc[df["institute_id"].isna(), "institute_id"] = self.config.institute_id
+    def _party_results(self, cells, headers: list[str]) -> list[SourcePartyResult]:
+        results: list[SourcePartyResult] = []
+        index = 0
+        for cell in cells:
+            value = self._text(cell)
+            colspan = int(cell.get("colspan", 1))
+            if not value:
+                index += colspan
+                continue
 
-        df["date_downloaded"] = datetime.now().isoformat()
-        return df
+            if colspan == 2 and headers[index : index + 2] == ["CDU", "CSU"]:
+                name = "CDU/CSU"
+            elif index < len(headers):
+                name = headers[index]
+            else:
+                break
 
-    def _normalize(self, df: pd.DataFrame, url_config: dict[str, Any]) -> pd.DataFrame | None:
-        """Normalize EU table and map into the raw poll schema."""
-        cols = list(df.columns.astype(str))
-        if not cols:
+            results.append(SourcePartyResult(name=name, value=value))
+            index += colspan
+        return results
+
+    def _row_to_poll(
+        self,
+        cells,
+        party_headers: list[str],
+        state: str,
+        date_pattern: str = r"^\d{2}\.\d{2}\.\d{4}$",
+    ) -> BundElectionPoll | None:
+        if len(cells) < 7:
             return None
 
-        # First column is always the date column in Wahlrecht tables.
-        cols[0] = "publish_date"
-        df = df.rename(columns=dict(zip(df.columns, cols, strict=False)))
+        date_or_institute = self._text(cells[0])
+        if not re.match(date_pattern, date_or_institute):
+            return None
 
-        # Column header variants on this page:
-        # - "Institut"
-        # - "Auftrag- geber"
-        # - "Befragte Zeitraum"
-        rename_map: dict[str, str] = {}
-        for col in df.columns:
-            c = str(col)
-            c_norm = re.sub(r"\s+", " ", c).strip()
-            c_flat = c_norm.replace(" ", "")
-            if c_norm == "Institut":
-                rename_map[c] = "institute_id"
-            elif c_flat in {"Auftrag-geber", "Auftraggeber"}:
-                rename_map[c] = "tasker"
-            elif c_norm == "Befragte Zeitraum":
-                rename_map[c] = "Befragte"
-        if rename_map:
-            df = df.rename(columns=rename_map)
+        parties = self._party_results(cells[6:], party_headers)
+        if not parties:
+            return None
 
-        # Keep only poll rows (table also contains election result rows).
-        if "publish_date" in df.columns:
-            date_mask = (
-                df["publish_date"].astype(str).str.strip().str.match(r"^\d{2}\.\d{2}\.\d{4}$")
+        return BundElectionPoll(
+            data_source=self.DATA_SOURCE,
+            worker=self.WORKER,
+            scope=self.SCOPE,
+            state=state,
+            institut=self._text(cells[2]),
+            auftraggeber=self._text(cells[3]) or None,
+            datum=date_or_institute,
+            befragte=self._text(cells[4]),
+            zeitraum="",
+            results=parties,
+        )
+
+    def _parse_table(self, table) -> list[BundElectionPoll]:
+        party_headers = self._party_headers(table)
+        polls: list[BundElectionPoll] = []
+        for row in table.select("tbody tr"):
+            poll = self._row_to_poll(
+                row.find_all(["td", "th"], recursive=False), party_headers, self.STATE
             )
-            df = df.loc[date_mask].copy()
-            if df.empty:
-                return None
+            if poll:
+                polls.append(poll)
+        return polls
 
-        # Preserve the unparsed combined field in both schema-compatible places.
-        # This keeps maximum information without parsing respondents/timeframe.
-        if "Befragte" in df.columns and "Zeitraum" not in df.columns:
-            df["Zeitraum"] = df["Befragte"]
+    def parse(self, html: str) -> list[BundElectionPoll]:
+        soup = BeautifulSoup(html, "html.parser")
+        tables = soup.find_all("table", class_="wilko")
+        polls: list[BundElectionPoll] = []
+        for index in self.TABLES:
+            if index < len(tables):
+                polls.extend(self._parse_table(tables[index]))
+        return polls
 
-        party_cols = self._resolve_party_columns(list(df.columns.astype(str)), url_config)
-        if not party_cols:
-            return None
-
-        valid_party_cols = [col for col in party_cols if col in df.columns]
-        if not valid_party_cols:
-            return None
-
-        df["parties"] = df.apply(lambda row: self._create_party_dict(row, valid_party_cols), axis=1)
-
-        keep_cols = ["publish_date", "institute_id", "tasker", "Befragte", "Zeitraum", "parties"]
-        for col in keep_cols:
-            if col not in df.columns:
-                df[col] = None
-
-        return df.loc[:, keep_cols].copy()
-
-    @classmethod
-    def get_config(cls) -> ScraperConfig:
-        """Get configuration for EU federal scraper."""
-        return ScraperConfig(
-            worker_name="eu_fed",
-            institute_id="various",
-            provider="eu_fed",
+    def insert(self, polls: list[BundElectionPoll]) -> int:
+        inserted, skipped = insert_new_polls(
+            db=self.db,
+            polls=polls,
+            provider=self.DATA_SOURCE,
             source="html_scraper",
-            scope="eu",
-            election_id="Europawahl",
+            election_id=self.SCOPE,
             method_id="99",
-            urls=[
-                {
-                    "url": "https://www.wahlrecht.de/umfragen/europawahl.htm",
-                    "table_index": 1,
-                    "party_columns": [
-                        "CDU",
-                        "CSU",
-                        "SPD",
-                        "GRÜNE",
-                        "FDP",
-                        "LINKE",
-                        "AfD",
-                        "PIR",
-                        "FW",
-                        "TSP",
-                        "PARTEI",
-                        "BSW",
-                        "Volt",
-                        "Sonstige",
-                    ],
-                },
-                {
-                    "url": "https://www.wahlrecht.de/umfragen/europawahl.htm",
-                    "table_index": 2,
-                    "party_columns": [
-                        "CDU",
-                        "CSU",
-                        "SPD",
-                        "GRÜNE",
-                        "FDP",
-                        "LINKE",
-                        "Sonstige",
-                    ],
-                },
-            ],
-            type="wahlrecht_bund",
+            pipeline_run_id=self.context.run_id if self.context else None,
         )
+        self.logger.info(f"Inserted {inserted} polls for {self.WORKER} (skipped {skipped})")
+        return inserted
 
-
-def get_config():
-    """Return config for discovery."""
-    return EuFedScraper.get_config()
+    def run(self) -> int:
+        html = self.fetch()
+        self.save_snapshot(html)
+        return self.insert(self.parse(html))
