@@ -24,9 +24,15 @@ class EuFedCurrentScraper:
     TABLES = (0, 1)
     REQUEST_DELAY = 1.0
 
-    def __init__(self, db: Session, context: RunContext | None = None):
+    def __init__(
+        self,
+        db: Session,
+        context: RunContext | None = None,
+        dry_run: bool = False,
+    ):
         self.db = db
         self.context = context
+        self.dry_run = dry_run
         self.logger = get_logger(self.WORKER)
         self.session = requests.Session()
         self.session.headers.update(
@@ -125,6 +131,10 @@ class EuFedCurrentScraper:
         return polls
 
     def insert(self, polls: list[BundElectionPoll]) -> int:
+        if self.dry_run:
+            self.logger.info(f"Would insert {len(polls)} polls for {self.WORKER}")
+            return len(polls)
+
         inserted, skipped = insert_new_polls(
             db=self.db,
             polls=polls,

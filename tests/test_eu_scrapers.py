@@ -60,3 +60,10 @@ def test_runner_discovers_eu_workers():
 
     assert "eu_fed" in names
     assert "eu_state" in names
+
+
+def test_eu_scraper_dry_run_does_not_need_database_insert():
+    scraper = EuStateCurrentScraper(db=None, dry_run=True)
+    polls = scraper.parse(HTML)
+
+    assert scraper.insert(polls) == 1
