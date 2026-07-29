@@ -300,6 +300,21 @@ DOWNLOAD_FILES = {
     "poll-results.json": ("poll-results", "json", EXPORT_DIR / "poll_results.json"),
     "poll-results.csv": ("poll-results", "csv", EXPORT_DIR / "poll_results.csv"),
     "poll-results.parquet": ("poll-results", "parquet", EXPORT_DIR / "poll_results.parquet"),
+    "polls-without-results.json": (
+        "polls-without-results",
+        "json",
+        EXPORT_DIR / "polls_without_results.json",
+    ),
+    "polls-without-results.csv": (
+        "polls-without-results",
+        "csv",
+        EXPORT_DIR / "polls_without_results.csv",
+    ),
+    "polls-without-results.parquet": (
+        "polls-without-results",
+        "parquet",
+        EXPORT_DIR / "polls_without_results.parquet",
+    ),
     "all-cleaned-polls.json": ("all-cleaned-polls", "json", EXPORT_DIR / "all_cleaned_polls.json"),
     "all-cleaned-polls.csv": ("all-cleaned-polls", "csv", EXPORT_DIR / "all_cleaned_polls.csv"),
     "all-cleaned-polls.parquet": (

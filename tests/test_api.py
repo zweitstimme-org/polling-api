@@ -226,7 +226,12 @@ class TestV2Endpoints:
         response = client.get("/v2/downloads")
         assert response.status_code == 200
         filenames = {item["filename"] for item in response.json()}
-        assert {"polls.json", "poll-results.csv", "raw-polls.parquet"} <= filenames
+        assert {
+            "polls.json",
+            "poll-results.csv",
+            "polls-without-results.json",
+            "raw-polls.parquet",
+        } <= filenames
 
     def test_v2_archive_routes_are_well_formed(self, client):
         """Test v2 archive paths use slash-separated resource names."""

@@ -34,6 +34,7 @@ class ExportService:
             Dictionary with counts of exported records per file.
         """
         polls_count = self.export_polls()
+        polls_without_results_count = self.export_polls_without_results()
         results_count = self.export_results()
         all_cleaned_polls_count = self.export_all_cleaned_polls()
         all_cleaned_results_count = self.export_all_cleaned_results()
@@ -42,6 +43,7 @@ class ExportService:
 
         return {
             "polls": polls_count,
+            "polls_without_results": polls_without_results_count,
             "results": results_count,
             "observations": results_count,
             "all_cleaned_polls": all_cleaned_polls_count,
@@ -111,6 +113,20 @@ class ExportService:
             for poll in polls
         ]
 
+    def _poll_rows_with_results(self, polls: list[Poll]) -> list[dict]:
+        rows = self._poll_rows(polls)
+        for row, poll in zip(rows, polls, strict=True):
+            row["results"] = [
+                {
+                    "party_key": result.party_key,
+                    "party_short_name": result.party.short_name if result.party else None,
+                    "party_name": result.party.name if result.party else None,
+                    "percentage": result.percentage,
+                }
+                for result in sorted(poll.results, key=lambda r: r.party_key)
+            ]
+        return rows
+
     def _result_rows(self, results: list[PollResult]) -> list[dict]:
         return [
             {
@@ -138,13 +154,24 @@ class ExportService:
             for r in results
         ]
 
+    def _tabular_rows(self, rows: list[dict]) -> list[dict]:
+        return [
+            {
+                key: json.dumps(value, ensure_ascii=False)
+                if isinstance(value, list | dict)
+                else value
+                for key, value in row.items()
+            }
+            for row in rows
+        ]
+
     def _write_dataset(self, rows: list[dict], filename_base: str, label: str) -> int:
         file_path = settings.export_dir / f"{filename_base}.json"
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(rows, f, indent=2, ensure_ascii=False)
         logger.info(f"Exported {len(rows)} {label} to JSON")
 
-        df = pd.DataFrame(rows)
+        df = pd.DataFrame(self._tabular_rows(rows))
         file_path = settings.export_dir / f"{filename_base}.csv"
         df.to_csv(file_path, index=False)
         logger.info(f"Exported {len(rows)} {label} to CSV")
@@ -162,7 +189,16 @@ class ExportService:
             Number of polls exported.
         """
         polls = self._public_polls(self._base_poll_query()).all()
-        return self._write_dataset(self._poll_rows(polls), "polls", "public polls")
+        return self._write_dataset(self._poll_rows_with_results(polls), "polls", "public polls")
+
+    def export_polls_without_results(self) -> int:
+        """Export public poll rows without nested party results."""
+        polls = self._public_polls(self._base_poll_query()).all()
+        return self._write_dataset(
+            self._poll_rows(polls),
+            "polls_without_results",
+            "public polls without results",
+        )
 
     def export_results(self) -> int:
         """Export poll-party results to JSON, CSV, and Parquet.
@@ -265,6 +301,7 @@ class ExportService:
             "default_dataset": "public",
             "counts": {
                 "polls": poll_count,
+                "polls_without_results": poll_count,
                 "poll_results": result_count,
                 "all_cleaned_polls": all_cleaned_poll_count,
                 "all_cleaned_poll_results": all_cleaned_result_count,
@@ -285,6 +322,11 @@ class ExportService:
                     "json": "poll_results.json",
                     "csv": "poll_results.csv",
                     "parquet": "poll_results.parquet",
+                },
+                "polls_without_results": {
+                    "json": "polls_without_results.json",
+                    "csv": "polls_without_results.csv",
+                    "parquet": "polls_without_results.parquet",
                 },
                 "all_cleaned_polls": {
                     "json": "all_cleaned_polls.json",
