@@ -117,6 +117,7 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
     assert counts["polls_without_results"] == 2
     assert counts["all_cleaned_polls"] == 3
     assert [row["public_id"] for row in public_polls] == ["C00000001", "C00000003"]
+    assert {"fingerprint", "is_public", "public_exclusion_reason"}.isdisjoint(public_polls[0])
     assert public_polls[0]["election_key"] == "federal"
     assert public_polls[0]["election_type"] == "Federal election"
     assert public_polls[0]["results"] == [
@@ -132,17 +133,23 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
         "C00000003",
     ]
     assert "results" not in public_polls_without_results[0]
+    assert {"fingerprint", "is_public", "public_exclusion_reason"}.isdisjoint(
+        public_polls_without_results[0]
+    )
     assert {row["public_id"] for row in all_cleaned_polls} == {
         "C00000001",
         "C00000002",
         "C00000003",
     }
+    assert {"fingerprint", "is_public", "public_exclusion_reason"} <= all_cleaned_polls[0].keys()
     assert [row["poll_public_id"] for row in public_results] == ["C00000001", "C00000003"]
+    assert {"is_public", "public_exclusion_reason"}.isdisjoint(public_results[0])
     assert {row["poll_public_id"] for row in all_cleaned_results} == {
         "C00000001",
         "C00000002",
         "C00000003",
     }
+    assert {"is_public", "public_exclusion_reason"} <= all_cleaned_results[0].keys()
 
 
 def test_archive_stage_includes_latest_report(tmp_path, monkeypatch):

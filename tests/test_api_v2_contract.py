@@ -96,6 +96,7 @@ def test_v2_poll_results_follow_default_dataset_policy(v2_client: TestClient) ->
         "C00000001",
         "C00000002",
     }
+    assert {"is_public", "public_exclusion_reason"}.isdisjoint(payload["data"][0])
 
 
 def test_v2_can_exclude_warning_polls_from_public_dataset(
@@ -143,7 +144,14 @@ def test_v2_poll_payload_uses_english_public_field_names(v2_client: TestClient) 
         "survey_method_key",
         "raw_poll_public_id",
     } <= item.keys()
-    assert {"publish_date", "method_key", "raw_public_id"}.isdisjoint(item.keys())
+    assert {
+        "publish_date",
+        "method_key",
+        "raw_public_id",
+        "fingerprint",
+        "is_public",
+        "public_exclusion_reason",
+    }.isdisjoint(item.keys())
 
 
 def test_v2_raw_poll_payload_uses_english_public_field_names(v2_client: TestClient) -> None:

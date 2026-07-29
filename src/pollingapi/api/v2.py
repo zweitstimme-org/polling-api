@@ -143,13 +143,10 @@ class V2PollItem(BaseModel):
     election_type: str | None = None
     survey_method_key: str | None = None
     survey_method_name: str | None = None
-    fingerprint: str | None = None
     downloaded_at: str | None = None
     matching_poll_id: int | None = None
     matching_poll_public_id: str | None = None
     matching_status: str | None = None
-    is_public: bool = False
-    public_exclusion_reason: str | None = None
     results: list[V2PollResultItem] = Field(default_factory=list)
 
 
@@ -175,8 +172,6 @@ class V2WidePollItem(BaseModel):
     matching_poll_id: int | None = None
     matching_poll_public_id: str | None = None
     matching_status: str | None = None
-    is_public: bool = False
-    public_exclusion_reason: str | None = None
     results: dict[str, float] = Field(default_factory=dict)
 
 
@@ -204,8 +199,6 @@ class V2PollObservationItem(BaseModel):
     matching_poll_id: int | None = None
     matching_poll_public_id: str | None = None
     matching_status: str | None = None
-    is_public: bool = False
-    public_exclusion_reason: str | None = None
     party_key: str
     party_short_name: str | None = None
     party_name: str | None = None
@@ -421,13 +414,10 @@ def _serialize_poll(poll: Poll, include_results: bool) -> V2PollItem:
         election_type=public_election_name(poll.election),
         survey_method_key=poll.method_key,
         survey_method_name=poll.method.name if poll.method else None,
-        fingerprint=poll.fingerprint,
         downloaded_at=poll.date_downloaded.isoformat() if poll.date_downloaded else None,
         matching_poll_id=poll.matching_poll_id,
         matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
         matching_status=poll.matching_status,
-        is_public=poll.is_public,
-        public_exclusion_reason=poll.public_exclusion_reason,
         results=[_serialize_poll_result(row) for row in poll.results] if include_results else [],
     )
 
@@ -453,8 +443,6 @@ def _serialize_wide_poll(poll: Poll) -> V2WidePollItem:
         matching_poll_id=poll.matching_poll_id,
         matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
         matching_status=poll.matching_status,
-        is_public=poll.is_public,
-        public_exclusion_reason=poll.public_exclusion_reason,
         results={row.party_key: row.percentage for row in poll.results},
     )
 
@@ -484,8 +472,6 @@ def _serialize_observation(result: PollResult) -> V2PollObservationItem:
         matching_poll_id=poll.matching_poll_id,
         matching_poll_public_id=poll.matching_poll.public_id if poll.matching_poll else None,
         matching_status=poll.matching_status,
-        is_public=poll.is_public,
-        public_exclusion_reason=poll.public_exclusion_reason,
         party_key=result.party_key,
         party_short_name=party.short_name if party else None,
         party_name=party.name if party else None,

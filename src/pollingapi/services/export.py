@@ -82,9 +82,10 @@ class ExportService:
     def _public_polls(self, query):
         return apply_public_dataset_policy(query, get_validation_config().public_dataset)
 
-    def _poll_rows(self, polls: list[Poll]) -> list[dict]:
-        return [
-            {
+    def _poll_rows(self, polls: list[Poll], *, include_internal: bool = False) -> list[dict]:
+        rows = []
+        for poll in polls:
+            row = {
                 "id": poll.id,
                 "public_id": poll.public_id,
                 "raw_id": poll.raw_id,
@@ -106,17 +107,27 @@ class ExportService:
                 if poll.matching_poll
                 else None,
                 "matching_status": poll.matching_status,
-                "is_public": poll.is_public,
-                "public_exclusion_reason": poll.public_exclusion_reason,
                 "scope": poll.scope,
                 "source": poll.source,
-                "fingerprint": poll.fingerprint,
             }
-            for poll in polls
-        ]
+            if include_internal:
+                row.update(
+                    {
+                        "is_public": poll.is_public,
+                        "public_exclusion_reason": poll.public_exclusion_reason,
+                        "fingerprint": poll.fingerprint,
+                    }
+                )
+            rows.append(row)
+        return rows
 
-    def _poll_rows_with_results(self, polls: list[Poll]) -> list[dict]:
-        rows = self._poll_rows(polls)
+    def _poll_rows_with_results(
+        self,
+        polls: list[Poll],
+        *,
+        include_internal: bool = False,
+    ) -> list[dict]:
+        rows = self._poll_rows(polls, include_internal=include_internal)
         for row, poll in zip(rows, polls, strict=True):
             row["results"] = [
                 {
@@ -129,9 +140,12 @@ class ExportService:
             ]
         return rows
 
-    def _result_rows(self, results: list[PollResult]) -> list[dict]:
-        return [
-            {
+    def _result_rows(
+        self, results: list[PollResult], *, include_internal: bool = False
+    ) -> list[dict]:
+        rows = []
+        for r in results:
+            row = {
                 "poll_id": r.poll_id,
                 "poll_public_id": r.poll.public_id if r.poll else None,
                 "poll_raw_id": r.poll.raw_id if r.poll else None,
@@ -146,15 +160,22 @@ class ExportService:
                 "institute_name": r.poll.institute.name if r.poll and r.poll.institute else None,
                 "election_key": public_election_key(r.poll.election_key) if r.poll else None,
                 "scope": r.poll.scope if r.poll else None,
-                "is_public": r.poll.is_public if r.poll else None,
-                "public_exclusion_reason": r.poll.public_exclusion_reason if r.poll else None,
                 "party_key": r.party_key,
                 "party_short_name": r.party.short_name if r.party else None,
                 "party_name": r.party.name if r.party else None,
                 "percentage": r.percentage,
             }
-            for r in results
-        ]
+            if include_internal:
+                row.update(
+                    {
+                        "is_public": r.poll.is_public if r.poll else None,
+                        "public_exclusion_reason": r.poll.public_exclusion_reason
+                        if r.poll
+                        else None,
+                    }
+                )
+            rows.append(row)
+        return rows
 
     def _tabular_rows(self, rows: list[dict]) -> list[dict]:
         return [
@@ -216,13 +237,17 @@ class ExportService:
     def export_all_cleaned_polls(self) -> int:
         """Export all cleaned polls before public dataset subsetting."""
         polls = self._base_poll_query().all()
-        return self._write_dataset(self._poll_rows(polls), "all_cleaned_polls", "all cleaned polls")
+        return self._write_dataset(
+            self._poll_rows(polls, include_internal=True),
+            "all_cleaned_polls",
+            "all cleaned polls",
+        )
 
     def export_all_cleaned_results(self) -> int:
         """Export all cleaned poll-party results before public dataset subsetting."""
         results = self._base_result_query().all()
         return self._write_dataset(
-            self._result_rows(results),
+            self._result_rows(results, include_internal=True),
             "all_cleaned_poll_results",
             "all cleaned poll results",
         )

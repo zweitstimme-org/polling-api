@@ -27,10 +27,21 @@ class CorePartyRule:
 
 
 @dataclass(frozen=True)
+class CorePartyPresencePolicy:
+    """Context rules for deciding if a missing core party blocks publication."""
+
+    enabled: bool = True
+    min_comparison_polls: int = 5
+    window_days: int = 365
+    min_presence_share: float = 0.80
+
+
+@dataclass(frozen=True)
 class CorePartyConfig:
     """Scope/year rules for expected core parties."""
 
     rules: tuple[CorePartyRule, ...] = ()
+    presence_policy: CorePartyPresencePolicy = field(default_factory=CorePartyPresencePolicy)
 
 
 @dataclass(frozen=True)
@@ -221,7 +232,16 @@ def _read_core_party_config(data: dict[str, Any]) -> CorePartyConfig:
             {"scope": "*", "parties": ["AFD"], "from_year": 2014},
         ]
 
-    return CorePartyConfig(rules=tuple(_read_core_party_rule(rule) for rule in rules))
+    policy = data.get("presence_policy", {})
+    return CorePartyConfig(
+        rules=tuple(_read_core_party_rule(rule) for rule in rules),
+        presence_policy=CorePartyPresencePolicy(
+            enabled=bool(policy.get("enabled", True)),
+            min_comparison_polls=int(policy.get("min_comparison_polls", 5)),
+            window_days=int(policy.get("window_days", 365)),
+            min_presence_share=float(policy.get("min_presence_share", 0.80)),
+        ),
+    )
 
 
 def _read_core_party_rule(rule: dict[str, Any]) -> CorePartyRule:

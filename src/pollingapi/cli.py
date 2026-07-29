@@ -11,11 +11,15 @@ from sqlalchemy.orm import Session
 from pollingapi.cleaner import run_cleaning_pipeline
 from pollingapi.core import PROJECT_ROOT, settings
 from pollingapi.data_validation import DataValidationService, ValidationReportService
+from pollingapi.data_validation.config import CONFIG_PATH, PUBLIC_POLICY_PATH, get_validation_config
+from pollingapi.data_validation.service import CHECK_NAMES
 from pollingapi.database import SessionLocal, init_db, seed_all_from_json
 from pollingapi.importer import DEFAULT_MANIFEST, IMPORTS_DIR, ImportRunner, download_from_manifest
 from pollingapi.logging_config import get_logger, setup_logging
 from pollingapi.notifications import PipelineRunResult, create_notification_manager
 from pollingapi.scraper.context import RunContext
+from pollingapi.scraper.datamodel import Party as PartyDefinition
+from pollingapi.scraper.datamodel import enum_key
 from pollingapi.scraper.runner import ScraperRunner
 from pollingapi.services import ExportService, ReportService, S3Service
 
@@ -108,6 +112,87 @@ ImportManifestOption = Annotated[
 def get_db() -> Session:
     """Get database session."""
     return SessionLocal()
+
+
+def _validate_public_policy(
+    config_path: Path = CONFIG_PATH,
+    public_policy_path: Path = PUBLIC_POLICY_PATH,
+) -> list[str]:
+    """Return policy configuration errors."""
+    get_validation_config.cache_clear()
+    config = get_validation_config(config_path, public_policy_path)
+    errors: list[str] = []
+    check_names = set(CHECK_NAMES)
+    party_keys = {enum_key(party) for party in PartyDefinition}
+    public_dataset = config.public_dataset
+    selection = public_dataset.selection
+    presence_policy = config.core_parties.presence_policy
+
+    for field_name, values in (
+        ("public_dataset.required_checks", public_dataset.required_checks),
+        ("public_dataset.exclude_failed_checks", public_dataset.exclude_failed_checks),
+    ):
+        unknown = sorted(set(values) - check_names)
+        if unknown:
+            errors.append(f"{field_name} has unknown check(s): {', '.join(unknown)}")
+
+    if not 1800 <= selection.cutoff_year <= 2100:
+        errors.append("public_dataset.selection.cutoff_year must be between 1800 and 2100")
+
+    for field_name, value in (
+        ("pre_cutoff_provider", selection.pre_cutoff_provider),
+        ("post_cutoff_provider", selection.post_cutoff_provider),
+        ("secondary_provider", selection.secondary_provider),
+    ):
+        if not value.strip():
+            errors.append(f"public_dataset.selection.{field_name} must not be empty")
+
+    if presence_policy.min_comparison_polls < 1:
+        errors.append("core_parties.presence_policy.min_comparison_polls must be at least 1")
+    if presence_policy.window_days < 1:
+        errors.append("core_parties.presence_policy.window_days must be at least 1")
+    if not 0 < presence_policy.min_presence_share <= 1:
+        errors.append(
+            "core_parties.presence_policy.min_presence_share must be greater than 0 and at most 1"
+        )
+
+    for index, rule in enumerate(config.core_parties.rules, start=1):
+        prefix = f"core_parties.rules[{index}]"
+        if not rule.scope.strip():
+            errors.append(f"{prefix}.scope must not be empty")
+        if not rule.parties:
+            errors.append(f"{prefix}.parties must not be empty")
+        unknown_parties = sorted(set(rule.parties) - party_keys)
+        if unknown_parties:
+            errors.append(
+                f"{prefix}.parties has unknown party key(s): {', '.join(unknown_parties)}"
+            )
+        if (
+            rule.from_year is not None
+            and rule.to_year is not None
+            and rule.from_year > rule.to_year
+        ):
+            errors.append(f"{prefix}.from_year must be less than or equal to to_year")
+
+    return errors
+
+
+@app.command(name="policy:validate")
+def policy_validate():
+    """Validate public_policy.yaml and related validation settings."""
+    try:
+        errors = _validate_public_policy()
+    except Exception as exc:
+        typer.echo(f"✗ Public policy invalid: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    if errors:
+        typer.echo("✗ Public policy invalid:", err=True)
+        for error in errors:
+            typer.echo(f"  - {error}", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"✓ Public policy valid: {PUBLIC_POLICY_PATH}")
 
 
 @app.command(name="db:ping")

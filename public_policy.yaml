@@ -7,6 +7,7 @@ public_dataset:
     - qc_result_sum_check
     - qc_date_consistency
     - qc_respondents_plausible
+    - qc_core_parties_present
   exclude_failed_checks: []
   selection:
     cutoff_year: 2005
@@ -17,6 +18,11 @@ public_dataset:
     exclude_ambiguous_secondary: true
 
 core_parties:
+  presence_policy:
+    enabled: true
+    min_comparison_polls: 5
+    window_days: 365
+    min_presence_share: 0.8
   rules:
     - scope: federal
       parties: [CDU_CSU, SPD, FDP]
