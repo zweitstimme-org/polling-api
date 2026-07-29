@@ -21,24 +21,26 @@ def validate_core_parties(poll: Poll) -> ValidationCheck:
 
 def expected_core_parties(poll: Poll) -> set[str]:
     """Return expected core party keys for the poll."""
-    config = get_validation_config().core_parties
+    rules = get_validation_config().core_parties.rules
     year = _poll_year(poll)
-    parties = {"SPD"}
+    scope = poll.scope or "federal"
+    parties: set[str] = set()
 
-    if poll.scope == "by":
-        parties.add("CSU")
-    elif poll.scope and poll.scope != "federal":
-        parties.add("CDU")
-    else:
-        parties.add("CDU_CSU")
-
-    if year is None or year <= config.fdp_until_year:
-        parties.add("FDP")
-    if year is None or year >= config.green_from_year:
-        parties.add("GRUENE")
-    if year is None or year >= config.afd_from_year:
-        parties.add("AFD")
+    for rule in rules:
+        if rule.scope not in {"*", _scope_group(scope), scope}:
+            continue
+        if year is not None and rule.from_year is not None and year < rule.from_year:
+            continue
+        if year is not None and rule.to_year is not None and year > rule.to_year:
+            continue
+        parties.update(rule.parties)
     return parties
+
+
+def _scope_group(scope: str) -> str:
+    if scope == "federal":
+        return "federal"
+    return "state"
 
 
 def _poll_year(poll: Poll) -> int | None:

@@ -161,6 +161,19 @@ def test_v2_raw_poll_payload_uses_english_public_field_names(v2_client: TestClie
     assert {"publish_date", "zeitraum", "parties", "tasker", "method_id"}.isdisjoint(item.keys())
 
 
+def test_v2_validation_summary_uses_researcher_facing_aliases(
+    v2_client: TestClient,
+) -> None:
+    response = v2_client.get("/v2/validation-reports/summary")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["public_status"] in {"ready", "review_recommended", "attention_needed"}
+    assert "research_ready_polls" in payload
+    assert "polls_outside_quality_criteria" in payload
+    assert "checks_needing_review" in payload
+
+
 def _seed_v2_contract_data(session: Session) -> None:
     session.add(Party(key="SPD", name="Social Democratic Party", short_name="SPD"))
     session.add(

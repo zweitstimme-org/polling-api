@@ -315,6 +315,7 @@ class ValidationCheckSummary(BaseModel):
     check: str
     passed: int
     failed: int
+    needs_review: int | None = None
     pass_share: float
 
 
@@ -323,20 +324,28 @@ class ValidationFailureSummary(BaseModel):
 
     check: str
     failed: int
+    needs_review: int | None = None
 
 
 class ValidationReport(BaseModel):
     """Aggregate validation quality report."""
 
     status: Literal["pass", "warn", "fail"]
+    public_status: Literal["ready", "review_recommended", "attention_needed"] | None = None
     generated_at: dt.datetime
     total_polls: int
     valid_polls: int
     invalid_polls: int
     warning_polls: int
+    research_ready_polls: int | None = None
+    polls_outside_quality_criteria: int | None = None
+    polls_with_review_notes: int | None = None
     valid_share: float
     invalid_share: float
     warning_share: float
+    research_ready_share: float | None = None
+    outside_quality_criteria_share: float | None = None
     latest_validated_at: dt.datetime | None = None
     checks: list[ValidationCheckSummary] = Field(default_factory=list)
     top_failure_checks: list[ValidationFailureSummary] = Field(default_factory=list)
+    checks_needing_review: list[ValidationFailureSummary] = Field(default_factory=list)

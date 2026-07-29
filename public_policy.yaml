@@ -1,0 +1,32 @@
+public_dataset:
+  require_persisted_validation: true
+  include_valid: true
+  include_warnings: true
+  required_checks:
+    - qc_party_percentage_range
+    - qc_result_sum_check
+    - qc_date_consistency
+    - qc_respondents_plausible
+  exclude_failed_checks: []
+  selection:
+    cutoff_year: 2005
+    pre_cutoff_provider: Kayser/Rehmert
+    post_cutoff_provider: wahlrecht.de
+    secondary_provider: DAWUM
+    include_unmatched_secondary_after_cutoff: true
+    exclude_ambiguous_secondary: true
+
+core_parties:
+  rules:
+    - scope: federal
+      parties: [CDU_CSU, SPD, FDP]
+    - scope: state
+      parties: [CDU, SPD, FDP]
+    - scope: by
+      parties: [CSU, SPD, FDP]
+    - scope: "*"
+      parties: [GRUENE]
+      from_year: 1990
+    - scope: "*"
+      parties: [AFD]
+      from_year: 2014

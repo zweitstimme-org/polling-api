@@ -6,8 +6,9 @@ from sqlalchemy.orm import sessionmaker
 
 from pollingapi.core import settings
 from pollingapi.database import Base
-from pollingapi.models import Party, Poll, PollResult, PollValidation, Provider
+from pollingapi.models import Election, Party, Poll, PollResult, PollValidation, Provider
 from pollingapi.services.export import ExportService
+from pollingapi.services.public_dataset import apply_public_dataset_policy
 
 
 def _validation(poll_id: int) -> PollValidation:
@@ -28,6 +29,28 @@ def _validation(poll_id: int) -> PollValidation:
     )
 
 
+def test_public_policy_can_include_unvalidated_rows_when_configured(tmp_path):
+    from types import SimpleNamespace
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'polling.db'}")
+    Base.metadata.create_all(bind=engine)
+    session = sessionmaker(bind=engine)()
+    session.add(Poll(public_id="C00000001", publish_date=date(2024, 1, 1), is_public=True))
+    session.commit()
+
+    policy = SimpleNamespace(
+        require_persisted_validation=False,
+        include_valid=True,
+        include_warnings=True,
+        exclude_failed_checks=(),
+        selection=SimpleNamespace(pre_cutoff_provider="Kayser/Rehmert", cutoff_year=2005),
+    )
+
+    rows = apply_public_dataset_policy(session.query(Poll), policy).all()
+
+    assert [row.public_id for row in rows] == ["C00000001"]
+
+
 def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch):
     engine = create_engine(f"sqlite:///{tmp_path / 'polling.db'}")
     Base.metadata.create_all(bind=engine)
@@ -35,6 +58,7 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
     monkeypatch.setattr(settings, "export_dir", tmp_path)
 
     session.add(Party(key="SPD", name="SPD", short_name="SPD"))
+    session.add(Election(key="BUND", election_type="Bundestagswahl", scope="federal"))
     session.add(Provider(id=1, name="Kayser/Rehmert"))
     session.add_all(
         [
@@ -42,12 +66,14 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
                 id=1,
                 public_id="C00000001",
                 publish_date=date(2024, 1, 1),
+                election_key="BUND",
                 is_public=True,
             ),
             Poll(
                 id=2,
                 public_id="C00000002",
                 publish_date=date(2024, 1, 2),
+                election_key="BUND",
                 is_public=False,
                 public_exclusion_reason="matched_secondary_provider",
             ),
@@ -56,6 +82,7 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
                 public_id="C00000003",
                 publish_date=date(2004, 12, 31),
                 provider_id=1,
+                election_key="BUND",
                 is_public=True,
             ),
         ]
@@ -90,6 +117,8 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
     assert counts["polls_without_results"] == 2
     assert counts["all_cleaned_polls"] == 3
     assert [row["public_id"] for row in public_polls] == ["C00000001", "C00000003"]
+    assert public_polls[0]["election_key"] == "federal"
+    assert public_polls[0]["election_type"] == "Federal election"
     assert public_polls[0]["results"] == [
         {
             "party_key": "SPD",

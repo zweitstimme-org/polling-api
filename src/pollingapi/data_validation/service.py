@@ -6,6 +6,7 @@ import datetime as dt
 
 from sqlalchemy.orm import Session, joinedload
 
+from pollingapi.data_validation.config import get_validation_config
 from pollingapi.data_validation.validate_core_parties import validate_core_parties
 from pollingapi.data_validation.validate_dates import validate_dates
 from pollingapi.data_validation.validate_jumps import (
@@ -139,7 +140,7 @@ class DataValidationService:
                 group_name="scope",
             ),
         }
-        valid = all(check.passed for check in checks.values() if check.severity == "error")
+        valid = self._is_research_ready(checks)
         return DataValidation(
             poll_id=poll.id,
             public_id=poll.public_id,
@@ -188,3 +189,12 @@ class DataValidationService:
 
     def _has_warning(self, item: DataValidation) -> bool:
         return any(check.severity == "warning" and not check.passed for check in self._checks(item))
+
+    def _is_research_ready(self, checks: dict[str, ValidationCheck]) -> bool:
+        required_checks = get_validation_config().public_dataset.required_checks
+        if required_checks:
+            unknown = sorted(set(required_checks) - set(checks))
+            if unknown:
+                raise ValueError(f"Unknown public dataset required check(s): {unknown}")
+            return all(checks[name].passed for name in required_checks)
+        return all(check.passed for check in checks.values() if check.severity == "error")

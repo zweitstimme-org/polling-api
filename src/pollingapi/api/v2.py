@@ -24,6 +24,7 @@ from pollingapi.api.polls import (
     _serialize_validation,
     _validate_date_range,
 )
+from pollingapi.api.public_names import public_election_key, public_election_name
 from pollingapi.cleaner.transforms.references import normalized_scope
 from pollingapi.core import settings
 from pollingapi.data_validation import ValidationReportService
@@ -57,7 +58,7 @@ from pollingapi.schemas import (
 from pollingapi.schemas import (
     Provider as ProviderSchema,
 )
-from pollingapi.services.export import _apply_public_dataset_policy
+from pollingapi.services.public_dataset import apply_public_dataset_policy
 from pollingapi.services.s3 import S3Service
 
 DBSession = Annotated[Session, Depends(get_db)]
@@ -416,8 +417,8 @@ def _serialize_poll(poll: Poll, include_results: bool) -> V2PollItem:
         institute_name=poll.institute.name if poll.institute else None,
         provider_id=poll.provider_id,
         provider_name=poll.provider.name if poll.provider else None,
-        election_key=poll.election_key,
-        election_type=poll.election.election_type if poll.election else None,
+        election_key=public_election_key(poll.election_key),
+        election_type=public_election_name(poll.election),
         survey_method_key=poll.method_key,
         survey_method_name=poll.method.name if poll.method else None,
         fingerprint=poll.fingerprint,
@@ -445,8 +446,8 @@ def _serialize_wide_poll(poll: Poll) -> V2WidePollItem:
         institute_key=poll.institute_key,
         institute_name=poll.institute.name if poll.institute else None,
         provider_name=poll.provider.name if poll.provider else None,
-        election_key=poll.election_key,
-        election_type=poll.election.election_type if poll.election else None,
+        election_key=public_election_key(poll.election_key),
+        election_type=public_election_name(poll.election),
         survey_method_key=poll.method_key,
         survey_method_name=poll.method.name if poll.method else None,
         matching_poll_id=poll.matching_poll_id,
@@ -476,8 +477,8 @@ def _serialize_observation(result: PollResult) -> V2PollObservationItem:
         institute_name=poll.institute.name if poll.institute else None,
         provider_id=poll.provider_id,
         provider_name=poll.provider.name if poll.provider else None,
-        election_key=poll.election_key,
-        election_type=poll.election.election_type if poll.election else None,
+        election_key=public_election_key(poll.election_key),
+        election_type=public_election_name(poll.election),
         survey_method_key=poll.method_key,
         survey_method_name=poll.method.name if poll.method else None,
         matching_poll_id=poll.matching_poll_id,
@@ -574,7 +575,7 @@ def _polls_for_dataset(
         published_to=published_to,
     )
     if dataset == "default":
-        query = _apply_public_dataset_policy(query, get_validation_config().public_dataset)
+        query = apply_public_dataset_policy(query, get_validation_config().public_dataset)
     return query
 
 
@@ -630,7 +631,7 @@ def get_poll(
     include_results: Annotated[bool, Query(description="Include nested party results")] = True,
 ):
     """Get one poll by public id such as C00014337 or by numeric database id."""
-    query = _apply_public_dataset_policy(
+    query = apply_public_dataset_policy(
         _base_poll_query(db), get_validation_config().public_dataset
     )
     if poll_id.upper().startswith("C"):
@@ -833,7 +834,7 @@ def list_dataset_poll_results(
         date_to=published_to,
     )
     if dataset == "default":
-        query = _apply_public_dataset_policy(query, get_validation_config().public_dataset)
+        query = apply_public_dataset_policy(query, get_validation_config().public_dataset)
     if party_key:
         query = query.filter(PollResult.party_key.in_(_normalize_keys(party_key)))
 
@@ -938,8 +939,8 @@ def list_scopes(db: DBSession):
     return [
         ScopeItem(
             key=row.scope or row.key.lower(),
-            election_key=row.key,
-            election_type=row.election_type,
+            election_key=public_election_key(row.key),
+            election_type=public_election_name(row),
         )
         for row in rows
     ]
@@ -965,7 +966,7 @@ def list_reference_data(db: DBSession):
 )
 def get_validation_report_summary(
     db: DBSession,
-    top: Annotated[int, Query(ge=1, le=20, description="Number of top failures")] = 5,
+    top: Annotated[int, Query(ge=1, le=20, description="Number of checks needing review")] = 5,
 ):
     """Return aggregate validation quality report."""
     return ValidationReportService(db).build_report(top_n=top)

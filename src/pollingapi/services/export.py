@@ -4,13 +4,15 @@ import json
 from datetime import datetime
 
 import pandas as pd
-from sqlalchemy import extract, func, or_
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
+from pollingapi.api.public_names import public_election_key, public_election_name
 from pollingapi.core import settings
-from pollingapi.data_validation.config import PublicDatasetConfig, get_validation_config
+from pollingapi.data_validation.config import get_validation_config
 from pollingapi.logging_config import get_logger
-from pollingapi.models import Poll, PollResult, PollValidation, Provider, RawPoll
+from pollingapi.models import Poll, PollResult, RawPoll
+from pollingapi.services.public_dataset import apply_public_dataset_policy
 
 logger = get_logger(__name__)
 
@@ -78,7 +80,7 @@ class ExportService:
         )
 
     def _public_polls(self, query):
-        return _apply_public_dataset_policy(query, get_validation_config().public_dataset)
+        return apply_public_dataset_policy(query, get_validation_config().public_dataset)
 
     def _poll_rows(self, polls: list[Poll]) -> list[dict]:
         return [
@@ -95,8 +97,8 @@ class ExportService:
                 "institute_name": poll.institute.name if poll.institute else None,
                 "provider_id": poll.provider_id,
                 "provider_name": poll.provider.name if poll.provider else None,
-                "election_key": poll.election_key,
-                "election_type": poll.election.election_type if poll.election else None,
+                "election_key": public_election_key(poll.election_key),
+                "election_type": public_election_name(poll.election),
                 "method_key": poll.method_key,
                 "method_name": poll.method.name if poll.method else None,
                 "matching_poll_id": poll.matching_poll_id,
@@ -142,7 +144,7 @@ class ExportService:
                 "respondents": r.poll.respondents if r.poll else None,
                 "institute_key": r.poll.institute_key if r.poll else None,
                 "institute_name": r.poll.institute.name if r.poll and r.poll.institute else None,
-                "election_key": r.poll.election_key if r.poll else None,
+                "election_key": public_election_key(r.poll.election_key) if r.poll else None,
                 "scope": r.poll.scope if r.poll else None,
                 "is_public": r.poll.is_public if r.poll else None,
                 "public_exclusion_reason": r.poll.public_exclusion_reason if r.poll else None,
@@ -352,31 +354,3 @@ class ExportService:
 
         logger.info("Exported metadata")
         return metadata
-
-
-def _apply_public_dataset_policy(query, policy: PublicDatasetConfig):
-    query = query.filter(Poll.is_public.is_(True))
-    prevalidated = Poll.provider.has(
-        func.lower(Provider.name) == policy.selection.pre_cutoff_provider.lower()
-    ) & (extract("year", Poll.publish_date) < policy.selection.cutoff_year)
-
-    if policy.require_persisted_validation:
-        query = query.outerjoin(Poll.validation)
-    else:
-        query = query.outerjoin(Poll.validation)
-
-    if policy.include_valid:
-        query = query.filter(or_(prevalidated, PollValidation.valid.is_(True)))
-    else:
-        query = query.filter(PollValidation.valid.is_(False))
-
-    if not policy.include_warnings:
-        query = query.filter(or_(prevalidated, PollValidation.warning_count == 0))
-
-    for check_name in policy.exclude_failed_checks:
-        column = getattr(PollValidation, check_name, None)
-        if column is None:
-            raise ValueError(f"Unknown public dataset validation check: {check_name}")
-        query = query.filter(or_(prevalidated, column.is_(True)))
-
-    return query
