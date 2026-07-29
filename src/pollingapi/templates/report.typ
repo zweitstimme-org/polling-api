@@ -71,14 +71,13 @@ API version: #raw(report.api_version)
 == Primary Sources by Year
 
 #table(
-  columns: (12%, 15%, 17%, 22%, 20%, 14%),
-  inset: 5pt,
+  columns: (10%, 14%, 16%, 42%, 18%),
+  inset: 3pt,
   stroke: 0.4pt + gray,
   table.header(
     [Year],
     [Polls],
     [Validated],
-    [Primary provider],
     [Primary source],
     [Primary polls],
   ),
@@ -86,8 +85,7 @@ API version: #raw(report.api_version)
     [#year.year]
     [#year.total_polls]
     [#year.validated_polls]
-    [#raw(year.primary_provider)]
-    [#raw(year.primary_source)]
+    [#raw(year.primary_provider) \ #raw(year.primary_source)]
     [#year.primary_polls]
   },
 )

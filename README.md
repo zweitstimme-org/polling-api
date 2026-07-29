@@ -1,266 +1,258 @@
-![zweitstimme.org](https://zweitstimme.org/images/logo_orange.png)
+# pollingAPI
 
-# polling-api
+German election polling data pipeline and API for zweitstimme.org.
 
-All-in-one pipeline and API for German election polling data by zweitstimme.org
+The project collects polling data, keeps immutable raw source rows, cleans them
+into a relational model, validates data quality, exports research datasets, and
+serves the public dataset through FastAPI.
 
-## Project status
+## Requirements
 
-This repository currently documents and ships the **development/testing setup**.
+- Python 3.12 or newer
+- `uv`
+- `just` is optional, but useful for common commands
 
-- The API should be treated as a local development/test service for now.
-- This guide is focused on running the stack locally on your machine.
-- Production deployment details may evolve as the project stabilizes.
-
-## What this project does
-
-`polling-api` collects polling data from multiple sources, normalizes it into a consistent relational
-model, exports machine-readable datasets, and serves the data through a FastAPI application.
-
-The **main operational entrypoint** is:
+## Quick Start
 
 ```bash
-uv run pollingapi pipeline:run
-```
-
-That command runs the full end-to-end process:
-
-```text
-scrape -> clean -> validate -> export -> optional archive -> notifications
-```
-
-## Dataflow at a glance
-
-```text
-HTML workers + DAWUM API
-          |
-          v
-      polls_raw (immutable source rows)
-          |
-          v
-   ETL cleaning + transforms
-          |
-          v
-   polls + poll_results + reference tables
-          |
-          v
-   data validation -> poll_validations
-          |
-          +--> export files in data/export/
-          |
-          +--> optional S3 archive zip + index
-          |
-          +--> FastAPI endpoints (/v1/*)
-```
-
-## Quick start (local dev)
-
-```bash
-# 1) install dependencies
 uv sync
-
-# 2) initialize schema + seed dictionaries
 uv run pollingapi db:init
 uv run pollingapi db:seed
-
-# 3) run full pipeline (recommended main flow)
 uv run pollingapi pipeline:run
-
-# 4) start API locally
 uv run pollingapi server:start --reload
 ```
 
 Open:
+
 - API docs: `http://localhost:8000/docs`
 - OpenAPI: `http://localhost:8000/openapi.json`
-- Heartbeat: `http://localhost:8000/health` (alias: `/heartbeat`)
+- Health: `http://localhost:8000/health`
 
-This is the recommended way to explore and validate the current development version locally.
+## Data Flow
 
-## Core commands
-
-### Pipeline (main)
-
-```bash
-uv run pollingapi pipeline:run             # Full run: scrape + clean + validate + export + optional archive
-uv run pollingapi pipeline:clean           # Clean only (from polls_raw into normalized tables)
-uv run pollingapi pipeline:inspect <raw_id> # Inspect one raw row
+```text
+scrapers + imports
+        |
+        v
+polls_raw
+        |
+        v
+cleaning pipeline
+        |
+        v
+polls + poll_results + reference tables
+        |
+        v
+validation + public policy
+        |
+        +--> public API
+        +--> export files
+        +--> archive bundle and optional S3 upload
 ```
 
-### Validation
+`polls_raw` is the immutable source table. Cleaned and normalized data is stored
+in `polls` and `poll_results`.
+
+## Main Commands
+
+Use the CLI directly:
 
 ```bash
-uv run pollingapi validation:run                  # Run validation without writing results
-uv run pollingapi validation:run --persist        # Store results in poll_validations
-uv run pollingapi validation:inspect C00000001    # Inspect one persisted validation result
-uv run pollingapi validation:report               # Aggregate quality report
+uv run pollingapi --help
 ```
 
-`pipeline:run` already runs validation with persistence. The standalone validation commands are useful
-for development, debugging, and re-running quality control after changing `validation.toml`.
+Or use `just`:
 
-### Scrapers
+```bash
+just help
+```
+
+### Database
+
+```bash
+uv run pollingapi db:init
+uv run pollingapi db:seed
+uv run pollingapi db:tables
+uv run pollingapi db:ping
+```
+
+### Imports
+
+Historical Kayser/Rehmert data is configured in `import_urls.txt`.
+
+```bash
+uv run pollingapi import:download
+uv run pollingapi import:run KAYSER_REHMERT.xlsx --source kayser_rehmert
+```
+
+### Scraping And Cleaning
 
 ```bash
 uv run pollingapi scraper:list
 uv run pollingapi scraper:run all
-uv run pollingapi scraper:run forsa
-uv run pollingapi scraper:status
+uv run pollingapi pipeline:clean
 ```
 
-### Database and exports
+### Full Pipeline
 
 ```bash
-uv run pollingapi db:ping
-uv run pollingapi db:tables
-uv run pollingapi export:all
-uv run pollingapi db:reset --confirm
+uv run pollingapi pipeline:run
 ```
 
-### API server
+This runs:
+
+```text
+scrape -> clean -> validate -> export -> report -> archive if S3 is configured
+```
+
+Use this for scheduled production runs after the database is initialized and
+historical imports are loaded.
+
+### Validation
+
+```bash
+uv run pollingapi policy:validate
+uv run pollingapi validation:run --persist
+uv run pollingapi validation:inspect C00000001
+uv run pollingapi validation:report
+```
+
+Validation settings are in `validation.toml`.
+
+Public dataset rules are in `public_policy.yaml`. The public policy controls:
+
+- which validation checks are required for public serving
+- source priority before and after 2005
+- how secondary-source polls are handled
+- contextual core-party presence rules
+
+The contextual core-party rule blocks a poll only when a missing monitored party
+is usually present in nearby polls for the same scope. This catches likely
+single-poll extraction errors without removing valid state-election periods
+where a party is consistently absent.
+
+### Exports
+
+```bash
+uv run pollingapi export:all
+```
+
+Default export files in `data/export/` contain the same public dataset served by
+the API:
+
+- `polls.*`
+- `polls_without_results.*`
+- `poll_results.*`
+
+Archive export files contain complete cleaned and raw data for audit use:
+
+- `all_cleaned_polls.*`
+- `all_cleaned_poll_results.*`
+- `polls_raw.*`
+
+Supported formats are JSON, CSV, and Parquet.
+
+### Server
 
 ```bash
 uv run pollingapi server:start --host 0.0.0.0 --port 8000 --reload
 uv run pollingapi server:prod --host 127.0.0.1 --port 8000
 ```
 
-### Logs and archive
+## API
 
-```bash
-uv run pollingapi logs:view
-uv run pollingapi logs:list
-uv run pollingapi data:archive
-uv run pollingapi data:list
-```
+The public API is `/v2`. Legacy `/v1` routes remain callable for compatibility
+but are hidden from OpenAPI.
 
-## API surface
+Important v2 routes:
 
-The app mounts versioned routes under `/v1`.
+- `GET /v2/polls`
+- `GET /v2/polls/{poll_id}`
+- `GET /v2/poll-results`
+- `GET /v2/datasets`
+- `GET /v2/datasets/default/polls`
+- `GET /v2/datasets/all-cleaned/polls`
+- `GET /v2/raw-polls`
+- `GET /v2/parties`
+- `GET /v2/institutes`
+- `GET /v2/providers`
+- `GET /v2/survey-methods`
+- `GET /v2/scopes`
+- `GET /v2/elections`
+- `GET /v2/validation-reports/summary`
+- `GET /v2/downloads`
+- `GET /v2/archives`
 
-- `GET /` basic API metadata
-- `GET /health` and `GET /heartbeat` service heartbeat and run freshness
-- `GET /v1/polls` cleaned, normalized polls (filters + pagination)
-- `GET /v1/polls/wide` cleaned polls with party percentages as dict
-- `GET /v1/polls/latest` latest polls optimized for app use
-- `GET /v1/polls/{id}` single poll by integer or public id
-- `GET /v1/polls/{id}/validation` persisted validation report for one poll
-- `GET /v1/validation/report` aggregate validation quality report
-- `GET /v1/observations` long-format poll-party observations for analysis
-- `GET /v1/results` backward-compatible alias for observations
-- `GET /v1/raw-polls` immutable raw scraped rows
-- `GET /v1/reference/*` lookup tables (institutes, parties, providers, methods, elections, taskers)
-- `GET /v1/elections` election summaries and metadata
-- `GET /v1/download/*` dataset downloads (json/csv/parquet/sqlite/raw/results)
-- `GET /v1/archive` archive listing (HTML/JSON) when S3 is configured
-
-## Health and observability
-
-`/health` and `/heartbeat` return structured status including:
-- overall service status
-- current version/release id
-- total poll count in the database
-- last successful pipeline run timestamp
-- time since last run in seconds
-- component checks (`database:polls`, `pipeline:last_run`, `validation:quality`)
-
-Pipeline runs are persisted in `pipeline_runs` for auditability and exposed through heartbeat freshness.
-The run record also stores a compact validation summary: validation status, validated poll count, valid
-poll count, invalid poll count, warning count, and valid share.
-
-The validation check in `/health` is based on persisted rows in `poll_validations`. It reports valid,
-invalid, and warning shares plus the top failing checks. If no validation data exists yet, validation
-health reports a warning instead of failing the API.
+The default public poll endpoints use English public names. Internal database
+keys are kept unchanged.
 
 ## Configuration
 
-Copy `.env.example` and adjust as needed:
+The app reads `.env` if the file exists.
 
-```bash
-cp .env.example .env
-```
+Common settings:
 
-Common variables:
-- `DATABASE_URL`, `ASYNC_DATABASE_URL`
-- `API_HOST`, `API_PORT`, `API_RELOAD`
-- `SCRAPER_DELAY`, `SCRAPER_TIMEOUT`
-- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_NAME`, `AWS_S3_REGION`,
-  `AWS_S3_ENDPOINT_URL` (for archive upload)
-- `NTFY_URL`, `SLACK_WEBHOOK_URL` (optional notifications after pipeline runs)
+- `DATABASE_URL`
+- `ASYNC_DATABASE_URL`
+- `API_HOST`
+- `API_PORT`
+- `SCRAPER_DELAY`
+- `SCRAPER_TIMEOUT`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_S3_BUCKET_NAME`
+- `AWS_S3_REGION`
+- `AWS_S3_ENDPOINT_URL`
+- `NTFY_URL`
+- `SLACK_WEBHOOK_URL`
 
-Validation thresholds are configured in `validation.toml` at the project root. This includes:
+S3 settings are optional. If S3 is not configured, `pipeline:run` still runs and
+skips archive upload.
 
-- result sum tolerance
-- jump threshold
-- respondent limits by method
-- core-party year rules
-- reporting thresholds for `pass`, `warn`, and `fail`
-
-Slack and ntfy notifications include the validation summary from `pipeline:run`. If validation status
-is `warn` or `fail`, notifications include the top failing quality checks.
-
-### Versioning
-
-API version is read from the root file `.apiversion` and surfaced in OpenAPI and heartbeat responses.
-
-## Project structure
+## Project Layout
 
 ```text
-pollingAPI/
-├── src/pollingapi/
-│   ├── cli.py                    # Typer CLI entrypoint
-│   ├── main.py                   # FastAPI app + /health + /heartbeat
-│   ├── database.py               # Engine/session/init helpers
-│   ├── database_seed.py         # Reference data seeding from JSON
-│   ├── models.py                # SQLAlchemy models incl. PipelineRun
-│   ├── schemas.py                # Pydantic request/response schemas
-│   ├── core/                    # Settings and configuration
-│   ├── notifications/            # Notification managers (ntfy, Slack)
-│   ├── api/                     # Routers mounted at /v1
-│   │   ├── polls.py             # Polls, observations, raw polls
-│   │   ├── validation.py        # Validation quality report endpoint
-│   │   ├── dictionaries.py      # Reference lookup tables
-│   │   ├── elections.py        # Election metadata
-│   │   ├── download.py        # Dataset downloads
-│   │   └── data.py            # Archive endpoints
-│   ├── scraper/                 # Worker discovery + source scrapers
-│   │   ├── runner.py           # Scraper execution
-│   │   ├── context.py         # Run context management
-│   │   ├── datamodel.py        # Domain models and enums
-│   │   ├── dawum.py           # DAWUM API scraper
-│   │   └── workers/           # HTML scraper workers
-│   ├── cleaner/                 # ETL normalization pipeline
-│   │   ├── etl_pipeline.py
-│   │   └── transforms/        # Data transformations (dates, results, references)
-│   ├── data_validation/         # Quality checks, persisted validation, reports
-│   └── services/              # Export and S3 services
-├── json/                      # Reference snapshots and dictionaries
-├── data/                      # SQLite DB, logs, exports
-├── tests/
-├── .apiversion
-├── validation.toml            # Validation thresholds and reporting limits
-└── pyproject.toml
+src/pollingapi/
+├── api/              FastAPI routes
+├── cleaner/          ETL pipeline and transforms
+├── data_validation/  quality checks and reports
+├── importer/         file imports, including Kayser/Rehmert
+├── scraper/          scraper runner, DAWUM, and HTML workers
+├── services/         export, report, and S3 services
+├── cli.py            Typer CLI
+├── database.py       database setup
+├── models.py         SQLAlchemy models
+└── schemas.py        Pydantic schemas
 ```
 
-## Development workflow
+Top-level data/config files:
+
+- `public_policy.yaml`
+- `validation.toml`
+- `import_urls.txt`
+- `json/`
+- `data/`
+- `justfile`
+
+## Development
 
 ```bash
-# lint
-uv run ruff check src/
-
-# format
-uv run ruff format src/
-
-# type check
-uv run mypy src/
-
-# tests
+uv run ruff check src/ tests/
+uv run ruff format src/ tests/
 uv run pytest tests/
+```
+
+Run a focused test:
+
+```bash
+uv run pytest tests/test_data_validation.py
 ```
 
 ## Notes
 
-- `pollingapi` and `zweitstimme` are both installed CLI entrypoints.
-- `pipeline:run` is designed for repeatable scheduled execution (cron/systemd/CI).
-- Raw rows remain in `polls_raw`; normalization writes to `polls` and `poll_results`.
-- Validation writes only to `poll_validations` and does not change source poll rows.
-- Treat this README as a **local development guide** first; production hardening docs will follow.
+- `pollingapi` and `zweitstimme` are equivalent CLI entrypoints.
+- Raw source rows stay in `polls_raw`.
+- Validation writes to `poll_validations`.
+- Public API/export data is selected by both `is_public` and
+  `public_policy.yaml`.
+- Complete archive exports are kept for audit and reproducibility.

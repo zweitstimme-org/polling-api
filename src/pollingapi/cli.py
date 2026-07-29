@@ -320,9 +320,9 @@ def validation_run(
 
     typer.echo("Data validation complete:")
     typer.echo(f"  Total polls   : {summary.total_polls}")
-    typer.echo(f"  Valid polls   : {summary.valid_polls}")
-    typer.echo(f"  Invalid polls : {summary.invalid_polls}")
-    typer.echo(f"  Warning polls : {summary.warning_polls}")
+    typer.echo(f"  Research-ready polls              : {summary.valid_polls}")
+    typer.echo(f"  Polls outside quality criteria    : {summary.invalid_polls}")
+    typer.echo(f"  Polls with review notes           : {summary.warning_polls}")
     if persist:
         typer.echo("  Persisted to  : poll_validations")
 
@@ -393,9 +393,15 @@ def validation_report(
     typer.echo("Validation report:")
     typer.echo(f"  Status        : {report.status}")
     typer.echo(f"  Total polls   : {report.total_polls}")
-    typer.echo(f"  Valid polls   : {report.valid_polls} ({report.valid_share:.1%})")
-    typer.echo(f"  Invalid polls : {report.invalid_polls} ({report.invalid_share:.1%})")
-    typer.echo(f"  Warning polls : {report.warning_polls} ({report.warning_share:.1%})")
+    typer.echo(
+        f"  Research-ready polls           : {report.valid_polls} ({report.valid_share:.1%})"
+    )
+    typer.echo(
+        f"  Polls outside quality criteria : {report.invalid_polls} ({report.invalid_share:.1%})"
+    )
+    typer.echo(
+        f"  Polls with review notes        : {report.warning_polls} ({report.warning_share:.1%})"
+    )
     typer.echo(f"  Latest run    : {report.latest_validated_at}")
 
     typer.echo("")
@@ -408,7 +414,7 @@ def validation_report(
 
     if report.top_failure_checks:
         typer.echo("")
-        typer.echo("Top failures:")
+        typer.echo("Checks needing review:")
         for item in report.top_failure_checks:
             typer.echo(f"  {item.check}: {item.failed}")
 
@@ -738,10 +744,10 @@ def pipeline_run(
             else f"✓ Valid     : {run_result.validation_valid_polls}/"
             f"{run_result.validation_total_polls}"
         )
-        typer.echo(f"✓ Invalid   : {run_result.validation_invalid_polls}")
-        typer.echo(f"✓ Warnings  : {run_result.validation_warning_polls}")
+        typer.echo(f"✓ Outside quality criteria: {run_result.validation_invalid_polls}")
+        typer.echo(f"✓ Review notes            : {run_result.validation_warning_polls}")
         if run_result.validation_top_failures:
-            typer.echo("  Top failures:")
+            typer.echo("  Checks needing review:")
             for item in run_result.validation_top_failures:
                 typer.echo(f"    {item['check']}: {item['failed']}")
         typer.echo("")
