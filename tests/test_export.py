@@ -6,8 +6,9 @@ from sqlalchemy.orm import sessionmaker
 
 from pollingapi.core import settings
 from pollingapi.database import Base
-from pollingapi.models import Party, Poll, PollResult, PollValidation
+from pollingapi.models import Election, Party, Poll, PollResult, PollValidation, Provider
 from pollingapi.services.export import ExportService
+from pollingapi.services.public_dataset import apply_public_dataset_policy
 
 
 def _validation(poll_id: int) -> PollValidation:
@@ -28,6 +29,28 @@ def _validation(poll_id: int) -> PollValidation:
     )
 
 
+def test_public_policy_can_include_unvalidated_rows_when_configured(tmp_path):
+    from types import SimpleNamespace
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'polling.db'}")
+    Base.metadata.create_all(bind=engine)
+    session = sessionmaker(bind=engine)()
+    session.add(Poll(public_id="C00000001", publish_date=date(2024, 1, 1), is_public=True))
+    session.commit()
+
+    policy = SimpleNamespace(
+        require_persisted_validation=False,
+        include_valid=True,
+        include_warnings=True,
+        exclude_failed_checks=(),
+        selection=SimpleNamespace(pre_cutoff_provider="Kayser/Rehmert", cutoff_year=2005),
+    )
+
+    rows = apply_public_dataset_policy(session.query(Poll), policy).all()
+
+    assert [row.public_id for row in rows] == ["C00000001"]
+
+
 def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch):
     engine = create_engine(f"sqlite:///{tmp_path / 'polling.db'}")
     Base.metadata.create_all(bind=engine)
@@ -35,20 +58,32 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
     monkeypatch.setattr(settings, "export_dir", tmp_path)
 
     session.add(Party(key="SPD", name="SPD", short_name="SPD"))
+    session.add(Election(key="BUND", election_type="Bundestagswahl", scope="federal"))
+    session.add(Provider(id=1, name="Kayser/Rehmert"))
     session.add_all(
         [
             Poll(
                 id=1,
                 public_id="C00000001",
                 publish_date=date(2024, 1, 1),
+                election_key="BUND",
                 is_public=True,
             ),
             Poll(
                 id=2,
                 public_id="C00000002",
                 publish_date=date(2024, 1, 2),
+                election_key="BUND",
                 is_public=False,
                 public_exclusion_reason="matched_secondary_provider",
+            ),
+            Poll(
+                id=3,
+                public_id="C00000003",
+                publish_date=date(2004, 12, 31),
+                provider_id=1,
+                election_key="BUND",
+                is_public=True,
             ),
         ]
     )
@@ -57,6 +92,7 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
         [
             PollResult(poll_id=1, party_key="SPD", percentage=20),
             PollResult(poll_id=2, party_key="SPD", percentage=21),
+            PollResult(poll_id=3, party_key="SPD", percentage=22),
             _validation(1),
             _validation(2),
         ]
@@ -77,10 +113,13 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
         (tmp_path / "all_cleaned_poll_results.json").read_text(encoding="utf-8")
     )
 
-    assert counts["polls"] == 1
-    assert counts["polls_without_results"] == 1
-    assert counts["all_cleaned_polls"] == 2
-    assert [row["public_id"] for row in public_polls] == ["C00000001"]
+    assert counts["polls"] == 2
+    assert counts["polls_without_results"] == 2
+    assert counts["all_cleaned_polls"] == 3
+    assert [row["public_id"] for row in public_polls] == ["C00000001", "C00000003"]
+    assert {"fingerprint", "is_public", "public_exclusion_reason"}.isdisjoint(public_polls[0])
+    assert public_polls[0]["election_key"] == "federal"
+    assert public_polls[0]["election_type"] == "Federal election"
     assert public_polls[0]["results"] == [
         {
             "party_key": "SPD",
@@ -89,14 +128,28 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
             "percentage": 20.0,
         }
     ]
-    assert [row["public_id"] for row in public_polls_without_results] == ["C00000001"]
+    assert [row["public_id"] for row in public_polls_without_results] == [
+        "C00000001",
+        "C00000003",
+    ]
     assert "results" not in public_polls_without_results[0]
-    assert {row["public_id"] for row in all_cleaned_polls} == {"C00000001", "C00000002"}
-    assert [row["poll_public_id"] for row in public_results] == ["C00000001"]
+    assert {"fingerprint", "is_public", "public_exclusion_reason"}.isdisjoint(
+        public_polls_without_results[0]
+    )
+    assert {row["public_id"] for row in all_cleaned_polls} == {
+        "C00000001",
+        "C00000002",
+        "C00000003",
+    }
+    assert {"fingerprint", "is_public", "public_exclusion_reason"} <= all_cleaned_polls[0].keys()
+    assert [row["poll_public_id"] for row in public_results] == ["C00000001", "C00000003"]
+    assert {"is_public", "public_exclusion_reason"}.isdisjoint(public_results[0])
     assert {row["poll_public_id"] for row in all_cleaned_results} == {
         "C00000001",
         "C00000002",
+        "C00000003",
     }
+    assert {"is_public", "public_exclusion_reason"} <= all_cleaned_results[0].keys()
 
 
 def test_archive_stage_includes_latest_report(tmp_path, monkeypatch):

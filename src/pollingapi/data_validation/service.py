@@ -6,7 +6,11 @@ import datetime as dt
 
 from sqlalchemy.orm import Session, joinedload
 
-from pollingapi.data_validation.validate_core_parties import validate_core_parties
+from pollingapi.data_validation.config import get_validation_config
+from pollingapi.data_validation.validate_core_parties import (
+    build_core_party_presence_context,
+    validate_core_parties,
+)
 from pollingapi.data_validation.validate_dates import validate_dates
 from pollingapi.data_validation.validate_jumps import (
     PreviousResult,
@@ -56,6 +60,7 @@ class DataValidationService:
     def run(self, limit: int | None = None, persist: bool = False) -> DataValidationResponse:
         """Validate cleaned polls and return a report."""
         polls = self._load_polls(limit=limit)
+        self._core_party_presence_context = build_core_party_presence_context(polls)
         previous_by_institute: dict[tuple[str, str], PreviousResult] = {}
         previous_by_scope: dict[tuple[str, str], PreviousResult] = {}
         items: list[DataValidation] = []
@@ -125,7 +130,10 @@ class DataValidationService:
             "qc_result_sum_check": validate_result_sum(poll),
             "qc_date_consistency": validate_dates(poll, today=self.today),
             "qc_respondents_plausible": validate_respondents(poll),
-            "qc_core_parties_present": validate_core_parties(poll),
+            "qc_core_parties_present": validate_core_parties(
+                poll,
+                presence_context=getattr(self, "_core_party_presence_context", None),
+            ),
             "qc_institute_result_jump": validate_jump(
                 poll,
                 previous_by_institute,
@@ -139,7 +147,7 @@ class DataValidationService:
                 group_name="scope",
             ),
         }
-        valid = all(check.passed for check in checks.values() if check.severity == "error")
+        valid = self._is_research_ready(checks)
         return DataValidation(
             poll_id=poll.id,
             public_id=poll.public_id,
@@ -188,3 +196,12 @@ class DataValidationService:
 
     def _has_warning(self, item: DataValidation) -> bool:
         return any(check.severity == "warning" and not check.passed for check in self._checks(item))
+
+    def _is_research_ready(self, checks: dict[str, ValidationCheck]) -> bool:
+        required_checks = get_validation_config().public_dataset.required_checks
+        if required_checks:
+            unknown = sorted(set(required_checks) - set(checks))
+            if unknown:
+                raise ValueError(f"Unknown public dataset required check(s): {unknown}")
+            return all(checks[name].passed for name in required_checks)
+        return all(check.passed for check in checks.values() if check.severity == "error")

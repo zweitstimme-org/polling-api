@@ -96,6 +96,7 @@ def test_v2_poll_results_follow_default_dataset_policy(v2_client: TestClient) ->
         "C00000001",
         "C00000002",
     }
+    assert {"is_public", "public_exclusion_reason"}.isdisjoint(payload["data"][0])
 
 
 def test_v2_can_exclude_warning_polls_from_public_dataset(
@@ -143,7 +144,14 @@ def test_v2_poll_payload_uses_english_public_field_names(v2_client: TestClient) 
         "survey_method_key",
         "raw_poll_public_id",
     } <= item.keys()
-    assert {"publish_date", "method_key", "raw_public_id"}.isdisjoint(item.keys())
+    assert {
+        "publish_date",
+        "method_key",
+        "raw_public_id",
+        "fingerprint",
+        "is_public",
+        "public_exclusion_reason",
+    }.isdisjoint(item.keys())
 
 
 def test_v2_raw_poll_payload_uses_english_public_field_names(v2_client: TestClient) -> None:
@@ -159,6 +167,19 @@ def test_v2_raw_poll_payload_uses_english_public_field_names(v2_client: TestClie
         "survey_method_raw",
     } <= item.keys()
     assert {"publish_date", "zeitraum", "parties", "tasker", "method_id"}.isdisjoint(item.keys())
+
+
+def test_v2_validation_summary_uses_researcher_facing_aliases(
+    v2_client: TestClient,
+) -> None:
+    response = v2_client.get("/v2/validation-reports/summary")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["public_status"] in {"ready", "review_recommended", "attention_needed"}
+    assert "research_ready_polls" in payload
+    assert "polls_outside_quality_criteria" in payload
+    assert "checks_needing_review" in payload
 
 
 def _seed_v2_contract_data(session: Session) -> None:

@@ -4,13 +4,15 @@ import json
 from datetime import datetime
 
 import pandas as pd
-from sqlalchemy import func, or_
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
+from pollingapi.api.public_names import public_election_key, public_election_name
 from pollingapi.core import settings
-from pollingapi.data_validation.config import PublicDatasetConfig, get_validation_config
+from pollingapi.data_validation.config import get_validation_config
 from pollingapi.logging_config import get_logger
-from pollingapi.models import Poll, PollResult, PollValidation, RawPoll
+from pollingapi.models import Poll, PollResult, RawPoll
+from pollingapi.services.public_dataset import apply_public_dataset_policy
 
 logger = get_logger(__name__)
 
@@ -78,11 +80,12 @@ class ExportService:
         )
 
     def _public_polls(self, query):
-        return _apply_public_dataset_policy(query, get_validation_config().public_dataset)
+        return apply_public_dataset_policy(query, get_validation_config().public_dataset)
 
-    def _poll_rows(self, polls: list[Poll]) -> list[dict]:
-        return [
-            {
+    def _poll_rows(self, polls: list[Poll], *, include_internal: bool = False) -> list[dict]:
+        rows = []
+        for poll in polls:
+            row = {
                 "id": poll.id,
                 "public_id": poll.public_id,
                 "raw_id": poll.raw_id,
@@ -95,8 +98,8 @@ class ExportService:
                 "institute_name": poll.institute.name if poll.institute else None,
                 "provider_id": poll.provider_id,
                 "provider_name": poll.provider.name if poll.provider else None,
-                "election_key": poll.election_key,
-                "election_type": poll.election.election_type if poll.election else None,
+                "election_key": public_election_key(poll.election_key),
+                "election_type": public_election_name(poll.election),
                 "method_key": poll.method_key,
                 "method_name": poll.method.name if poll.method else None,
                 "matching_poll_id": poll.matching_poll_id,
@@ -104,17 +107,27 @@ class ExportService:
                 if poll.matching_poll
                 else None,
                 "matching_status": poll.matching_status,
-                "is_public": poll.is_public,
-                "public_exclusion_reason": poll.public_exclusion_reason,
                 "scope": poll.scope,
                 "source": poll.source,
-                "fingerprint": poll.fingerprint,
             }
-            for poll in polls
-        ]
+            if include_internal:
+                row.update(
+                    {
+                        "is_public": poll.is_public,
+                        "public_exclusion_reason": poll.public_exclusion_reason,
+                        "fingerprint": poll.fingerprint,
+                    }
+                )
+            rows.append(row)
+        return rows
 
-    def _poll_rows_with_results(self, polls: list[Poll]) -> list[dict]:
-        rows = self._poll_rows(polls)
+    def _poll_rows_with_results(
+        self,
+        polls: list[Poll],
+        *,
+        include_internal: bool = False,
+    ) -> list[dict]:
+        rows = self._poll_rows(polls, include_internal=include_internal)
         for row, poll in zip(rows, polls, strict=True):
             row["results"] = [
                 {
@@ -127,9 +140,12 @@ class ExportService:
             ]
         return rows
 
-    def _result_rows(self, results: list[PollResult]) -> list[dict]:
-        return [
-            {
+    def _result_rows(
+        self, results: list[PollResult], *, include_internal: bool = False
+    ) -> list[dict]:
+        rows = []
+        for r in results:
+            row = {
                 "poll_id": r.poll_id,
                 "poll_public_id": r.poll.public_id if r.poll else None,
                 "poll_raw_id": r.poll.raw_id if r.poll else None,
@@ -142,17 +158,24 @@ class ExportService:
                 "respondents": r.poll.respondents if r.poll else None,
                 "institute_key": r.poll.institute_key if r.poll else None,
                 "institute_name": r.poll.institute.name if r.poll and r.poll.institute else None,
-                "election_key": r.poll.election_key if r.poll else None,
+                "election_key": public_election_key(r.poll.election_key) if r.poll else None,
                 "scope": r.poll.scope if r.poll else None,
-                "is_public": r.poll.is_public if r.poll else None,
-                "public_exclusion_reason": r.poll.public_exclusion_reason if r.poll else None,
                 "party_key": r.party_key,
                 "party_short_name": r.party.short_name if r.party else None,
                 "party_name": r.party.name if r.party else None,
                 "percentage": r.percentage,
             }
-            for r in results
-        ]
+            if include_internal:
+                row.update(
+                    {
+                        "is_public": r.poll.is_public if r.poll else None,
+                        "public_exclusion_reason": r.poll.public_exclusion_reason
+                        if r.poll
+                        else None,
+                    }
+                )
+            rows.append(row)
+        return rows
 
     def _tabular_rows(self, rows: list[dict]) -> list[dict]:
         return [
@@ -214,13 +237,17 @@ class ExportService:
     def export_all_cleaned_polls(self) -> int:
         """Export all cleaned polls before public dataset subsetting."""
         polls = self._base_poll_query().all()
-        return self._write_dataset(self._poll_rows(polls), "all_cleaned_polls", "all cleaned polls")
+        return self._write_dataset(
+            self._poll_rows(polls, include_internal=True),
+            "all_cleaned_polls",
+            "all cleaned polls",
+        )
 
     def export_all_cleaned_results(self) -> int:
         """Export all cleaned poll-party results before public dataset subsetting."""
         results = self._base_result_query().all()
         return self._write_dataset(
-            self._result_rows(results),
+            self._result_rows(results, include_internal=True),
             "all_cleaned_poll_results",
             "all cleaned poll results",
         )
@@ -352,36 +379,3 @@ class ExportService:
 
         logger.info("Exported metadata")
         return metadata
-
-
-def _apply_public_dataset_policy(query, policy: PublicDatasetConfig):
-    query = query.filter(Poll.is_public.is_(True))
-
-    if policy.require_persisted_validation:
-        query = query.join(Poll.validation)
-    else:
-        query = query.outerjoin(Poll.validation)
-
-    if policy.include_valid:
-        if policy.require_persisted_validation:
-            query = query.filter(PollValidation.valid.is_(True))
-        else:
-            query = query.filter(or_(PollValidation.id.is_(None), PollValidation.valid.is_(True)))
-    else:
-        query = query.filter(PollValidation.valid.is_(False))
-
-    if not policy.include_warnings:
-        if policy.require_persisted_validation:
-            query = query.filter(PollValidation.warning_count == 0)
-        else:
-            query = query.filter(
-                or_(PollValidation.id.is_(None), PollValidation.warning_count == 0)
-            )
-
-    for check_name in policy.exclude_failed_checks:
-        column = getattr(PollValidation, check_name, None)
-        if column is None:
-            raise ValueError(f"Unknown public dataset validation check: {check_name}")
-        query = query.filter(column.is_(True))
-
-    return query

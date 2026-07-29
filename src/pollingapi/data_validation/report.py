@@ -36,7 +36,11 @@ class ValidationReportService:
 
         checks = [self._summarize_check(rows, check_name) for check_name in CHECK_NAMES]
         failures = [
-            ValidationFailureSummary(check=check.check, failed=check.failed)
+            ValidationFailureSummary(
+                check=check.check,
+                failed=check.failed,
+                needs_review=check.failed,
+            )
             for check in sorted(checks, key=lambda item: item.failed, reverse=True)
             if check.failed > 0
         ][:top_n]
@@ -47,17 +51,24 @@ class ValidationReportService:
 
         return ValidationReport(
             status=self._status(total, valid_share, invalid_share, warning_share),
+            public_status=self._public_status(total, valid_share, invalid_share, warning_share),
             generated_at=dt.datetime.now(dt.UTC),
             total_polls=total,
             valid_polls=valid_polls,
             invalid_polls=invalid_polls,
             warning_polls=warning_polls,
+            research_ready_polls=valid_polls,
+            polls_outside_quality_criteria=invalid_polls,
+            polls_with_review_notes=warning_polls,
             valid_share=valid_share,
             invalid_share=invalid_share,
             warning_share=warning_share,
+            research_ready_share=valid_share,
+            outside_quality_criteria_share=invalid_share,
             latest_validated_at=self._latest_validated_at(),
             checks=checks,
             top_failure_checks=failures,
+            checks_needing_review=failures,
         )
 
     def health_check(self) -> dict:
@@ -65,13 +76,21 @@ class ValidationReportService:
         report = self.build_report(top_n=3)
         return {
             "status": report.status,
+            "public_status": report.public_status,
             "total_polls": report.total_polls,
+            "research_ready_polls": report.research_ready_polls,
+            "polls_outside_quality_criteria": report.polls_outside_quality_criteria,
             "valid_share": report.valid_share,
+            "research_ready_share": report.research_ready_share,
             "invalid_share": report.invalid_share,
+            "outside_quality_criteria_share": report.outside_quality_criteria_share,
             "warning_share": report.warning_share,
             "latest_validated_at": report.latest_validated_at,
             "top_failure_checks": [
                 item.model_dump(mode="json") for item in report.top_failure_checks
+            ],
+            "checks_needing_review": [
+                item.model_dump(mode="json") for item in report.checks_needing_review
             ],
         }
 
@@ -86,6 +105,7 @@ class ValidationReportService:
             check=check_name,
             passed=passed,
             failed=failed,
+            needs_review=failed,
             pass_share=_share(passed, len(rows)),
         )
 
@@ -120,6 +140,20 @@ class ValidationReportService:
         ):
             return "warn"
         return "pass"
+
+    def _public_status(
+        self,
+        total: int,
+        valid_share: float,
+        invalid_share: float,
+        warning_share: float,
+    ) -> str:
+        status = self._status(total, valid_share, invalid_share, warning_share)
+        return {
+            "pass": "ready",
+            "warn": "review_recommended",
+            "fail": "attention_needed",
+        }[status]
 
 
 def _share(count: int, total: int) -> float:

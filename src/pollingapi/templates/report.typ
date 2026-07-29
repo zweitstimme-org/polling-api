@@ -15,7 +15,7 @@
 
 #let empty-or-list(items) = {
   if items.len() == 0 {
-    [No failed validation checks.]
+    [No quality checks need review.]
   } else {
     for item in items {
       [- #raw(item.name): #item.failed]
@@ -45,7 +45,7 @@ API version: #raw(report.api_version)
   [#report.run.scraped],
   [Created / updated],
   [#report.run.created / #report.run.updated],
-  [ETL errors],
+  [Processing issues],
   [#report.run.errors],
 )
 
@@ -58,11 +58,11 @@ API version: #raw(report.api_version)
   [#report.totals.polls],
   [Validated polls],
   [#report.totals.validated_polls],
-  [Valid polls],
+  [Research-ready polls],
   [#report.totals.valid_polls (#raw(report.totals.valid_share))],
-  [Invalid polls],
+  [Polls outside quality criteria],
   [#report.totals.invalid_polls],
-  [Warning polls],
+  [Polls with review notes],
   [#report.totals.warning_polls],
   [Latest validation],
   [#raw(report.totals.latest_validated_at)],
@@ -98,7 +98,7 @@ API version: #raw(report.api_version)
   columns: (45%, 18%, 18%, 19%),
   inset: 5pt,
   stroke: 0.4pt + gray,
-  table.header([Check], [Passed], [Failed], [Pass share]),
+  table.header([Check], [Passed], [Needs review], [Pass share]),
   for check in report.checks {
     [#raw(check.name)]
     [#check.passed]
@@ -107,7 +107,7 @@ API version: #raw(report.api_version)
   },
 )
 
-== Top Failures
+== Most Common Quality Flags
 
 #empty-or-list(report.top_failures)
 
