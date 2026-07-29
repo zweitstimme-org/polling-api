@@ -137,8 +137,24 @@ def get_or_create_method(db: Session, name: str | None) -> Method | None:
     return method
 
 
-def get_or_create_election(db: Session, scope: str) -> Election:
-    """Get or create election/scope reference row by canonical state key."""
+def get_or_create_election(db: Session, scope: str, election_id: str | None = None) -> Election:
+    """Get or create election/scope reference row by canonical election key."""
+    if election_id == ElectionScope.EU_WAHLEN.value:
+        election_key = enum_key(ElectionScope.EU_WAHLEN)
+        election = db.query(Election).filter(Election.key == election_key).first()
+        if election:
+            return election
+
+        election = Election(
+            key=election_key,
+            election_type=ElectionScope.EU_WAHLEN.value,
+            scope="eu",
+        )
+        db.add(election)
+        db.flush()
+        logger.debug(f"Created election: {election_key} - {ElectionScope.EU_WAHLEN.value}")
+        return election
+
     state = resolve_state(scope)
     election_key = enum_key(state)
 
@@ -303,7 +319,7 @@ def clean_single_poll(db: Session, raw_poll: RawPoll) -> tuple[Poll | None, bool
         method = get_or_create_method(db, method_hint or "")
 
         # Classify election/scope using declared datamodel definitions
-        election = get_or_create_election(db, raw_poll.scope or "")
+        election = get_or_create_election(db, raw_poll.scope or "", raw_poll.election_id)
         canonical_scope = normalized_scope(raw_poll.scope)
         method_key = method.key if method else None
         results_by_party_key = _results_by_party_key(valid_results)
