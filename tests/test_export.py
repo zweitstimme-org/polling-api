@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 from pollingapi.core import settings
 from pollingapi.database import Base
-from pollingapi.models import Party, Poll, PollResult, PollValidation
+from pollingapi.models import Party, Poll, PollResult, PollValidation, Provider
 from pollingapi.services.export import ExportService
 
 
@@ -35,6 +35,7 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
     monkeypatch.setattr(settings, "export_dir", tmp_path)
 
     session.add(Party(key="SPD", name="SPD", short_name="SPD"))
+    session.add(Provider(id=1, name="Kayser/Rehmert"))
     session.add_all(
         [
             Poll(
@@ -50,6 +51,13 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
                 is_public=False,
                 public_exclusion_reason="matched_secondary_provider",
             ),
+            Poll(
+                id=3,
+                public_id="C00000003",
+                publish_date=date(2004, 12, 31),
+                provider_id=1,
+                is_public=True,
+            ),
         ]
     )
     session.flush()
@@ -57,6 +65,7 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
         [
             PollResult(poll_id=1, party_key="SPD", percentage=20),
             PollResult(poll_id=2, party_key="SPD", percentage=21),
+            PollResult(poll_id=3, party_key="SPD", percentage=22),
             _validation(1),
             _validation(2),
         ]
@@ -74,14 +83,19 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
         (tmp_path / "all_cleaned_poll_results.json").read_text(encoding="utf-8")
     )
 
-    assert counts["polls"] == 1
-    assert counts["all_cleaned_polls"] == 2
-    assert [row["public_id"] for row in public_polls] == ["C00000001"]
-    assert {row["public_id"] for row in all_cleaned_polls} == {"C00000001", "C00000002"}
-    assert [row["poll_public_id"] for row in public_results] == ["C00000001"]
+    assert counts["polls"] == 2
+    assert counts["all_cleaned_polls"] == 3
+    assert [row["public_id"] for row in public_polls] == ["C00000001", "C00000003"]
+    assert {row["public_id"] for row in all_cleaned_polls} == {
+        "C00000001",
+        "C00000002",
+        "C00000003",
+    }
+    assert [row["poll_public_id"] for row in public_results] == ["C00000001", "C00000003"]
     assert {row["poll_public_id"] for row in all_cleaned_results} == {
         "C00000001",
         "C00000002",
+        "C00000003",
     }
 
 

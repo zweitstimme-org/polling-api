@@ -8,7 +8,6 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from pollingapi.api import dictionaries, elections
@@ -28,7 +27,7 @@ from pollingapi.api.polls import (
 from pollingapi.cleaner.transforms.references import normalized_scope
 from pollingapi.core import settings
 from pollingapi.data_validation import ValidationReportService
-from pollingapi.data_validation.config import PublicDatasetConfig, get_validation_config
+from pollingapi.data_validation.config import get_validation_config
 from pollingapi.database import get_db
 from pollingapi.models import (
     Election,
@@ -58,6 +57,7 @@ from pollingapi.schemas import (
 from pollingapi.schemas import (
     Provider as ProviderSchema,
 )
+from pollingapi.services.export import _apply_public_dataset_policy
 from pollingapi.services.s3 import S3Service
 
 DBSession = Annotated[Session, Depends(get_db)]
@@ -500,42 +500,6 @@ def _serialize_raw_poll(row: RawPoll) -> V2RawPollItem:
         pipeline_run_id=row.pipeline_run_id,
         downloaded_at_raw=row.date_downloaded,
     )
-
-
-def _apply_public_dataset_policy(query, policy: PublicDatasetConfig):
-    query = query.filter(Poll.is_public.is_(True))
-
-    if policy.require_persisted_validation:
-        query = query.join(Poll.validation)
-    else:
-        query = query.outerjoin(Poll.validation)
-
-    if policy.include_valid:
-        if policy.require_persisted_validation:
-            query = query.filter(PollValidation.valid.is_(True))
-        else:
-            query = query.filter(or_(PollValidation.id.is_(None), PollValidation.valid.is_(True)))
-    else:
-        query = query.filter(PollValidation.valid.is_(False))
-
-    if not policy.include_warnings:
-        if policy.require_persisted_validation:
-            query = query.filter(PollValidation.warning_count == 0)
-        else:
-            query = query.filter(
-                or_(PollValidation.id.is_(None), PollValidation.warning_count == 0)
-            )
-
-    for check_name in policy.exclude_failed_checks:
-        column = getattr(PollValidation, check_name, None)
-        if column is None:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Unknown public dataset validation check: {check_name}",
-            )
-        query = query.filter(column.is_(True))
-
-    return query
 
 
 def _filtered_poll_query(

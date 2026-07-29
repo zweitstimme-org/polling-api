@@ -4,13 +4,13 @@ import json
 from datetime import datetime
 
 import pandas as pd
-from sqlalchemy import func, or_
+from sqlalchemy import extract, func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from pollingapi.core import settings
 from pollingapi.data_validation.config import PublicDatasetConfig, get_validation_config
 from pollingapi.logging_config import get_logger
-from pollingapi.models import Poll, PollResult, PollValidation, RawPoll
+from pollingapi.models import Poll, PollResult, PollValidation, Provider, RawPoll
 
 logger = get_logger(__name__)
 
@@ -314,32 +314,27 @@ class ExportService:
 
 def _apply_public_dataset_policy(query, policy: PublicDatasetConfig):
     query = query.filter(Poll.is_public.is_(True))
+    prevalidated = Poll.provider.has(
+        func.lower(Provider.name) == policy.selection.pre_cutoff_provider.lower()
+    ) & (extract("year", Poll.publish_date) < policy.selection.cutoff_year)
 
     if policy.require_persisted_validation:
-        query = query.join(Poll.validation)
+        query = query.outerjoin(Poll.validation)
     else:
         query = query.outerjoin(Poll.validation)
 
     if policy.include_valid:
-        if policy.require_persisted_validation:
-            query = query.filter(PollValidation.valid.is_(True))
-        else:
-            query = query.filter(or_(PollValidation.id.is_(None), PollValidation.valid.is_(True)))
+        query = query.filter(or_(prevalidated, PollValidation.valid.is_(True)))
     else:
         query = query.filter(PollValidation.valid.is_(False))
 
     if not policy.include_warnings:
-        if policy.require_persisted_validation:
-            query = query.filter(PollValidation.warning_count == 0)
-        else:
-            query = query.filter(
-                or_(PollValidation.id.is_(None), PollValidation.warning_count == 0)
-            )
+        query = query.filter(or_(prevalidated, PollValidation.warning_count == 0))
 
     for check_name in policy.exclude_failed_checks:
         column = getattr(PollValidation, check_name, None)
         if column is None:
             raise ValueError(f"Unknown public dataset validation check: {check_name}")
-        query = query.filter(column.is_(True))
+        query = query.filter(or_(prevalidated, column.is_(True)))
 
     return query
