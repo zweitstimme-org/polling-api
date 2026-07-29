@@ -110,6 +110,23 @@ serve-prod:
 pipeline-run:
     uv run pollingapi pipeline:run
 
+# Build/update the database, import archive data, run collection, clean, validate, export, archive
+[group('prod: pipeline')]
+deploy:
+    @echo "=== Syncing environment ==="
+    uv sync
+    @echo "=== Initializing database ==="
+    uv run pollingapi db:init
+    uv run pollingapi db:seed
+    @echo "=== Validating public policy ==="
+    uv run pollingapi policy:validate
+    @echo "=== Downloading import data ==="
+    uv run pollingapi import:download
+    @echo "=== Importing Kayser/Rehmert data ==="
+    uv run pollingapi import:run KAYSER_REHMERT.xlsx --source kayser_rehmert
+    @echo "=== Running scraper, cleaner, validation, export, and archive ==="
+    uv run pollingapi pipeline:run
+
 # Database ping (health check)
 [group('prod: health')]
 ping:
