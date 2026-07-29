@@ -13,6 +13,7 @@ DATA_DIR = settings.data_dir
 AVAILABLE_FORMATS = {
     "polls": ["json", "csv", "parquet"],
     "poll_results": ["json", "csv", "parquet"],
+    "polls_without_results": ["json", "csv", "parquet"],
     "all_cleaned_polls": ["json", "csv", "parquet"],
     "all_cleaned_poll_results": ["json", "csv", "parquet"],
     "raw_polls": ["json", "csv", "parquet"],
@@ -181,6 +182,11 @@ def list_download_assets():
             "json": "/v1/download/results",
             "csv": "/v1/download/results/csv",
             "parquet": "/v1/download/results/parquet",
+        },
+        "polls_without_results": {
+            "json": "/v2/downloads/polls-without-results.json",
+            "csv": "/v2/downloads/polls-without-results.csv",
+            "parquet": "/v2/downloads/polls-without-results.parquet",
         },
         "all_cleaned_polls": {
             "json": "/v2/downloads/all-cleaned-polls.json",
