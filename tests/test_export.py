@@ -66,6 +66,9 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
     counts = ExportService(session).export_all()
 
     public_polls = json.loads((tmp_path / "polls.json").read_text(encoding="utf-8"))
+    public_polls_without_results = json.loads(
+        (tmp_path / "polls_without_results.json").read_text(encoding="utf-8")
+    )
     all_cleaned_polls = json.loads(
         (tmp_path / "all_cleaned_polls.json").read_text(encoding="utf-8")
     )
@@ -75,8 +78,19 @@ def test_export_writes_public_default_and_all_cleaned_dump(tmp_path, monkeypatch
     )
 
     assert counts["polls"] == 1
+    assert counts["polls_without_results"] == 1
     assert counts["all_cleaned_polls"] == 2
     assert [row["public_id"] for row in public_polls] == ["C00000001"]
+    assert public_polls[0]["results"] == [
+        {
+            "party_key": "SPD",
+            "party_short_name": "SPD",
+            "party_name": "SPD",
+            "percentage": 20.0,
+        }
+    ]
+    assert [row["public_id"] for row in public_polls_without_results] == ["C00000001"]
+    assert "results" not in public_polls_without_results[0]
     assert {row["public_id"] for row in all_cleaned_polls} == {"C00000001", "C00000002"}
     assert [row["poll_public_id"] for row in public_results] == ["C00000001"]
     assert {row["poll_public_id"] for row in all_cleaned_results} == {

@@ -36,6 +36,9 @@ ARCHIVE_EXPORT_GROUPS = {
         "poll_results.json",
         "poll_results.csv",
         "poll_results.parquet",
+        "polls_without_results.json",
+        "polls_without_results.csv",
+        "polls_without_results.parquet",
     ],
     "cleaned": [
         "all_cleaned_polls.json",
@@ -192,6 +195,7 @@ def db_export():
     counts = export_service.export_all()
     typer.echo(f"✓ Exported to {settings.export_dir}:")
     typer.echo(f"  public polls: {counts['polls']}")
+    typer.echo(f"  public polls_without_results: {counts['polls_without_results']}")
     typer.echo(f"  public poll_results: {counts['results']}")
     typer.echo(f"  all_cleaned_polls: {counts['all_cleaned_polls']}")
     typer.echo(f"  all_cleaned_poll_results: {counts['all_cleaned_results']}")
@@ -668,6 +672,7 @@ def pipeline_run(
 
         typer.echo(
             f"✓ Exported {run_result.export_polls} polls,"
+            f" {export_counts['polls_without_results']} polls without results,"
             f" {run_result.export_poll_results} poll results,"
             f" {export_counts['all_cleaned_polls']} all-cleaned polls,"
             f" and {run_result.export_raw_polls} raw polls"
@@ -1117,6 +1122,7 @@ def data_archive(
     export_counts = export_service.export_all()
     typer.echo(
         f"✓ Exported {export_counts['polls']} public polls, "
+        f"{export_counts['polls_without_results']} public polls without results, "
         f"{export_counts['all_cleaned_polls']} all-cleaned polls, "
         f"and {export_counts['raw']} raw polls"
     )
