@@ -1001,7 +1001,7 @@ def list_reference_data(db: DBSession):
 )
 def get_validation_report_summary(
     db: DBSession,
-    top: Annotated[int, Query(ge=1, le=20, description="Number of top failures")] = 5,
+    top: Annotated[int, Query(ge=1, le=20, description="Number of checks needing review")] = 5,
 ):
     """Return aggregate validation quality report."""
     return ValidationReportService(db).build_report(top_n=top)
