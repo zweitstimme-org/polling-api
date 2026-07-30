@@ -1,5 +1,9 @@
 """Database seeding from declared domain models."""
 
+import json
+from functools import lru_cache
+from pathlib import Path
+
 from sqlalchemy.orm import Session
 
 from pollingapi.models import Election, Institute, Method, Party
@@ -16,6 +20,24 @@ from pollingapi.scraper.datamodel import (
 from pollingapi.scraper.datamodel import (
     Party as PartyDefinition,
 )
+
+PARTY_EXTERNAL_IDS_PATH = Path(__file__).resolve().parents[2] / "json" / "party_external_ids.json"
+
+
+@lru_cache(maxsize=1)
+def party_external_ids() -> dict[str, dict[str, str]]:
+    if not PARTY_EXTERNAL_IDS_PATH.exists():
+        return {}
+    data = json.loads(PARTY_EXTERNAL_IDS_PATH.read_text(encoding="utf-8"))
+    return {
+        str(key): {str(id_key): str(id_value) for id_key, id_value in value.items() if id_value}
+        for key, value in data.items()
+        if isinstance(value, dict)
+    }
+
+
+def external_ids_for_party(party_key: str) -> dict[str, str] | None:
+    return party_external_ids().get(party_key) or None
 
 
 def seed_institutes_from_datamodel(db: Session) -> int:
@@ -52,14 +74,17 @@ def seed_parties_from_datamodel(db: Session) -> int:
     """Seed parties from the declared party enum and short-handle mapping."""
     count = 0
     for definition in PartyDefinition:
+        party_key = enum_key(definition)
         short_name = party_short_name(definition)
-        existing = db.query(Party).filter(Party.key == enum_key(definition)).first()
+        external_ids = external_ids_for_party(party_key)
+        existing = db.query(Party).filter(Party.key == party_key).first()
         if not existing:
             db.add(
                 Party(
-                    key=enum_key(definition),
+                    key=party_key,
                     name=definition.value,
                     short_name=short_name,
+                    external_ids=external_ids,
                 )
             )
             count += 1
@@ -71,6 +96,9 @@ def seed_parties_from_datamodel(db: Session) -> int:
             updated = True
         if existing.short_name != short_name:
             existing.short_name = short_name
+            updated = True
+        if existing.external_ids != external_ids:
+            existing.external_ids = external_ids
             updated = True
         if updated:
             count += 1
