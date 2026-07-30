@@ -153,7 +153,7 @@ class THBaseScraper:
 
 
 class THCurrentScraper(THBaseScraper):
-    URL = "https://www.wahlrecht.de/umfragen/landtage/niedersachsen.htm"
+    URL = "https://www.wahlrecht.de/umfragen/landtage/thueringen.htm"
     WORKER = "thueringen_current"
     SCOPE = "Landtagswahl"
     INSTITUTE = ""
