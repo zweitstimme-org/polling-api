@@ -47,9 +47,7 @@ class KayserRehmertImportSource(ImportSource):
     def load(self, path: Path) -> list[RawPollImport]:
         frame = pd.read_excel(path, sheet_name="Table1", dtype=object)
         frame = _normalize_frame(frame)
-        frame = frame[
-            frame["country_iso3c"].eq(COUNTRY_ISO3C) & frame["original_date"].eq("1")
-        ].copy()
+        frame = frame[frame["country_iso3c"].eq(COUNTRY_ISO3C)].copy()
 
         imports: list[RawPollImport] = []
         for _, group in frame.groupby(list(GROUP_COLUMNS), dropna=False, sort=False):

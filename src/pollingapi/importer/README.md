@@ -210,7 +210,6 @@ The Kayser/Rehmert importer applies these source-specific rules:
 
 ```text
 country_iso3c = DEU                 keep only Germany
-original_date = 1                   keep only original poll observations
 survey_date + institute             group long rows into one poll
 survey_date                         mapped to publish_date
 scope                               Bund
