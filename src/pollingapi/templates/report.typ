@@ -71,23 +71,12 @@ API version: #raw(report.api_version)
 == Primary Sources by Year
 
 #table(
-  columns: (10%, 14%, 16%, 42%, 18%),
-  inset: 3pt,
-  stroke: 0.4pt + gray,
-  table.header(
-    [Year],
-    [Polls],
-    [Validated],
-    [Primary source],
-    [Primary polls],
-  ),
-  for year in report.years {
-    [#year.year]
-    [#year.total_polls]
-    [#year.validated_polls]
-    [#raw(year.primary_provider) \ #raw(year.primary_source)]
-    [#year.primary_polls]
-  },
+  columns: 3,
+
+  table.header([*Year*], [*Validated*], [*Primary Provider*]),
+
+  [after 2005], [zweitstimme-org validation engine], [wahlrecht.de],
+  [before 2005], [external], [KAYSER & REHMERT],
 )
 
 == Validation Checks
