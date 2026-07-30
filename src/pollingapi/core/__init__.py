@@ -60,6 +60,8 @@ class Settings(BaseSettings):
     ntfy_topic_title: str = "pollingAPI"
     # Set SLACK_WEBHOOK_URL to enable Slack notifications
     slack_webhook_url: str | None = None
+    # Set RSS_FEED_PATH to override the pipeline notification RSS file
+    rss_feed_path: Path = DATA_DIR / "export" / "pipeline-notifications.rss"
 
     # Data Paths
     data_dir: Path = DATA_DIR
