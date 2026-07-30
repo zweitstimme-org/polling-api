@@ -240,6 +240,18 @@ class TestV2Endpoints:
         assert "/v2/archives/{filename}" in route_paths
         assert "/v2/archives/{filename}/download" in route_paths
 
+    def test_v2_pipeline_notifications_rss_is_hidden_from_docs(self, client, tmp_path, monkeypatch):
+        """Test the notification RSS feed is served but hidden from OpenAPI."""
+        feed_path = tmp_path / "pipeline-notifications.rss"
+        feed_path.write_text("<?xml version='1.0'?><rss version='2.0' />", encoding="utf-8")
+        monkeypatch.setattr("pollingapi.core.settings.rss_feed_path", feed_path)
+
+        response = client.get("/v2/pipeline-notifications.rss")
+
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("application/rss+xml")
+        assert "/v2/pipeline-notifications.rss" not in client.get("/openapi.json").json()["paths"]
+
     def test_openapi_shows_v2_but_hides_v1(self, client):
         """Test public OpenAPI docs show v2 while keeping v1 hidden."""
         response = client.get("/openapi.json")

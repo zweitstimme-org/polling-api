@@ -1011,6 +1011,18 @@ def download_file(filename: str):
     return FileResponse(path=path, filename=filename, media_type=media_type)
 
 
+@router.get("/pipeline-notifications.rss", include_in_schema=False)
+def pipeline_notifications_feed():
+    """Serve the pipeline notification RSS feed."""
+    path = settings.rss_feed_path
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="RSS feed not found")
+    return FileResponse(
+        path=path,
+        media_type="application/rss+xml",
+    )
+
+
 def _format_size(size_bytes: int | float) -> str:
     size = float(size_bytes)
     for unit in ["B", "KB", "MB", "GB"]:

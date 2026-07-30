@@ -6,6 +6,7 @@ Public API
 - :class:`BaseNotifier` — abstract base for notification backends
 - :class:`NotificationManager` — fan-out dispatcher
 - :class:`NtfyNotifier` — ntfy.sh push notification backend
+- :class:`RssNotifier` — local RSS feed notification backend
 - :func:`create_notification_manager` — factory that builds a configured manager
 
 Example
@@ -24,6 +25,7 @@ from __future__ import annotations
 from .base import BaseNotifier, PipelineRunResult, ScraperRunResult
 from .manager import NotificationManager
 from .ntfy import NtfyNotifier
+from .rss_notification import RssNotifier
 from .slack import SlackNotifier
 
 
@@ -34,6 +36,7 @@ def create_notification_manager() -> NotificationManager:
 
     - :class:`NtfyNotifier` if ``NTFY_URL`` is set in the environment / ``.env``.
     - :class:`SlackNotifier` if ``SLACK_WEBHOOK_URL`` is set.
+    - :class:`RssNotifier` for the local notification feed.
 
     Returns:
         A ready-to-use :class:`NotificationManager`.
@@ -54,12 +57,21 @@ def create_notification_manager() -> NotificationManager:
     if settings.slack_webhook_url:
         manager.register(SlackNotifier(webhook_url=settings.slack_webhook_url))
 
+    if settings.rss_feed_path:
+        manager.register(
+            RssNotifier(
+                feed_path=settings.rss_feed_path,
+                title_prefix=settings.ntfy_topic_title,
+            )
+        )
+
     return manager
 
 
 __all__ = [
     "BaseNotifier",
     "NtfyNotifier",
+    "RssNotifier",
     "SlackNotifier",
     "NotificationManager",
     "PipelineRunResult",
