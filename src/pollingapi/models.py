@@ -78,6 +78,7 @@ class Party(Base):
     name: Mapped[str] = mapped_column(String(150), unique=True, index=True)
     short_name: Mapped[str | None] = mapped_column(String(20))
     color: Mapped[str | None] = mapped_column(String(7))  # Hex color
+    external_ids: Mapped[dict[str, str] | None] = mapped_column(JSON)
 
     # Relationships
     poll_results: Mapped[list[PollResult]] = relationship("PollResult", back_populates="party")

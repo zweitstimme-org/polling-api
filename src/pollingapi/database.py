@@ -130,6 +130,12 @@ def _apply_schema_migrations():
                     text("CREATE INDEX IF NOT EXISTS ix_polls_is_public ON polls (is_public)")
                 )
 
+            if "parties" in tables:
+                rows = conn.execute(text("PRAGMA table_info(parties)")).fetchall()
+                party_columns = {row[1] for row in rows}
+                if "external_ids" not in party_columns:
+                    conn.execute(text("ALTER TABLE parties ADD COLUMN external_ids JSON"))
+
             if "poll_validations" in tables:
                 rows = conn.execute(text("PRAGMA table_info(poll_validations)")).fetchall()
                 validation_columns = {row[1] for row in rows}
@@ -263,6 +269,19 @@ def _apply_schema_migrations():
                 conn.execute(
                     text("CREATE INDEX IF NOT EXISTS ix_polls_is_public ON polls (is_public)")
                 )
+
+            parties_exists = conn.execute(
+                text("SELECT 1 FROM information_schema.tables WHERE table_name = 'parties' LIMIT 1")
+            ).fetchone()
+            if parties_exists:
+                column = conn.execute(
+                    text(
+                        "SELECT column_name FROM information_schema.columns"
+                        " WHERE table_name = 'parties' AND column_name = 'external_ids'"
+                    )
+                ).fetchone()
+                if column is None:
+                    conn.execute(text("ALTER TABLE parties ADD COLUMN external_ids JSON"))
 
             for old_name, new_name in validation_column_renames.items():
                 old_column = conn.execute(

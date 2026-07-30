@@ -137,6 +137,7 @@ class PartyBase(BaseModel):
     name: str
     short_name: str | None = None
     color: str | None = None
+    external_ids: dict[str, str] | None = None
 
 
 class PartyCreate(PartyBase):
