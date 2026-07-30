@@ -96,7 +96,7 @@ def test_import_sources_are_listed():
     assert list_sources() == ["csv", "kayser_rehmert", "manual_csv"]
 
 
-def test_kayser_rehmert_source_filters_germany_original_polls_and_maps_columns(tmp_path):
+def test_kayser_rehmert_source_filters_germany_polls_and_maps_columns(tmp_path):
     path = tmp_path / "kayser.xlsx"
     pd.DataFrame(
         [
@@ -123,6 +123,7 @@ def test_kayser_rehmert_source_filters_germany_original_polls_and_maps_columns(t
         "CDU/CSU": "30",
         "Grüne": "13.5",
         "Linke": "4",
+        "SPD": "17",
     }
     assert rows[1].publish_date == "2024-01-11"
     assert rows[1].institute_id == "Institut Wahlkreisprognose"
