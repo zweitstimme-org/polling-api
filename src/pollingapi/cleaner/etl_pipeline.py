@@ -24,6 +24,7 @@ from pollingapi.cleaner.transforms.references import (
 )
 from pollingapi.cleaner.transforms.respondents import parse_respondents
 from pollingapi.cleaner.transforms.results import parse_party_results
+from pollingapi.database_seed import external_ids_for_party
 from pollingapi.logging_config import get_logger
 from pollingapi.models import (
     Election,
@@ -422,6 +423,7 @@ def sync_poll_results(db: Session, poll: Poll, results_data: list[DomainPartyRes
                 key=party_key,
                 name=result.party.value,
                 short_name=party_short_name(result.party),
+                external_ids=external_ids_for_party(party_key),
             )
             db.add(party)
             db.flush()
