@@ -277,9 +277,11 @@ class DawumScraper:
             skipped = 0
             for payload in payloads:
                 existing = self._find_existing_raw(payload)
-                needs_write = existing is None or existing.scope != payload.get(
-                    "scope"
-                ) or existing.election_id != payload.get("election_id")
+                needs_write = (
+                    existing is None
+                    or existing.scope != payload.get("scope")
+                    or existing.election_id != payload.get("election_id")
+                )
                 if needs_write:
                     new_or_fixable.append(payload)
                 else:
