@@ -12,14 +12,35 @@ from pollingapi.core import DATA_DIR
 from pollingapi.logging_config import get_logger
 from pollingapi.models import RawPoll
 from pollingapi.scraper.context import RunContext
+from pollingapi.scraper.dawum_parliaments import (
+    UnknownDawumParliamentError,
+    map_dawum_parliament,
+)
 from pollingapi.scraper.schemas import filter_poll_payloads
+
+# Identity for DAWUM re-ingest. Scope/election_id are intentionally excluded so
+# correcting a mis-scoped row updates in place instead of inserting a duplicate.
+_DAWUM_IDENTITY_KEYS = (
+    "publish_date",
+    "survey_date_start",
+    "survey_date_end",
+    "respondents",
+    "zeitraum",
+    "parties",
+    "institute_id",
+    "provider",
+    "tasker",
+    "source",
+    "method_id",
+    "worker",
+    "survey_type",
+)
 
 
 class DawumScraper:
     """Scraper for DAWUM API data."""
 
     DATA_SOURCE = "DAWUM"
-    SCOPE = "federal"
     WORKER = "dawum"
     REQUEST_TIMEOUT = 30
 
@@ -63,9 +84,12 @@ class DawumScraper:
         # Merge with parliaments
         if not parliaments.empty:
             parliaments_reset = parliaments.reset_index().rename(columns={"index": "Parliament_ID"})
+            keep = ["Parliament_ID", "Shortcut"]
+            if "Election" in parliaments_reset.columns:
+                keep.append("Election")
             df = df.merge(
-                parliaments_reset[["Parliament_ID", "Shortcut"]].rename(
-                    columns={"Shortcut": "Parliament"}
+                parliaments_reset[keep].rename(
+                    columns={"Shortcut": "Parliament", "Election": "Election_Name"}
                 ),
                 on="Parliament_ID",
                 how="left",
@@ -142,11 +166,39 @@ class DawumScraper:
         }
         df_mapped = df_mapped.rename(columns=column_mapping)
 
+        scopes: list[str] = []
+        election_ids: list[str] = []
+        skipped_unknown = 0
+        keep_mask: list[bool] = []
+        for _, row in df_mapped.iterrows():
+            try:
+                mapping = map_dawum_parliament(
+                    row.get("Parliament_ID"),
+                    shortcut=row.get("Parliament"),
+                    election=row.get("Election_Name"),
+                )
+            except UnknownDawumParliamentError as exc:
+                skipped_unknown += 1
+                self.logger.warning("Skipping DAWUM survey with unmapped parliament: %s", exc)
+                keep_mask.append(False)
+                scopes.append("")
+                election_ids.append("")
+                continue
+            keep_mask.append(True)
+            scopes.append(mapping.scope)
+            election_ids.append(mapping.election_id)
+
+        df_mapped["scope"] = scopes
+        df_mapped["election_id"] = election_ids
+        df_mapped = df_mapped.loc[keep_mask].copy()
+        if skipped_unknown:
+            self.logger.warning(
+                "Skipped %d DAWUM surveys with unknown parliament mapping", skipped_unknown
+            )
+
         # Add metadata
         df_mapped["provider"] = self.DATA_SOURCE
         df_mapped["source"] = "api"
-        df_mapped["scope"] = self.SCOPE
-        df_mapped["election_id"] = "Bundestagswahl"
         df_mapped["worker"] = self.WORKER
         df_mapped["zeitraum"] = None
         df_mapped["survey_type"] = None
@@ -205,59 +257,63 @@ class DawumScraper:
             pipeline_run_id=payload.get("pipeline_run_id"),
         )
 
-    def _check_duplicate(self, payload: dict[str, Any]) -> bool:
-        """Check if a poll already exists in the database."""
-        dedup_values = {
-            "publish_date": payload.get("publish_date"),
-            "survey_date_start": payload.get("survey_date_start"),
-            "survey_date_end": payload.get("survey_date_end"),
-            "respondents": payload.get("respondents"),
-            "zeitraum": payload.get("zeitraum"),
-            "parties": self._parties_json(payload.get("parties")),
-            "institute_id": payload.get("institute_id"),
-            "provider": payload.get("provider"),
-            "tasker": payload.get("tasker"),
-            "source": payload.get("source"),
-            "scope": payload.get("scope"),
-            "election_id": payload.get("election_id"),
-            "method_id": payload.get("method_id"),
-            "worker": payload.get("worker"),
-            "survey_type": payload.get("survey_type"),
-        }
-
+    def _find_existing_raw(self, payload: dict[str, Any]) -> RawPoll | None:
+        """Find an existing DAWUM raw row by survey identity (not scope)."""
         query = self.db.query(RawPoll)
-        for key, value in dedup_values.items():
+        for key in _DAWUM_IDENTITY_KEYS:
             column = getattr(RawPoll, key)
+            value = payload.get(key)
+            if key == "parties":
+                value = self._parties_json(value) if not isinstance(value, str) else value
             query = (
                 query.filter(column.is_(None)) if value is None else query.filter(column == value)
             )
-
-        return query.first() is not None
-
-    def _new_payloads(self, payloads: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Return only payloads that are not already present in polls_raw."""
-        return [payload for payload in payloads if not self._check_duplicate(payload)]
+        return query.first()
 
     def post_polls(self, payloads: list[dict[str, Any]]) -> int:
-        """Insert polls into database with deduplication."""
-        new_payloads = self._new_payloads(payloads)
-        skipped_count = len(payloads) - len(new_payloads)
-
+        """Insert polls into database with deduplication / scope correction."""
         if self.dry_run:
+            new_or_fixable = []
+            skipped = 0
+            for payload in payloads:
+                existing = self._find_existing_raw(payload)
+                needs_write = (
+                    existing is None
+                    or existing.scope != payload.get("scope")
+                    or existing.election_id != payload.get("election_id")
+                )
+                if needs_write:
+                    new_or_fixable.append(payload)
+                else:
+                    skipped += 1
             self.logger.info(
-                f"[DRY RUN] Would insert {len(new_payloads)} DAWUM polls "
-                f"(skipped {skipped_count} duplicates)"
+                f"[DRY RUN] Would insert/update {len(new_or_fixable)} DAWUM polls "
+                f"(skipped {skipped} unchanged duplicates)"
             )
-            for payload in new_payloads[:3]:
+            for payload in new_or_fixable[:3]:
                 self.logger.info(f"  {payload}")
-            if len(new_payloads) > 3:
-                self.logger.info(f"  ... and {len(new_payloads) - 3} more")
-            return len(new_payloads)
+            if len(new_or_fixable) > 3:
+                self.logger.info(f"  ... and {len(new_or_fixable) - 3} more")
+            return len(new_or_fixable)
 
         inserted_count = 0
+        updated_count = 0
+        skipped_count = 0
 
-        for payload in new_payloads:
+        for payload in payloads:
             try:
+                existing = self._find_existing_raw(payload)
+                if existing is not None:
+                    scope = payload.get("scope")
+                    election_id = payload.get("election_id")
+                    if existing.scope != scope or existing.election_id != election_id:
+                        existing.scope = scope
+                        existing.election_id = election_id
+                        updated_count += 1
+                    else:
+                        skipped_count += 1
+                    continue
+
                 self.db.add(self._raw_poll_from_payload(payload))
                 inserted_count += 1
 
@@ -265,12 +321,15 @@ class DawumScraper:
                 self.logger.error(f"Error inserting poll: {e}")
                 continue
 
-        # Commit all successful inserts
-        if inserted_count > 0:
+        # Commit all successful inserts / updates
+        if inserted_count > 0 or updated_count > 0:
             try:
                 self.db.commit()
                 self.logger.info(
-                    f"Inserted {inserted_count} DAWUM polls, skipped {skipped_count} duplicates"
+                    "DAWUM ingest: inserted=%d updated_scope=%d skipped=%d",
+                    inserted_count,
+                    updated_count,
+                    skipped_count,
                 )
             except Exception as e:
                 self.db.rollback()
@@ -279,7 +338,7 @@ class DawumScraper:
         else:
             self.logger.info(f"No new DAWUM polls to insert (skipped {skipped_count} duplicates)")
 
-        return inserted_count
+        return inserted_count + updated_count
 
     def run(self) -> int:
         """Run the DAWUM scraper."""
